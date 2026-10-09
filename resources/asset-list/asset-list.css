@@ -49,12 +49,6 @@
   outline-offset: 1px;
 }
 
-.asset-thumb__image {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: cover;
-}
-
 /* 音频：试听按钮在左，类型与时长在右侧竖排 */
 .asset-audio {
   display: flex;
@@ -86,12 +80,6 @@
 }
 
 /* 分类管理弹出页：顶部操作条、操作结果提示和分类表格 */
-.asset-cat {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-page);
-}
-
 .asset-cat__bar {
   display: flex;
   flex-wrap: wrap;
@@ -99,35 +87,8 @@
   gap: var(--space-sm);
 }
 
-.asset-cat__message {
-  margin: 0;
-}
-
 /* 生成图片/音频的弹出页 */
-.asset-gen {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-page);
-}
-
-.asset-gen__message {
-  margin: 0;
-}
-
 /* 版本层：顶部工具条（版本下拉、摘要、操作按钮）、提示和主体 */
-.asset-ver {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-page);
-}
-
-.asset-ver__bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-md);
-}
-
 .asset-ver__select {
   flex: 0 0 auto;
   min-width: 200px;
@@ -138,16 +99,6 @@
   flex-wrap: wrap;
   gap: var(--space-sm);
   margin-left: auto;
-}
-
-.asset-ver__message {
-  margin: 0;
-}
-
-.asset-ver__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-page);
 }
 
 .asset-ver__body p {
@@ -187,33 +138,8 @@
   cursor: default;
 }
 
-.asset-ver__thumb-image {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-
-.asset-ver__audio {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-md);
-}
-
 .asset-ver__prompt {
   margin: var(--space-xs) 0 0;
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-.asset-ver__viewer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.asset-ver__original {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
 }

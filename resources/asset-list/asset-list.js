@@ -63,7 +63,7 @@
   /** 在操作结果区显示文字；空串表示清除。 */
   function showMessage(text, isError) {
     messageElement.textContent = text;
-    messageElement.className = isError ? 'assets-message status-error' : 'assets-message status-success';
+    messageElement.className = isError ? 'ui-message status-error' : 'ui-message status-success';
     messageElement.hidden = text === '';
   }
 
@@ -257,7 +257,7 @@
         on: { click: () => void viewReferenceImage(asset) }
       },
       aiUi.h('img', {
-        class: 'asset-thumb__image',
+        class: 'ui-image ui-image--cover',
         attrs: { src: `data:${asset.thumbnail.mime};base64,${asset.thumbnail.data}`, alt: asset.name }
       })
     );
@@ -473,7 +473,7 @@
 
   /** 空状态和错误状态。 */
   function renderState(text, button) {
-    return aiUi.h('div', { class: 'ui-state assets-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
+    return aiUi.h('div', { class: 'ui-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
   }
 
   /** 按当前状态刷新内容区：按名称关键字筛选。 */
@@ -511,7 +511,7 @@
     manageButton = aiUi.button({ text: '分类管理', disabled: true, onClick: openCategoryManager });
     document.getElementById('page-toolbar').append(aiUi.h('div', { class: 'assets-search' }, search.element), categorySlot, manageButton.element);
 
-    messageElement = aiUi.h('p', { class: 'ui-message assets-message', hidden: true, attrs: { role: 'status' } });
+    messageElement = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
     contentElement = aiUi.h('div');
     root.append(messageElement, contentElement);
   }

@@ -136,12 +136,6 @@
   font-size: var(--font-size-caption);
 }
 
-.account-entry {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-}
-
 .account-entry__name {
   color: var(--text-muted);
 }

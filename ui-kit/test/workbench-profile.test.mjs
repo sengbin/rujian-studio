@@ -160,7 +160,7 @@ test('声音内容：每个内容一个开关、一行一个，模型不支持�
   last.click();
   await flush();
   assert.deepEqual(plain(single.saved), [], '至少保留一项，不保存');
-  assert.match(single.doc.querySelector('.wb-message').textContent, /至少开启一项/);
+  assert.match(single.doc.querySelector('.ui-message').textContent, /至少开启一项/);
 });
 
 test('生效参数：已设置的值原样使用，未设置的负向清单与改写开关来源为“默认”；模型不支持改写开关却设置了时记为问题', () => {

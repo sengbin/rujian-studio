@@ -172,7 +172,7 @@
       voice: catalog.defaults.voice,
       useReferenceImages: catalog.defaults.useReferenceImages,
       paramsElement: aiUi.h('div'),
-      messageElement: aiUi.h('p', { class: 'asset-gen__message status-error', hidden: true, attrs: { role: 'alert' } })
+      messageElement: aiUi.h('p', { class: 'ui-message ui-message--flush status-error', hidden: true, attrs: { role: 'alert' } })
     };
     const modelSelect = aiUi.select({
       options: catalog.models.map((model) => ({ value: String(model.id), label: model.label })),
@@ -186,7 +186,7 @@
     });
     const content = aiUi.h(
       'div',
-      { class: 'asset-gen' },
+      { class: 'ui-stack asset-gen' },
       aiUi.h('p', { class: 'description', text: `为“${asset.name}”生成${noun}。` }),
       aiUi.field({ label: '模型', control: modelSelect }).element,
       state.paramsElement,

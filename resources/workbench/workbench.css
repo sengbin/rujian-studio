@@ -73,13 +73,6 @@ body {
   min-height: 0;
 }
 
-/* 操作结果可能有多行（逐个镜头的提醒与未提交原因） */
-.wb-message {
-  flex: none;
-  margin: var(--space-xs) 0;
-  white-space: pre-line;
-}
-
 .wb-notice {
   display: flex;
   flex: none;
@@ -121,7 +114,7 @@ body {
 .wb-context__summary {
   display: flex;
   align-items: center;
-  height: 24px;
+  height: var(--input-height);
   padding: 0 var(--space-md);
   overflow: hidden;
   border: 1px dashed var(--input-border);
@@ -161,7 +154,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-page);
-  min-height: 44px;
+  min-height: var(--panel-header-height);
   padding: var(--space-sm) var(--space-page);
   border-bottom: 1px solid var(--divider);
 }
@@ -374,12 +367,6 @@ body {
   margin: 0;
 }
 
-.wb-section__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-}
-
 /* 后续组采用的视频基于上一组旧版本尾帧时的提示 */
 .wb-stale {
   margin: 0 0 var(--space-sm);
@@ -450,47 +437,11 @@ body {
 }
 
 /* ---------- 右栏：步骤页签与面板 ---------- */
+/* 页签条与页签的通用样式见组件库的卡片式 ui-tabs，这里只管页签里的内容 */
 .wb-steps__tabs {
-  display: grid;
-  flex: none;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  min-height: 44px;
   border-bottom: 1px solid var(--divider);
 }
 
-.wb-steps__tab {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--space-xs);
-  min-width: 0;
-  padding: var(--space-sm) var(--space-page);
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color var(--hover-duration) ease, border-color var(--hover-duration) ease;
-}
-
-.wb-steps__tab:hover {
-  background: var(--option-hover-bg);
-}
-
-.wb-steps__tab:active {
-  background: var(--option-active-bg);
-}
-
-.wb-steps__tab--active,
-.wb-steps__tab--active:hover,
-.wb-steps__tab--active:active {
-  border-bottom-color: var(--wb-accent);
-  background: var(--wb-selected-bg);
-}
-
-.wb-steps__tab:focus-visible,
 .wb-steps__panel:focus-visible {
   outline: 1px solid var(--focus-border);
   outline-offset: -1px;
@@ -518,11 +469,11 @@ body {
   white-space: nowrap;
 }
 
-.wb-steps__tab--active .wb-steps__tab-head {
+.wb-steps__tab[aria-selected="true"] .wb-steps__tab-head {
   color: var(--wb-accent);
 }
 
-.wb-steps__tab--done .wb-steps__tab-head {
+.wb-steps__tab.wb-steps__tab--done .wb-steps__tab-head {
   color: var(--status-success);
 }
 
@@ -553,8 +504,8 @@ body {
 /* 面板底部的操作固定在滚动区底部，内容再长也能直接点到 */
 .wb-steps__footer {
   position: sticky;
-  bottom: -12px;
-  margin: 8px -10px -8px;
+  bottom: calc(-1 * var(--space-md));
+  margin: var(--space-md) calc(-1 * var(--space-page)) calc(-1 * var(--space-md));
   padding: var(--space-md) var(--space-page);
   border-top: 1px solid var(--divider);
   background: var(--wb-panel-bg);
@@ -595,7 +546,7 @@ body {
   height: 100%;
   border-radius: inherit;
   background: var(--wb-accent);
-  transition: width 0.2s;
+  transition: width var(--motion-duration);
 }
 
 .wb-bind__actions {
@@ -618,7 +569,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-page);
-  min-height: 30px;
+  min-height: var(--tab-height);
   padding: var(--space-xs) 0;
   border-bottom: 1px solid var(--divider);
   font-size: var(--font-size-body);
@@ -676,7 +627,7 @@ body {
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  min-height: 36px;
+  min-height: var(--row-height-lg);
 }
 
 .wb-bind-item__main {
@@ -710,7 +661,7 @@ body {
 .wb-bind-empty {
   display: flex;
   align-items: center;
-  min-height: 36px;
+  min-height: var(--row-height-lg);
 }
 
 .wb-bind-cell__actions {
@@ -725,8 +676,8 @@ body {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: var(--row-height-lg);
+  height: var(--row-height-lg);
   overflow: hidden;
   border: 1px solid var(--table-border);
   border-radius: var(--radius-md);
@@ -748,35 +699,11 @@ body {
   outline-offset: 1px;
 }
 
-.wb-bind-thumb__image {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: cover;
-}
-
-.wb-bind-viewer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.wb-bind-original {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-
 .wb-bind-picker__search {
   margin: 0 0 var(--space-md);
 }
 
 /* 参数面板：各字段竖向排列，字段标签与说明用小号淡色字 */
-.wb-profile__fields {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-page);
-}
-
 .wb-profile > * + * {
   margin-top: var(--space-md);
 }
@@ -793,7 +720,7 @@ body {
 
 .wb-profile__scope .ui-choice {
   justify-content: center;
-  min-height: 32px;
+  min-height: var(--tab-height);
   font-size: var(--font-size-body);
 }
 

@@ -131,7 +131,7 @@
 
     // ---------- 元素 ----------
     const statusText = aiUi.h('span', { class: 'sbp-status__text', attrs: { role: 'status' } });
-    const statusBadges = aiUi.h('span', { class: 'sbp-status__badges' });
+    const statusBadges = aiUi.h('span', { class: 'ui-wrap sbp-status__badges' });
     const errorRow = aiUi.h('div', { class: 'sbp-error', hidden: true });
     const canvas = aiUi.h('canvas', { class: 'sbp-canvas', attrs: { role: 'img', 'aria-label': '分镜动画舞台' } });
     const stageFrame = aiUi.h('div', { class: 'sbp-stage', attrs: { tabindex: '0', role: 'group', 'aria-label': '舞台，空格播放或暂停，方向键前进后退，Shift 加方向键切换镜头' } }, canvas);
@@ -145,10 +145,10 @@
     ];
     let infoTab = 'shot';
     const infoCounts = {};
-    for (const tab of INFO_TABS) infoCounts[tab.id] = aiUi.h('span', { class: 'ui-tab__count sbp-tab__count' });
+    for (const tab of INFO_TABS) infoCounts[tab.id] = aiUi.h('span', { class: 'ui-tab__count' });
     let infoBody = null;
     const infoTabs = aiUi.tabs({
-      items: INFO_TABS.map((tab) => ({ id: tab.id, label: tab.label, count: infoCounts[tab.id], className: 'sbp-tab' })),
+      items: INFO_TABS.map((tab) => ({ id: tab.id, label: tab.label, count: infoCounts[tab.id] })),
       activeId: infoTab,
       ariaLabel: '镜头信息类别',
       className: 'sbp-tabs',

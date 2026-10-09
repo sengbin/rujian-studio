@@ -78,7 +78,7 @@
   /** 在操作结果区显示文字；空串表示清除。 */
   function showMessage(text, isError) {
     messageElement.textContent = text;
-    messageElement.className = isError ? 'works-message status-error' : 'works-message status-success';
+    messageElement.className = isError ? 'ui-message status-error' : 'ui-message status-success';
     messageElement.hidden = text === '';
   }
 
@@ -579,7 +579,7 @@
 
   /** 空状态和错误状态。 */
   function renderState(text, button) {
-    return aiUi.h('div', { class: 'ui-state works-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
+    return aiUi.h('div', { class: 'ui-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
   }
 
   /** 按当前状态刷新内容区：先按项目、再按名称关键字筛选。 */
@@ -642,7 +642,7 @@
       .getElementById('page-toolbar')
       .append(aiUi.h('div', { class: 'works-search' }, search.element), projectSlot, statusSlot);
 
-    messageElement = aiUi.h('p', { class: 'ui-message works-message', hidden: true, attrs: { role: 'status' } });
+    messageElement = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
     contentElement = aiUi.h('div');
     root.append(messageElement, contentElement);
     renderProjectFilter();

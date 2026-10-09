@@ -229,7 +229,7 @@
       const blockingCount = chosen.filter((preview) => preview.blocking.length > 0).length;
       const warningCount = chosen.filter((preview) => preview.warnings.length > 0).length;
       const needsAcknowledgement = warningCount > 0;
-      if (previewError) element.append(aiUi.h('p', { class: 'status-error wb-message', text: `检查失败：${previewError}` }));
+      if (previewError) element.append(aiUi.h('p', { class: 'status-error ui-message', text: `检查失败：${previewError}` }));
 
       const acknowledgement = needsAcknowledgement
         ? aiUi.checkbox({

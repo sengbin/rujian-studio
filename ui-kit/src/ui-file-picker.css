@@ -40,7 +40,7 @@
   display: flex;
   gap: var(--space-md);
   align-items: center;
-  min-height: 26px;
+  min-height: var(--row-height);
   padding: 2px var(--space-md);
 }
 

@@ -186,7 +186,7 @@ test('间距与圆角总控：除令牌文件外，样式不写死 3 到 13px �
   for (const path of [...listStyleFiles(sourceRoot), ...listStyleFiles(resourcesRoot)]) {
     if (path.endsWith('ui-tokens.css')) continue;
     readFileSync(path, 'utf8').split(/\r?\n/).forEach((line, index) => {
-      const declaration = /^\s*(margin|padding|gap|row-gap|column-gap|border-radius)[\w-]*:\s*([^;]+);/.exec(line);
+      const declaration = /^\s*(margin|padding|gap|row-gap|column-gap|border-radius|--[\w-]*(?:gap|padding|margin|radius))[\w-]*:\s*([^;]+);/.exec(line);
       if (!declaration || /(^|\s)-\d/.test(declaration[2])) return;
       if (/(?<![\w.-])([3-9]|1[0-3])px\b/.test(declaration[2])) offenders.push(path + ':' + (index + 1) + ' ' + line.trim());
     });

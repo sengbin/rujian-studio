@@ -55,7 +55,7 @@
   /* 按钮：所有按钮高度、字号、圆角、图标尺寸完全一致，只有宽度可以按需不同；“功能”级令牌默认继承通用值，只控制内边距与最小宽度 */
   --btn-height: 22px;
   --btn-padding-x: var(--space-md);
-  --btn-gap: 5px;
+  --btn-gap: var(--space-xs);
   --btn-radius: var(--radius-sm);
   --btn-font-size: var(--font-size-body);
   --btn-icon-size: 14px;
@@ -108,6 +108,11 @@
   --tab-padding-x: var(--space-page);
   --tab-font-size: var(--font-size-body);
   --tab-count-font-size: var(--font-size-caption);
+  /* 行与面板：菜单行、文件选择行、绑定项等行高，面板头高度；动效时长统一 */
+  --row-height: 26px;
+  --row-height-lg: 36px;
+  --panel-header-height: 44px;
+  --motion-duration: 0.18s;
   /* 列表项（可选择的列表行） */
   --list-gap: var(--space-xs);
   --list-item-padding-y: var(--space-sm);

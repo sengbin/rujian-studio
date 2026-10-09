@@ -75,7 +75,7 @@
           'section',
           { class: 'storyboard-entity-group' },
           aiUi.h('h4', { class: 'ui-subheading storyboard-entity-group__title' }, label, aiUi.h('span', { class: 'storyboard-entity-group__count', text: `${entities.length} 个` })),
-          aiUi.h('div', { class: 'storyboard-entity-list' }, buttons)
+          aiUi.h('div', { class: 'ui-wrap storyboard-entity-list' }, buttons)
         )
       );
     }

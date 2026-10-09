@@ -37,7 +37,7 @@
   /** 在提示区显示文字；空串表示清除。 */
   function showMessage(text, isError) {
     session.message.textContent = text;
-    session.message.className = isError ? 'asset-ver__message status-error' : 'asset-ver__message status-success';
+    session.message.className = isError ? 'ui-message ui-message--flush status-error' : 'ui-message ui-message--flush status-success';
     session.message.hidden = text === '';
   }
 
@@ -101,8 +101,8 @@
 
   /** 弹出页查看一张图片的原图。 */
   function viewImage(title, data) {
-    const image = aiUi.h('img', { class: 'asset-ver__original', attrs: { src: `data:${data.mime};base64,${data.data}`, alt: title } });
-    aiUi.openPage({ title, content: aiUi.h('div', { class: 'asset-ver__viewer' }, image), width: 640, height: 520, minWidth: 320, minHeight: 240, buttons: [{ id: 'close', text: '关闭', isCancel: true }] });
+    const image = aiUi.h('img', { class: 'ui-image ui-image--contain', attrs: { src: `data:${data.mime};base64,${data.data}`, alt: title } });
+    aiUi.openPage({ title, content: aiUi.h('div', { class: 'ui-image-viewer' }, image), width: 640, height: 520, minWidth: 320, minHeight: 240, buttons: [{ id: 'close', text: '关闭', isCancel: true }] });
   }
 
   /** 查看一张结果图片的原图。 */
@@ -128,7 +128,7 @@
         ? aiUi.h(
             'button',
             { class: 'asset-ver__thumb', attrs: { type: 'button', 'aria-label': `查看原图：${detail.version.version}-${file.sortOrder + 1}` }, on: { click: () => void viewOriginal(file, `v${detail.version.version} · 第 ${file.sortOrder + 1} 张`) } },
-            aiUi.h('img', { class: 'asset-ver__thumb-image', attrs: { src: `data:${file.thumbnail.mime};base64,${file.thumbnail.data}`, alt: `第 ${file.sortOrder + 1} 张` } })
+            aiUi.h('img', { class: 'ui-image ui-image--cover', attrs: { src: `data:${file.thumbnail.mime};base64,${file.thumbnail.data}`, alt: `第 ${file.sortOrder + 1} 张` } })
           )
         : aiUi.h('div', { class: 'asset-ver__thumb asset-ver__thumb--empty', text: '缩略图生成中…' });
       grid.append(
@@ -152,7 +152,7 @@
     const duration = file.durationSeconds === null ? '' : `${Number(file.durationSeconds.toFixed(1))} 秒 · `;
     return aiUi.h(
       'div',
-      { class: 'asset-ver__audio' },
+      { class: 'ui-row asset-ver__audio' },
       aiUi.h('span', { text: `${duration}${file.mime.replace('audio/', '').toUpperCase()}${isFileAdopted(detail, file) ? ' · 已采用' : ''}` }),
       preview.element
     );
@@ -388,10 +388,10 @@
    */
   function open(asset) {
     if (session) return;
-    const message = aiUi.h('p', { class: 'asset-ver__message', hidden: true, attrs: { role: 'status' } });
+    const message = aiUi.h('p', { class: 'ui-message ui-message--flush', hidden: true, attrs: { role: 'status' } });
     const summary = aiUi.h('span', { class: 'description' });
     const versionSlot = aiUi.h('div', { class: 'asset-ver__select' });
-    const body = aiUi.h('div', { class: 'asset-ver__body' });
+    const body = aiUi.h('div', { class: 'ui-stack asset-ver__body' });
     const buttons = {
       adopt: aiUi.button({ text: '采用此版本', variant: 'primary', compact: true, disabled: true, onClick: () => void adoptSelected() }),
       remove: aiUi.button({ text: '删除此版本', compact: true, disabled: true, onClick: () => void deleteCurrent() }),
@@ -402,12 +402,12 @@
     buttons.retry.element.hidden = true;
     const bar = aiUi.h(
       'div',
-      { class: 'asset-ver__bar' },
+      { class: 'ui-row asset-ver__bar' },
       versionSlot,
       summary,
       aiUi.h('div', { class: 'asset-ver__actions' }, Object.values(buttons).map((button) => button.element))
     );
-    const content = aiUi.h('div', { class: 'asset-ver' }, bar, message, body);
+    const content = aiUi.h('div', { class: 'ui-stack asset-ver' }, bar, message, body);
     session = { assetId: asset.id, name: asset.name, page: null, versionId: null, list: null, detail: null, selectedFileIds: new Set(), thumbnailTried: new Set(), message, summary, versionSlot, body, buttons };
     const page = aiUi.openPage({ title: `版本：${asset.name}`, content, width: 760, height: 560, minWidth: 460, minHeight: 320, buttons: [{ id: 'close', text: '关闭', isCancel: true }] });
     session.page = page;

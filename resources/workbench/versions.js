@@ -31,7 +31,7 @@
   /** 在提示区显示文字；空串表示清除。 */
   function showMessage(text, isError) {
     dialog.messageElement.textContent = text;
-    dialog.messageElement.className = isError ? 'wb-message status-error' : 'wb-message status-success';
+    dialog.messageElement.className = isError ? 'ui-message status-error' : 'ui-message status-success';
     dialog.messageElement.hidden = text === '';
   }
 
@@ -197,7 +197,7 @@
    */
   function open(groupId, host) {
     if (dialog) return;
-    const messageElement = aiUi.h('p', { class: 'wb-message', hidden: true, attrs: { role: 'status' } });
+    const messageElement = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
     const bodyElement = aiUi.h('div');
     const compareButton = aiUi.button({ text: '', compact: true, disabled: true, onClick: compareSelected });
     const hint = aiUi.h('p', { class: 'description', text: COMPARE_HINT });

@@ -118,7 +118,7 @@ function type(window, element, text) {
 
 /** 按文字找页签按钮。 */
 function tabOf(doc, text) {
-  return [...doc.querySelectorAll('.storyboard-tab')].find((tab) => tab.textContent.startsWith(text));
+  return [...doc.querySelectorAll('.storyboard-tabs .ui-tab')].find((tab) => tab.textContent.startsWith(text));
 }
 
 /** 按文字找按钮。 */
@@ -175,7 +175,7 @@ test('页签：默认显示“调度”，切换时只显示选中的面板，�
   const shotTab = tabOf(doc, SHOT_TAB_TEXT);
   const content = tabOf(doc, CONTENT_TAB_TEXT);
   const [blockingPanel, shotPanel, contentPanel] = [...doc.querySelectorAll('.storyboard-panel')];
-  assert.deepEqual([...doc.querySelectorAll('.storyboard-tab')].map((tab) => tab.textContent.replace(/（.*）/, '')), ['调度', '镜头', '画面与声音']);
+  assert.deepEqual([...doc.querySelectorAll('.storyboard-tabs .ui-tab')].map((tab) => tab.textContent.replace(/（.*）/, '')), ['调度', '镜头', '画面与声音']);
   assert.equal(blocking.getAttribute('aria-selected'), 'true');
   assert.equal(blockingPanel.hidden, false);
   assert.equal(shotPanel.hidden, true);

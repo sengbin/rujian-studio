@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
-// 备注：必须先于 workbench.js 加载；对外是 window.aiStepTabs.create；步骤面板创建后一直保留在页面里（只切换显示），所以各面板的状态不会因为切换步骤或页面刷新而丢失；最后一步的底部由面板自己提供（含“上一步”和主操作），其余步骤的底部由页签容器生成。
+// 备注：必须先于 workbench.js 加载；对外是 window.aiStepTabs.create；页签条与切换、键盘导航由组件库的 aiUi.tabs（卡片式）提供；步骤面板创建后一直保留在页面里（只切换显示），所以各面板的状态不会因为切换步骤或页面刷新而丢失；最后一步的底部由面板自己提供（含“上一步”和主操作），其余步骤的底部由页签容器生成。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -25,26 +25,14 @@
    * @returns {{ element: HTMLElement, show: (id: string, focus?: boolean) => void, showPrevious: () => void, getActive: () => string, setContext: (text: string) => void, setStatus: (id: string, status: { note: string, state?: 'normal'|'done' }) => void, refresh: () => void }}
    */
   function create(options) {
-    const prefix = aiUi.uid('wb-steps');
     const items = options.tabs.map((tab, index) => {
       const controller = tab.build();
       const title = aiUi.h('span', { class: 'wb-steps__tab-title' });
       const head = aiUi.h('span', { class: 'wb-steps__tab-head' }, tab.icon ? aiUi.icon(tab.icon, 'wb-steps__tab-icon') : null, title);
       const note = aiUi.h('span', { class: 'wb-steps__tab-note' });
       const context = aiUi.h('p', { class: 'wb-steps__context' });
-      const button = aiUi.h(
-        'button',
-        { class: 'wb-steps__tab', attrs: { type: 'button', role: 'tab', id: `${prefix}-tab-${tab.id}`, 'aria-controls': `${prefix}-panel-${tab.id}` } },
-        head,
-        note
-      );
-      const panel = aiUi.h(
-        'div',
-        { class: 'wb-steps__panel', attrs: { role: 'tabpanel', id: `${prefix}-panel-${tab.id}`, 'aria-labelledby': button.id, tabindex: 0 } },
-        context,
-        controller.element
-      );
-      return { id: tab.id, label: tab.label, index, controller, button, panel, title, note, context, state: STATE_NORMAL };
+      const panel = aiUi.h('div', { class: 'wb-steps__panel' }, context, controller.element);
+      return { id: tab.id, label: tab.label, index, controller, head, panel, title, note, context, state: STATE_NORMAL };
     });
     let active = options.initial || items[0].id;
     let contextText = '';
@@ -60,24 +48,23 @@
       item.context.textContent = contextText ? `${contextText}${CONTEXT_SEPARATOR}${step}` : step;
     }
 
-    function show(id, focus) {
-      const target = items.find((item) => item.id === id);
-      if (!target) return;
-      active = id;
-      for (const item of items) {
-        const isActive = item.id === id;
-        item.button.setAttribute('aria-selected', String(isActive));
-        item.button.tabIndex = isActive ? 0 : -1;
-        item.button.classList.toggle('wb-steps__tab--active', isActive);
-        item.panel.hidden = !isActive;
+    const tabs = aiUi.tabs({
+      items: items.map((item) => ({ id: item.id, label: [item.head, item.note], className: 'wb-steps__tab', panel: item.panel })),
+      activeId: active,
+      ariaLabel: options.ariaLabel || '步骤',
+      className: 'ui-tabs--cards wb-steps__tabs',
+      focusablePanels: true,
+      onSelect: (id) => {
+        active = id;
+        const target = items.find((item) => item.id === id);
+        if (target.controller.refresh) target.controller.refresh();
       }
-      if (target.controller.refresh) target.controller.refresh();
-      if (focus) target.button.focus();
-    }
+    });
 
-    function move(offset, from) {
-      const index = items.findIndex((item) => item.id === from);
-      show(items[(index + offset + items.length) % items.length].id, true);
+    function show(id, focus) {
+      if (!items.some((item) => item.id === id)) return;
+      tabs.activate(id);
+      if (focus) tabs.buttons[id].focus();
     }
 
     /** 前几步的底部：“上一步”（第一步没有）和占满剩余宽度的“下一步”。 */
@@ -93,21 +80,10 @@
     items.forEach((item, index) => {
       renderTitle(item);
       renderContext(item);
-      item.button.addEventListener('click', () => show(item.id));
-      item.button.addEventListener('keydown', (event) => {
-        if (event.key === 'ArrowRight') move(1, item.id);
-        else if (event.key === 'ArrowLeft') move(-1, item.id);
-        else if (event.key === 'Home') show(items[0].id, true);
-        else if (event.key === 'End') show(items[items.length - 1].id, true);
-        else return;
-        event.preventDefault();
-      });
       if (index < items.length - 1) item.panel.append(createFooter(index));
     });
 
-    const tabList = aiUi.h('div', { class: 'wb-steps__tabs', attrs: { role: 'tablist', 'aria-label': options.ariaLabel || '步骤' } }, items.map((item) => item.button));
-    const element = aiUi.h('aside', { class: 'wb-panel wb-steps', attrs: { 'aria-label': options.ariaLabel || '步骤' } }, tabList, items.map((item) => item.panel));
-    show(active);
+    const element = aiUi.h('aside', { class: 'wb-panel wb-steps', attrs: { 'aria-label': options.ariaLabel || '步骤' } }, tabs.element, tabs.panels);
 
     return {
       element,
@@ -129,7 +105,7 @@
         if (!target) return;
         target.state = status.state || STATE_NORMAL;
         target.note.textContent = status.note;
-        target.button.classList.toggle('wb-steps__tab--done', target.state === STATE_DONE);
+        tabs.buttons[id].classList.toggle('wb-steps__tab--done', target.state === STATE_DONE);
         renderTitle(target);
       },
       refresh() {

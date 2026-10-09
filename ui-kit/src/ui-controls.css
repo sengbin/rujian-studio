@@ -570,7 +570,7 @@
   border: 0;
   border-radius: calc(var(--switch-height) / 2);
   cursor: pointer;
-  transition: background 0.18s ease;
+  transition: background var(--motion-duration) ease;
 }
 
 .ui-switch:hover {
@@ -630,7 +630,7 @@
   background: rgb(255, 255, 255);
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
-  transition: transform 0.18s ease;
+  transition: transform var(--motion-duration) ease;
 }
 
 .ui-switch[aria-checked="true"] .ui-switch__thumb {
@@ -736,6 +736,47 @@
   color: var(--status-warning);
 }
 
+/* 卡片式页签（带图标、标题和副文字的步骤导航）：等宽排列，选中项用底部强调线加底色表示 */
+.ui-tabs--cards {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  min-height: var(--panel-header-height);
+}
+
+.ui-tabs--cards .ui-tab {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  padding: var(--space-sm) var(--space-page);
+  color: var(--text);
+  text-align: left;
+  border-bottom: 2px solid transparent;
+  transition: background-color var(--hover-duration) ease, border-color var(--hover-duration) ease;
+}
+
+.ui-tabs--cards .ui-tab:hover {
+  border-radius: 0;
+}
+
+.ui-tabs--cards .ui-tab:active {
+  background: var(--option-active-bg);
+}
+
+.ui-tabs--cards .ui-tab[aria-selected="true"],
+.ui-tabs--cards .ui-tab[aria-selected="true"]:hover,
+.ui-tabs--cards .ui-tab[aria-selected="true"]:active {
+  background: var(--option-selected-bg);
+  border-bottom-color: var(--host-button-background);
+  font-weight: inherit;
+}
+
+.ui-tabs--cards .ui-tab[aria-selected="true"]::after {
+  display: none;
+}
+
 /* ---------- 可选择的列表 ---------- */
 /* 列表容器与列表项：阶段列表、工作台镜头组等共用；项内部的排版由页面自己决定，选中、悬停、按下、焦点反馈在这里统一 */
 .ui-list {
@@ -813,6 +854,48 @@
   font-size: var(--font-size-subheading);
 }
 
+/* ---------- 排版辅助 ---------- */
+/* 页面里反复出现的三种弹性排版：纵向堆叠、居中对齐的一行、可换行的一组；间隙取总控的间距令牌，页面不再各写一遍 */
+.ui-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-page);
+}
+
+.ui-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.ui-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+/* ---------- 图片 ---------- */
+/* 缩略图用 cover 铺满，原图预览用 contain 完整显示；预览容器让图片居中 */
+.ui-image {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.ui-image--cover {
+  object-fit: cover;
+}
+
+.ui-image--contain {
+  object-fit: contain;
+}
+
+.ui-image-viewer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ---------- 空状态与页内提示 ---------- */
 /* 列表、工作台等页面在没有内容或出错时显示的说明块（可带一个按钮），以及按钮操作后的状态提示 */
 .ui-state {
@@ -824,5 +907,12 @@
 }
 
 .ui-message {
+  flex: none;
   margin: var(--space-md) 0;
+  white-space: pre-line;
+}
+
+/* 所在容器已用 gap 排版时，提示不再自带外边距 */
+.ui-message--flush {
+  margin: 0;
 }

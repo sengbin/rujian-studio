@@ -37,7 +37,7 @@
   /** 在给定的提示区显示文字；空串表示清除。 */
   function setMessage(element, text, isError) {
     element.textContent = text;
-    element.className = isError ? 'wb-message status-error' : 'wb-message status-success';
+    element.className = isError ? 'ui-message status-error' : 'ui-message status-success';
     element.hidden = text === '';
   }
 
@@ -59,7 +59,7 @@
       return aiUi.h(
         'button',
         { class: 'wb-bind-thumb wb-bind-thumb--button', attrs: { type: 'button', title: '查看原图', 'aria-label': `查看原图：${name}` }, on: { click: () => void viewOriginal(item.assetId, name, message) } },
-        aiUi.h('img', { class: 'wb-bind-thumb__image', attrs: { src: `data:${item.thumbnail.mime};base64,${item.thumbnail.data}`, alt: name } })
+        aiUi.h('img', { class: 'ui-image ui-image--cover', attrs: { src: `data:${item.thumbnail.mime};base64,${item.thumbnail.data}`, alt: name } })
       );
     }
     return aiUi.h('div', { class: 'wb-bind-thumb wb-bind-thumb--empty', text: item.durationSeconds === null ? '无图' : '音频' });
@@ -69,14 +69,14 @@
   async function viewOriginal(assetId, name, message) {
     const data = await request(REQUEST_REFERENCE_IMAGE, { assetId }, message || messageTarget());
     if (!data) return;
-    const image = aiUi.h('img', { class: 'wb-bind-original', attrs: { src: `data:${data.mime};base64,${data.data}`, alt: name } });
-    aiUi.openPage({ title: name, content: aiUi.h('div', { class: 'wb-bind-viewer' }, image), width: 640, height: 520, minWidth: 320, minHeight: 240, buttons: [{ id: 'close', text: '关闭', isCancel: true }] });
+    const image = aiUi.h('img', { class: 'ui-image ui-image--contain', attrs: { src: `data:${data.mime};base64,${data.data}`, alt: name } });
+    aiUi.openPage({ title: name, content: aiUi.h('div', { class: 'ui-image-viewer' }, image), width: 640, height: 520, minWidth: 320, minHeight: 240, buttons: [{ id: 'close', text: '关闭', isCancel: true }] });
   }
 
   /** 选择资产的弹出页：可按名称搜索，点“选择”后调用 onPick，返回 true 才关闭。 */
   function openPicker(options) {
     const { title, assets, emptyText, onPick, withPreview } = options;
-    const message = aiUi.h('p', { class: 'wb-message', hidden: true, attrs: { role: 'status' } });
+    const message = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
     let keyword = '';
     const pick = async (asset) => {
       if (await onPick(asset, message)) page.close('api');
@@ -232,7 +232,7 @@
   function openEntityDialog(entityId) {
     const entity = session.view && session.view.entities.find((item) => item.entityId === entityId);
     if (!entity || session.dialog) return;
-    const message = aiUi.h('p', { class: 'wb-message', hidden: true, attrs: { role: 'status' } });
+    const message = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
     const body = aiUi.h('div', { class: 'wb-bind-dialog' });
     const handle = aiUi.openPage({
       title: `绑定资产：${entity.name}（${entity.kindLabel}）`,
@@ -403,7 +403,7 @@
    * @returns {{ element: HTMLElement, setEpisode: (episodeId: number|null) => void, setEntities: (entityIds: number[]|null) => void, refresh: () => Promise<void> }}
    */
   function create() {
-    const message = aiUi.h('p', { class: 'wb-message', hidden: true, attrs: { role: 'status' } });
+    const message = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
     const summary = aiUi.h('span', { class: 'description', text: '请先选择一个有分镜脚本的集。' });
     const progressValue = aiUi.h('div', { class: 'wb-progress__value' });
     const progress = aiUi.h('div', { class: 'wb-progress', hidden: true, attrs: { role: 'progressbar', 'aria-label': '素材绑定进度', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': 0 } }, progressValue);

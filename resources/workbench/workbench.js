@@ -98,7 +98,7 @@
   /** 在操作结果区显示文字（可多行）；空串表示清除。 */
   function showMessage(text, isError) {
     messageElement.textContent = text;
-    messageElement.className = isError ? 'wb-message status-error' : 'wb-message status-success';
+    messageElement.className = isError ? 'ui-message status-error' : 'ui-message status-success';
     messageElement.hidden = text === '';
   }
 
@@ -685,7 +685,7 @@
         'li',
         {},
         aiUi.listItem(
-          { selected: isSelected, className: `wb-group-item${isSelected ? ' wb-group-item--selected' : ''}`, onClick: () => selectGroup(group) },
+          { selected: isSelected, className: 'wb-group-item', onClick: () => selectGroup(group) },
           aiUi.h('span', { class: 'wb-group-item__name', text: `第 ${group.seq} 组` }),
           aiUi.h('span', { class: `wb-group-item__status ${status.className}`, text: status.text }),
           aiUi.h('span', { class: 'wb-group-item__meta description', text: `${group.shots.length} 个镜头 · ${group.totalSeconds} 秒` })
@@ -801,7 +801,7 @@
     return aiUi.h(
       'section',
       { class: 'wb-section', attrs: { 'aria-label': label } },
-      aiUi.h('div', { class: 'wb-section__head' }, aiUi.h('h3', { class: 'ui-subheading wb-section__title', text: title }), aiUi.h('div', { class: 'wb-section__actions' }, actions)),
+      aiUi.h('div', { class: 'wb-section__head' }, aiUi.h('h3', { class: 'ui-subheading wb-section__title', text: title }), aiUi.h('div', { class: 'ui-wrap wb-section__actions' }, actions)),
       content
     );
   }
@@ -939,7 +939,7 @@
 
   /** 空状态和错误状态。 */
   function renderState(text, button) {
-    return aiUi.h('div', { class: 'ui-state wb-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
+    return aiUi.h('div', { class: 'ui-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
   }
 
   /** 内容区上方的提示：没有可用模型、生成参数需要调整、分镜脚本未确认。 */
@@ -1080,7 +1080,7 @@
   /** 渲染页面骨架：顶部上下文栏、操作结果、内容区；创建右栏三个步骤的面板。 */
   function renderPage() {
     contextElement = aiUi.h('section', { class: 'wb-context', hidden: true, attrs: { 'aria-label': '当前集与生成配置' } });
-    messageElement = aiUi.h('p', { class: 'wb-message', hidden: true, attrs: { role: 'status' } });
+    messageElement = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
     contentElement = aiUi.h('div', { class: 'wb-content' });
     root.append(contextElement, messageElement, contentElement);
     // 三个步骤的面板创建一次，之后只在步骤之间切换显示。

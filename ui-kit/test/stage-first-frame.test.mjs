@@ -100,7 +100,7 @@ async function open(shots) {
   window.aiStage.open(WORK_ID, 'storyboard_script', EPISODE_ID, shots[0].id);
   await flush();
   // 首帧来源在“镜头”页签里。
-  [...env.document.querySelectorAll('.storyboard-tab')].find((tab) => tab.textContent.startsWith('镜头')).click();
+  [...env.document.querySelectorAll('.storyboard-tabs .ui-tab')].find((tab) => tab.textContent.startsWith('镜头')).click();
   return { window, doc: env.document, saved, reads };
 }
 

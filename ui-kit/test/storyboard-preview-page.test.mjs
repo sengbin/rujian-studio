@@ -124,7 +124,7 @@ test('信息栏页签：镜头、画面、调度、声音、检查分页显示�
   const { doc, open } = setup();
   open();
   await flush();
-  const tabs = [...doc.querySelectorAll('.sbp-info .sbp-tab')];
+  const tabs = [...doc.querySelectorAll('.sbp-info .ui-tab')];
   assert.deepEqual(tabs.map((tab) => tab.childNodes[0].textContent), ['镜头', '画面', '调度', '声音', '检查']);
   const visible = () => [...doc.querySelectorAll('.sbp-info .sbp-panel')].map((panel) => !panel.hidden);
   assert.deepEqual(visible(), [true, false, false, false, false]);
@@ -133,8 +133,8 @@ test('信息栏页签：镜头、画面、调度、声音、检查分页显示�
   tabs[3].click();
   assert.deepEqual(visible(), [false, false, false, true, false]);
   assert.equal(tabs[3].getAttribute('aria-selected'), 'true');
-  assert.notEqual(tabs[2].querySelector('.sbp-tab__count').textContent, '', '调度页签带出场数量');
-  assert.equal(tabs[4].querySelector('.sbp-tab__count').textContent, '1', '检查页签带检查项数量');
+  assert.notEqual(tabs[2].querySelector('.ui-tab__count').textContent, '', '调度页签带出场数量');
+  assert.equal(tabs[4].querySelector('.ui-tab__count').textContent, '1', '检查页签带检查项数量');
 
   tabs[3].dispatchEvent(new doc.defaultView.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
   assert.deepEqual(visible(), [false, false, false, false, true]);

@@ -363,7 +363,7 @@
   /** 在面板顶部显示保存结果。 */
   function showMessage(ok, text) {
     panel.messageElement.textContent = text;
-    panel.messageElement.className = ok ? 'wb-message status-success' : 'wb-message status-error';
+    panel.messageElement.className = ok ? 'ui-message status-success' : 'ui-message status-error';
     panel.messageElement.hidden = false;
   }
 
@@ -387,8 +387,8 @@
     const scopeField = aiUi.field({ label: '应用范围', control: scopeControl });
     scopeField.element.classList.add('wb-profile__scope');
     const hintElement = aiUi.h('p', { class: 'description' });
-    const messageElement = aiUi.h('p', { class: 'wb-message', hidden: true, attrs: { role: 'status' } });
-    const fieldsElement = aiUi.h('div', { class: 'wb-profile__fields' });
+    const messageElement = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
+    const fieldsElement = aiUi.h('div', { class: 'ui-stack wb-profile__fields' });
     const element = aiUi.h('div', { class: 'wb-profile' }, scopeField.element, hintElement, messageElement, fieldsElement);
     panel = { host, scopeControl, hintElement, messageElement, fieldsElement, key: '' };
     renderFields();

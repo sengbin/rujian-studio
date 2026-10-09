@@ -47,10 +47,6 @@ body.theme-light .stage-view--workspace {
   margin-left: auto;
 }
 
-.stage-message {
-  margin: var(--space-md) 0;
-}
-
 .stage-progress-area {
   margin: var(--space-page) 0 0;
 }
@@ -241,7 +237,7 @@ body.theme-light .stage-view--workspace {
   margin-left: 0;
 }
 
-.stage-view--workspace .stage-message,
+.stage-view--workspace .ui-message,
 .stage-view--workspace .stage-progress-area {
   margin: 0;
 }

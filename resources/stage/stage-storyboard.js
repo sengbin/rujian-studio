@@ -355,8 +355,8 @@
         setDirty(true);
       };
 
-      const blockingCountElement = aiUi.h('span', { class: 'ui-tab__count storyboard-tab__count' });
-      const contentCountElement = aiUi.h('span', { class: 'ui-tab__count storyboard-tab__count' });
+      const blockingCountElement = aiUi.h('span', { class: 'ui-tab__count' });
+      const contentCountElement = aiUi.h('span', { class: 'ui-tab__count' });
       /** 页签文字后的实体、站位、声音数量。 */
       const refreshCount = () => {
         blockingCountElement.textContent = `（${blocking.describe()}）`;
@@ -387,9 +387,9 @@
       });
       const tabs = aiUi.tabs({
         items: [
-          { id: TAB_BLOCKING, label: '调度', count: blockingCountElement, content: blocking.element, className: 'storyboard-tab' },
-          { id: TAB_SHOT, label: '镜头', content: shotPanel.element, className: 'storyboard-tab' },
-          { id: TAB_CONTENT, label: '画面与声音', count: contentCountElement, content: content.element, className: 'storyboard-tab' }
+          { id: TAB_BLOCKING, label: '调度', count: blockingCountElement, content: blocking.element },
+          { id: TAB_SHOT, label: '镜头', content: shotPanel.element },
+          { id: TAB_CONTENT, label: '画面与声音', count: contentCountElement, content: content.element }
         ],
         activeId: selectedTab,
         ariaLabel: '镜头信息类别',

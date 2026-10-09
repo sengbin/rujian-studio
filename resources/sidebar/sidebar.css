@@ -15,9 +15,6 @@
   --focus-border: var(--host-focus-border, rgb(0, 120, 212));
   --page-padding: var(--space-page) 0 var(--space-page) var(--space-page);
   --page-padding-end: var(--space-page);
-  /* 分区标题与菜单项同字号，层级靠字重区分，避免标题看起来比菜单项小 */
-  --menu-font-size: var(--font-size-body);
-  --menu-title-weight: var(--font-weight-strong);
   --card-gap: var(--space-page);
   --card-padding: var(--space-md);
   --divider: color-mix(in srgb, var(--host-foreground) 8%, transparent);
@@ -52,7 +49,7 @@ body {
   padding: var(--page-padding);
   color: var(--host-foreground);
   background: var(--bg);
-  font-size: var(--menu-font-size);
+  font-size: var(--font-size-body);
   line-height: var(--line-height-body);
 }
 
@@ -137,8 +134,6 @@ h2 {
   margin: 0 0 var(--space-xs);
   padding: 0 0 var(--space-xs);
   color: var(--host-foreground);
-  font-size: var(--font-size-heading);
-  font-weight: var(--menu-title-weight);
   border-bottom: 1px solid var(--divider);
 }
 
@@ -181,7 +176,7 @@ nav {
 
 button {
   min-width: 0;
-  min-height: 32px;
+  min-height: var(--row-height);
   color: inherit;
   font: inherit;
   cursor: pointer;
@@ -204,7 +199,7 @@ button:focus-visible {
 
 .menu-main,
 .menu-action {
-  min-height: 26px;
+  min-height: var(--row-height);
 }
 
 .menu-main {
@@ -253,8 +248,8 @@ h2 > span,
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: var(--row-height);
+  height: var(--row-height);
   padding: 0;
   color: var(--host-description-foreground);
   background: transparent;

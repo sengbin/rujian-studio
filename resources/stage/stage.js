@@ -80,7 +80,7 @@
     let handle = null;
 
     const headerElement = aiUi.h('header', { class: 'stage-header' });
-    const messageElement = aiUi.h('p', { class: 'stage-message', hidden: true, attrs: { role: 'status' } });
+    const messageElement = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
     const progressElement = aiUi.h('div', { class: 'stage-progress-area' });
     const bodyElement = aiUi.h('div', { class: 'stage-body' });
     const root = aiUi.h('div', { class: isWorkspace ? 'stage-view stage-view--workspace' : 'stage-view' }, headerElement, messageElement, progressElement, bodyElement);
@@ -98,7 +98,7 @@
     /** 在操作结果区显示文字；空串表示清除。 */
     function showMessage(text, isError) {
       messageElement.textContent = text;
-      messageElement.className = isError ? 'stage-message status-error' : 'stage-message status-success';
+      messageElement.className = isError ? 'ui-message status-error' : 'ui-message status-success';
       messageElement.hidden = text === '';
     }
 

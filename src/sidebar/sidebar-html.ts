@@ -99,7 +99,7 @@ function renderSection(section: SidebarMenuSection): string {
   const rows = section.items.map(renderItem).join('\n');
   return `    <section class="card" aria-labelledby="${headingId}">
       <div class="card-inner card-${section.surface}">
-        <h2 id="${headingId}">${renderSidebarIcon(section.icon)}<span>${escapeHtml(section.title)}</span></h2>
+        <h2 id="${headingId}" class="ui-heading">${renderSidebarIcon(section.icon)}<span>${escapeHtml(section.title)}</span></h2>
         <nav aria-label="${escapeHtml(section.title)}">
 ${rows}
         </nav>

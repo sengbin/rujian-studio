@@ -123,7 +123,7 @@
       aiUi.field({ label: '声音模型', control: modelSelect }).element,
       paramsSlot,
       aiUi.field({ label: '试听台词', description: `用这句台词试听音色，最多 ${SAMPLE_MAX_LENGTH} 字。`, required: true, control: sampleControl }).element,
-      aiUi.h('div', { class: 'sbp-draft__actions' }, generateButton.element, playerSlot),
+      aiUi.h('div', { class: 'ui-row sbp-draft__actions' }, generateButton.element, playerSlot),
       messageElement,
       aiUi.h('p', { class: 'description', text: COST_NOTICE }),
       adoptSection

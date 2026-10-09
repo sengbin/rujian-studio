@@ -47,12 +47,6 @@
   overflow-wrap: anywhere;
 }
 
-.sbp-status__badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-}
-
 .sbp-badge {
   padding: 0 var(--space-sm);
   color: var(--text-muted);
@@ -556,13 +550,6 @@
 .sbp-draft {
   display: grid;
   gap: var(--space-page);
-}
-
-.sbp-draft__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-md);
 }
 
 .sbp-draft__player:empty {

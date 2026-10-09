@@ -27,7 +27,7 @@
   /** 在提示区显示文字；空串表示清除。 */
   function showMessage(text, isError) {
     session.message.textContent = text;
-    session.message.className = isError ? 'asset-cat__message status-error' : 'asset-cat__message status-success';
+    session.message.className = isError ? 'ui-message ui-message--flush status-error' : 'ui-message ui-message--flush status-success';
     session.message.hidden = text === '';
   }
 
@@ -112,12 +112,12 @@
       text: '创建分类',
       onClick: () => void showForm({ form: FORM_CREATE, params: { kind: options.kind } }, '已创建分类。')
     });
-    const message = aiUi.h('p', { class: 'asset-cat__message', hidden: true, attrs: { role: 'status' } });
+    const message = aiUi.h('p', { class: 'ui-message ui-message--flush', hidden: true, attrs: { role: 'status' } });
     const body = aiUi.h('div');
     session = { label: options.label, categories: options.categories, message, body, isFormOpen: false };
     const page = aiUi.openPage({
       title: `${options.label}分类管理`,
-      content: aiUi.h('div', { class: 'asset-cat' }, aiUi.h('div', { class: 'asset-cat__bar' }, create.element), message, body),
+      content: aiUi.h('div', { class: 'ui-stack asset-cat' }, aiUi.h('div', { class: 'asset-cat__bar' }, create.element), message, body),
       width: PAGE_WIDTH,
       height: PAGE_HEIGHT,
       minWidth: PAGE_MIN_WIDTH,

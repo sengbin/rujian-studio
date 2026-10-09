@@ -449,8 +449,7 @@
       return {
         id: label,
         label,
-        className: 'provider-tab',
-        count: aiUi.h('span', { class: 'ui-tab__count provider-tab__count', text: `${models.filter((model) => model.isEnabled).length}/${models.length}` }),
+        count: aiUi.h('span', { class: 'ui-tab__count', text: `${models.filter((model) => model.isEnabled).length}/${models.length}` }),
         content: renderModelTable({ ...provider, models }, status)
       };
     });
@@ -459,7 +458,6 @@
       activeId: activeKindByProvider.get(provider.id),
       ariaLabel: `${provider.displayName}的模型类型`,
       className: 'provider-tabs',
-      panelClass: 'provider-tabpanel',
       onSelect: (id) => activeKindByProvider.set(provider.id, id)
     });
     return aiUi.h('div', { class: 'provider-models' }, tabs.element, tabs.panels);
@@ -603,7 +601,7 @@
     }
     for (const entry of result.entries) {
       box.append(
-        aiUi.h('div', { class: 'account-entry' }, aiUi.h('span', { class: 'account-entry__name', text: entry.name }), aiUi.h('span', { text: entry.text }))
+        aiUi.h('div', { class: 'ui-wrap account-entry' }, aiUi.h('span', { class: 'account-entry__name', text: entry.name }), aiUi.h('span', { text: entry.text }))
       );
     }
     if (result.message) box.append(aiUi.h('div', { class: 'description account-note', text: result.message }));
