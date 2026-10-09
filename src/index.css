@@ -11,7 +11,7 @@
 
 :root {
   color-scheme: dark;
-  --shell-sidebar-width: 260px;
+  --shell-sidebar-width: 220px;
   --shell-bg: rgb(24, 24, 24);
   --shell-tab-bar-bg: rgb(24, 24, 24);
   --shell-tab-active-bg: rgb(31, 31, 31);

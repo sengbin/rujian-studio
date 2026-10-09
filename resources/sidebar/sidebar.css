@@ -140,8 +140,8 @@ h2 {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 0 0 6px;
-  padding: 0 0 6px;
+  margin: 0 0 4px;
+  padding: 0 0 4px;
   color: var(--host-foreground);
   font-size: var(--menu-font-size);
   font-weight: var(--menu-title-weight);
@@ -164,7 +164,7 @@ nav {
 }
 
 .menu-row + .menu-row {
-  margin-top: 4px;
+  margin-top: 3px;
 }
 
 .menu-row:hover {
@@ -210,7 +210,7 @@ button:focus-visible {
 
 .menu-main,
 .menu-action {
-  min-height: 28px;
+  min-height: 26px;
 }
 
 .menu-main {
@@ -219,7 +219,7 @@ button:focus-visible {
   gap: 6px;
   width: 100%;
   max-width: 100%;
-  padding: 4px 6px;
+  padding: 3px 6px;
   overflow: hidden;
   text-align: left;
   background: transparent;
@@ -259,8 +259,8 @@ h2 > span,
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   color: var(--host-description-foreground);
   background: transparent;
