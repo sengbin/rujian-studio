@@ -10,12 +10,14 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    // 可执行文件图标（任务栏、跳转列表、文件管理器显示的都是它），不写扩展名
+    icon: './resources/icon',
     // 页面资源与提示词模板不经打包工具，原样复制到应用的 resources 目录（运行时见 main.ts 的 resourceRoot）
     extraResource: ['./resources', './ui-kit'],
   },
   rebuildConfig: {},
   makers: [
-    new MakerSquirrel({}),
+    new MakerSquirrel({ setupIcon: './resources/icon.ico' }),
     new MakerZIP({}, ['darwin']),
     new MakerRpm({}),
     new MakerDeb({}),
