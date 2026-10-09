@@ -69,7 +69,7 @@ main {
   padding-right: var(--page-padding-end);
 }
 
-/* 底部状态条：贴在页面底部，内容较多时跟在最后一张卡片之后；文字缩进与卡片内容对齐 */
+/* 底部状态条：贴在页面底部，内容较多时跟在最后一张卡片之后 */
 .status-bar {
   margin-top: auto;
   padding: 10px var(--page-padding-end) 0 0;
@@ -83,7 +83,7 @@ main {
   flex-wrap: wrap;
   gap: 2px 12px;
   margin: 0;
-  padding: 0 var(--card-padding);
+  padding: 0;
   list-style: none;
 }
 

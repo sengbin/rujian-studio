@@ -89,6 +89,7 @@ function run(): void {
       backupHost: createBackupHost(getWindow),
       notify,
       focusWindow: () => focusWindow(mainWindow),
+      postSidebarEvent: (name) => bridge.postEvent(SIDEBAR_FRAME_ID, name),
       reportError: (message) => dialog.showErrorBox(ERROR_TITLE, message)
     });
     bridge.registerFrame(SIDEBAR_FRAME_ID, { router: application.sidebar.router, html: application.sidebar.html });

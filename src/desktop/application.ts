@@ -33,7 +33,7 @@ import { JsonTextGenerationSettings } from '../infra/settings/json-text-generati
 import { ASSET_FILE_DIRECTORY_NAME } from '../infra/storage/local-asset-file-store';
 import { RESULT_VIDEO_DIRECTORY_NAME } from '../infra/storage/local-result-store';
 import { SidebarActionRegistry } from '../sidebar/sidebar-actions';
-import { registerSidebarHandlers } from '../sidebar/sidebar-handlers';
+import { SIDEBAR_EVENTS, registerSidebarHandlers } from '../sidebar/sidebar-handlers';
 import { DATABASE_UNAVAILABLE_NOTICE_PREFIX, DEGRADED_SIDEBAR_SECTIONS, SIDEBAR_SECTIONS } from '../sidebar/sidebar-menu-config';
 import { SidebarContent, createSidebarPageHtml } from '../sidebar/sidebar-page';
 import { SidebarStatusReader, buildSidebarStatus, countEnabledModels } from '../sidebar/sidebar-status';
@@ -73,6 +73,8 @@ export interface ApplicationEnvironment {
   readonly notify: DesktopNotifier;
   /** 把应用窗口带到前台。 */
   readonly focusWindow: () => void;
+  /** 向侧栏页面推送事件。 */
+  readonly postSidebarEvent: (name: string) => void;
   /** 向用户显示错误。 */
   readonly reportError: (message: string) => void;
 }
@@ -195,6 +197,8 @@ export function createApplication(environment: ApplicationEnvironment): Applicat
       .register(kind, 'action', () => assetListPages.show(kind, { action: 'create' }));
   }
   const readStatus: SidebarStatusReader = () => buildSidebarStatus({ databaseReady: true, enabledModelCount: countEnabledModels(container.providerRepository) });
+  // 启用或关闭模型、改访问密钥后，状态条里的已启用模型数随之刷新。
+  shutdown.add(container.providerService.onDidChangeProviders(() => environment.postSidebarEvent(SIDEBAR_EVENTS.statusChanged)));
   return { sidebar: createSidebarPage(environment, actionRegistry, readStatus, { sections: SIDEBAR_SECTIONS }), shutdown };
 }
 

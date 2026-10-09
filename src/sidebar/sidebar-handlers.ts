@@ -19,6 +19,11 @@ export const SIDEBAR_REQUESTS = {
   readStatus: 'sidebar.readStatus'
 } as const;
 
+/** 宿主推送给侧栏的事件名称：状态条内容有变化（载荷为空），页面收到后重新读取状态。 */
+export const SIDEBAR_EVENTS = {
+  statusChanged: 'sidebar.statusChanged'
+} as const;
+
 /**
  * 在路由器上注册侧栏的请求处理函数：菜单点击与读取状态条。
  * @param router 侧栏的请求路由器。

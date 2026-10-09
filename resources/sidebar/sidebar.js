@@ -15,6 +15,7 @@ document.documentElement.classList.add('is-ready');
 const PRESSED_CLASS = 'is-pressed';
 const REQUEST_OPEN = 'sidebar.open';
 const REQUEST_READ_STATUS = 'sidebar.readStatus';
+const EVENT_STATUS_CHANGED = 'sidebar.statusChanged';
 const NOTICE_TITLE = '提示';
 const UNAVAILABLE_MESSAGE = '该功能尚未开放。';
 const GENERIC_ERROR_MESSAGE = '操作失败，请重试。';
@@ -77,14 +78,19 @@ for (const row of document.querySelectorAll('.menu-row')) {
 }
 
 let statusRefreshing = false;
+let statusStale = false;
 
 /**
- * 向宿主读取最新状态并更新底部状态条；页面载入和窗口重新获得焦点时调用。
- * 状态条只是辅助信息，读取失败时保留已显示的内容，不打断用户；刷新进行中时忽略重复触发。
+ * 向宿主读取最新状态并更新底部状态条；页面载入、窗口重新获得焦点和宿主推送状态变化时调用。
+ * 状态条只是辅助信息，读取失败时保留已显示的内容，不打断用户；刷新进行中再触发时，结束后补读一次，避免漏掉变化。
  */
 async function refreshStatus() {
-  if (statusRefreshing) return;
+  if (statusRefreshing) {
+    statusStale = true;
+    return;
+  }
   statusRefreshing = true;
+  statusStale = false;
   try {
     const result = await window.hostBridge.request(REQUEST_READ_STATUS, {});
     for (const entry of result.entries) {
@@ -98,10 +104,12 @@ async function refreshStatus() {
     // 保留已显示的状态。
   } finally {
     statusRefreshing = false;
+    if (statusStale) refreshStatus();
   }
 }
 
 if (document.querySelector('.status-bar')) {
   refreshStatus();
   window.addEventListener('focus', refreshStatus);
+  window.hostBridge.onEvent(EVENT_STATUS_CHANGED, refreshStatus);
 }
