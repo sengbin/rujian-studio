@@ -1,0 +1,52 @@
+// ------------------------------------------------------------------------
+// 名称：storyboard-repository.ts
+// 说明：分镜脚本、镜头与镜头声音数据访问的端口接口：生成时整份写入，用户编辑时按镜头保存。
+// 作者：Lion
+// 邮箱：chengbin@3578.cn
+// 日期：2026-10-02
+// 备注：同步调用；每个阶段记录最多一份分镜脚本，重复写入会覆盖。
+// ------------------------------------------------------------------------
+
+import { GroupLayoutEntry, NewShotFirstFrameImage, ShotDraft, ShotEdit, ShotGroup, ShotRecord, StoryboardScript } from '../models/storyboard';
+
+/** 分镜脚本的数据访问接口。 */
+export interface StoryboardRepository {
+  /** 读取阶段记录的分镜脚本；还没有生成时返回 undefined。 */
+  find(runId: number): StoryboardScript | undefined;
+  /** 保存生成的整份分镜脚本，已存在时整体覆盖；在同一事务内完成。 */
+  save(runId: number, episodeId: number, shots: readonly ShotDraft[], timestamp: string): void;
+  /** 列出分镜脚本的镜头（含出场实体与声音），按序号升序；没有分镜脚本时为空。 */
+  listShots(runId: number): ShotRecord[];
+  /** 统计分镜脚本的镜头数。 */
+  countShots(runId: number): number;
+  /**
+   * 修改一个镜头：出场实体与声音整体替换；首帧来源为“指定图片”时换成新图片（没带新图则保留已保存的），其他来源删除已保存的图片；镜头不属于该记录时返回 false。
+   */
+  updateShot(runId: number, shotId: number, edit: ShotEdit, timestamp: string): boolean;
+  /**
+   * 在分镜脚本末尾新增一个镜头，返回镜头标识。
+   * @throws Error 记录还没有分镜脚本。
+   */
+  insertShot(runId: number, edit: ShotEdit, timestamp: string): number;
+  /**
+   * 删除一个镜头，后面的镜头序号依次前移；新的第 1 个镜头若接上一镜头尾帧则改为不指定。
+   * 镜头不属于该记录时返回 false。
+   */
+  deleteShot(runId: number, shotId: number, timestamp: string): boolean;
+  /**
+   * 交换两个镜头的位置：序号和所在的镜头组一起互换（各组的镜头数不变）；交换后新的第 1 个镜头若接上一镜头尾帧则改为不指定。
+   * 任一镜头不属于该记录时返回 false。
+   */
+  swapShots(runId: number, shotId: number, otherShotId: number, timestamp: string): boolean;
+  /** 列出分镜脚本的镜头组，按组序号升序；还没有分组时为空。 */
+  listGroups(runId: number): ShotGroup[];
+  /**
+   * 按布局重写分组：布局中有标识的组保留并更新成员，没有标识的新建，没有出现的已有组被删除（连同它的生成记录）；组序号按布局顺序重排。在同一事务内完成。
+   * @throws Error 分镜脚本不存在。
+   */
+  applyGroupLayout(runId: number, layout: readonly GroupLayoutEntry[], timestamp: string): void;
+  /**
+   * 读取镜头已保存的首帧图片（含文件内容）；镜头不属于该记录、没有保存图片或磁盘文件已丢失时返回 undefined。
+   */
+  readFirstFrameImage(runId: number, shotId: number): NewShotFirstFrameImage | undefined;
+}

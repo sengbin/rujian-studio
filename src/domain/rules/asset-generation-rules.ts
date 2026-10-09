@@ -1,0 +1,151 @@
+// ------------------------------------------------------------------------
+// 名称：asset-generation-rules.ts
+// 说明：资产生成的规则：修订号的维护、提示词“需更新”与图片“有改动未生成”的推算、能否提交生成的判断。
+// 作者：Lion
+// 邮箱：chengbin@3578.cn
+// 日期：2026-10-02
+// 备注：规则见 docs/database-design.md 4.9；修改表单或提示词只改修订号，不创建空版本；能否生成的判断用“生效提示词”（已保存的，没有时按模板拼）；纯函数，不依赖数据库。
+// ------------------------------------------------------------------------
+
+import { AssetContent, AssetGenerationSummary, AssetKind, AssetRecord, AssetUsageSummary } from '../models/asset';
+import { ModelKind } from '../models/model-capability';
+import { PromptSourceAsset, resolveGenerationPrompt } from './asset-prompt-rules';
+
+/** 资产使用上传文件时不能生成提示词和图片（音频）的提示。 */
+export const UPLOAD_SOURCE_GENERATION_MESSAGE = '当前使用的是上传的文件，请先改用生成。';
+
+/** 既没有已保存的提示词，设定也不足以按模板拼出提示词时的提示。 */
+export const NO_GENERATION_PROMPT_MESSAGE = '请先补充设定描述（图像类至少一项，音频需要描述），或生成、填写提示词。';
+
+/** 保存资产时要写入的修订信息。 */
+export interface AssetRevisionUpdate {
+  readonly contentRevision: number;
+  readonly promptRevision: number;
+  readonly promptContentRevision: number;
+}
+
+/** 资产类型对应的生成模型类型：音频资产用音频模型，其余用图像模型。 */
+export function modelKindOfAsset(kind: AssetKind): ModelKind {
+  return kind === 'audio' ? 'audio' : 'image';
+}
+
+/** 稳定的 JSON 文本：键按字典序，用于比较描述字段。 */
+function stableAttributes(attributes: Readonly<Record<string, string>>): string {
+  return JSON.stringify(Object.entries(attributes).sort(([left], [right]) => left.localeCompare(right)));
+}
+
+/** 影响生成的表单字段（不含名称、提示词、文件）是否发生变化。 */
+export function contentFieldsChanged(previous: AssetRecord, next: AssetContent): boolean {
+  return (
+    stableAttributes(previous.attributes) !== stableAttributes(next.attributes) ||
+    previous.composition !== next.composition ||
+    previous.style !== next.style ||
+    previous.background !== next.background ||
+    previous.referenceAspectRatio !== next.referenceAspectRatio ||
+    previous.extraRequirements !== next.extraRequirements
+  );
+}
+
+
+/**
+ * 计算保存时的修订信息。
+ * @param previous 保存前的资产。
+ * @param next 提交的新内容。
+ */
+export function computeRevisionUpdate(previous: AssetRecord, next: AssetContent): AssetRevisionUpdate {
+  // 提示词不随表单保存而改变，修订号保持原样；手动改提示词见 computePromptRevision。
+  return {
+    contentRevision: previous.contentRevision + (contentFieldsChanged(previous, next) ? 1 : 0),
+    promptRevision: previous.promptRevision,
+    promptContentRevision: previous.promptContentRevision
+  };
+}
+
+/** 手动保存提示词时要写入的修订信息。 */
+export interface PromptRevisionUpdate {
+  readonly promptRevision: number;
+  readonly promptContentRevision: number;
+}
+
+/**
+ * 计算手动保存提示词的修订信息：文本有变化才增加修订号；用户亲自保存即视为已确认基于当前表单内容（文本没变也一样），清空则不再有依据。
+ * @param previous 保存前的资产。
+ * @param next 提交的提示词。
+ */
+export function computePromptRevision(
+  previous: Pick<AssetRecord, 'prompt' | 'promptRevision' | 'contentRevision'>,
+  next: { readonly prompt: string }
+): PromptRevisionUpdate {
+  const changed = previous.prompt !== next.prompt;
+  return {
+    promptRevision: previous.promptRevision + (changed ? 1 : 0),
+    promptContentRevision: next.prompt !== '' ? previous.contentRevision : 0
+  };
+}
+
+/**
+ * 统计资产被多少集使用：集内实体绑定所在的集，加上镜头声音直接指定该音频的集，同一集只算一次；采用版本前据此提示。
+ * @param usage 资产的使用情况。
+ */
+export function countUsedEpisodes(usage: Pick<AssetUsageSummary, 'bindings' | 'soundEpisodes'>): number {
+  const episodes = new Set<string>();
+  for (const item of [...usage.bindings, ...usage.soundEpisodes]) {
+    episodes.add(`${item.workName}#${item.episodeSeq}`);
+  }
+  return episodes.size;
+}
+/** 是否有提示词。 */
+export function hasPrompt(asset: Pick<AssetRecord, 'prompt'>): boolean {
+  return asset.prompt !== '';
+}
+
+/** 提示词是否需要更新：有提示词，且表单字段在提示词之后改过。 */
+export function isPromptOutdated(asset: Pick<AssetRecord, 'prompt' | 'promptContentRevision' | 'contentRevision'>): boolean {
+  return hasPrompt(asset) && asset.promptContentRevision < asset.contentRevision;
+}
+
+/** 图片（音频）是否有改动未生成：已有版本，且最新版本记录的修订号落后于资产现在的。 */
+export function hasUngeneratedChanges(
+  asset: Pick<AssetRecord, 'contentRevision' | 'promptRevision'>,
+  summary: AssetGenerationSummary
+): boolean {
+  const latest = summary.latest;
+  return latest !== null && (latest.contentRevision < asset.contentRevision || latest.promptRevision < asset.promptRevision);
+}
+
+/** 能否提交生成的判断结果；不能时 reason 说明原因。 */
+export interface GenerationAvailability {
+  readonly available: boolean;
+  readonly reason: string | null;
+}
+
+/**
+ * 判断能否提交图片（音频）生成；提示词取已保存的，没有时按模板拼，两者都没有才不能生成。
+ * @param asset 资产。
+ * @param summary 版本摘要。
+ * @param hasUsableModel 是否有可用的同类型模型。
+ */
+export function checkGenerationAvailability(
+  asset: PromptSourceAsset & Pick<AssetRecord, 'promptStatus' | 'fileSource'>,
+  summary: AssetGenerationSummary,
+  hasUsableModel: boolean
+): GenerationAvailability {
+  const noun = asset.kind === 'audio' ? '音频' : '图像';
+  // 使用上传文件的资产没有生成入口，要生成须先改用生成。
+  if (asset.fileSource === 'upload') {
+    return { available: false, reason: UPLOAD_SOURCE_GENERATION_MESSAGE };
+  }
+  if (asset.promptStatus === 'running') {
+    return { available: false, reason: '提示词生成中，完成后才能生成。' };
+  }
+  if (resolveGenerationPrompt(asset) === '') {
+    return { available: false, reason: NO_GENERATION_PROMPT_MESSAGE };
+  }
+  if (summary.latest !== null && (summary.latest.status === 'queued' || summary.latest.status === 'running')) {
+    return { available: false, reason: '正在生成，请等待完成。' };
+  }
+  if (!hasUsableModel) {
+    return { available: false, reason: `请先在“设置 > 模型”中启用${noun}模型并配置访问密钥。` };
+  }
+  return { available: true, reason: null };
+}

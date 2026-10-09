@@ -1,8 +1,199 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：index.css
+ * 说明：外壳界面样式：左侧菜单区与右侧主内容区的布局、标签栏、页面 iframe 的显示切换，随 html 的 data-theme 切换亮暗。
+ * 作者：Lion
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-10
+ * 备注：颜色取自 VS Code 的 Dark Modern 与 Light Modern；页面内部样式不在这里。
+ * ------------------------------------------------------------------------
+ */
+
+:root {
+  color-scheme: dark;
+  --shell-sidebar-width: 260px;
+  --shell-bg: rgb(24, 24, 24);
+  --shell-tab-bar-bg: rgb(24, 24, 24);
+  --shell-tab-active-bg: rgb(31, 31, 31);
+  --shell-tab-hover-bg: rgb(42, 42, 42);
+  --shell-text: rgb(204, 204, 204);
+  --shell-text-muted: rgb(157, 157, 157);
+  --shell-border: rgb(43, 43, 43);
+  --shell-accent: rgb(0, 120, 212);
+  --shell-font: 'Segoe UI', system-ui, -apple-system, 'Microsoft YaHei', sans-serif;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --shell-bg: rgb(248, 248, 248);
+  --shell-tab-bar-bg: rgb(248, 248, 248);
+  --shell-tab-active-bg: rgb(255, 255, 255);
+  --shell-tab-hover-bg: rgb(236, 236, 236);
+  --shell-text: rgb(59, 59, 59);
+  --shell-text-muted: rgb(113, 113, 113);
+  --shell-border: rgb(229, 229, 229);
+  --shell-accent: rgb(0, 95, 184);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
-    sans-serif;
-  margin: auto;
-  max-width: 38rem;
-  padding: 2rem;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  color: var(--shell-text);
+  background: var(--shell-bg);
+  font-family: var(--shell-font);
+  font-size: 13px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+#app-shell {
+  display: flex;
+  height: 100%;
+}
+
+#sidebar-pane {
+  flex: none;
+  width: var(--shell-sidebar-width);
+  border-right: 1px solid var(--shell-border);
+}
+
+#workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* 标签栏：固定在主内容区顶部，标签过多时横向滚动（隐藏滚动条） */
+#tab-bar {
+  display: flex;
+  flex: none;
+  height: 35px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--shell-tab-bar-bg);
+  border-bottom: 1px solid var(--shell-border);
+  scrollbar-width: none;
+}
+
+#tab-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  max-width: 200px;
+  padding: 0 8px 0 12px;
+  color: var(--shell-text-muted);
+  border-right: 1px solid var(--shell-border);
+  cursor: pointer;
+  user-select: none;
+}
+
+.tab:hover {
+  background: var(--shell-tab-hover-bg);
+}
+
+.tab:focus-visible {
+  outline: 1px solid var(--shell-accent);
+  outline-offset: -1px;
+}
+
+.tab.is-active {
+  color: var(--shell-text);
+  background: var(--shell-tab-active-bg);
+}
+
+/* 激活标签的顶部强调线 */
+.tab.is-active::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--shell-accent);
+  content: '';
+}
+
+.tab__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab__close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.tab:hover .tab__close,
+.tab.is-active .tab__close,
+.tab__close:focus-visible {
+  opacity: 1;
+}
+
+.tab__close:hover {
+  background: color-mix(in srgb, var(--shell-text) 16%, transparent);
+}
+
+#tab-views {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: var(--shell-tab-active-bg);
+}
+
+#empty-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  color: var(--shell-text-muted);
+}
+
+.page-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+}
+
+/* 标签页面叠放在同一区域，只显示当前标签；隐藏的页面保留状态 */
+#tab-views > .page-frame {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+}
+
+#tab-views > .page-frame.is-active {
+  visibility: visible;
+}
+
+#sidebar-pane > .page-frame {
+  display: block;
 }

@@ -1,12 +1,24 @@
 <!doctype html>
-<html>
+<html lang="zh-CN" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <title>Hello World!</title>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="frame-src rujian-app:; object-src 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>如见 Studio</title>
   </head>
   <body>
-    <h1>💖 Hello World!</h1>
-    <p>Welcome to your Electron application.</p>
+    <div id="app-shell">
+      <aside id="sidebar-pane" aria-label="菜单"></aside>
+      <main id="workspace">
+        <div id="tab-bar" role="tablist" aria-label="已打开的页面"></div>
+        <div id="tab-views">
+          <p id="empty-hint">从左侧菜单选择一个入口开始。</p>
+        </div>
+      </main>
+    </div>
     <script type="module" src="/src/renderer.ts"></script>
   </body>
 </html>

@@ -1,0 +1,46 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：host-theme.css
+ * 说明：应用主题变量：提供页面样式与组件库依赖的 --vscode-* 变量（亮、暗两套），以及页面基础的字体与文字颜色。
+ * 作者：Lion
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-10
+ * 备注：取值参照 VS Code 默认的 Dark Modern 与 Light Modern；主题类 vscode-light、vscode-dark 同时位于 html 与 body，由页面 HTML 初始写入、host-bridge.js 随外壳切换。
+ * ------------------------------------------------------------------------
+ */
+
+:root {
+  --vscode-font-family: 'Segoe UI', system-ui, -apple-system, 'Microsoft YaHei', sans-serif;
+  --vscode-foreground: rgb(204, 204, 204);
+  --vscode-descriptionForeground: rgb(157, 157, 157);
+  --vscode-sideBar-background: rgb(24, 24, 24);
+  --vscode-editorWidget-background: rgb(32, 32, 32);
+  --vscode-editorWidget-border: rgb(69, 69, 69);
+  --vscode-input-background: rgb(49, 49, 49);
+  --vscode-input-foreground: rgb(204, 204, 204);
+  --vscode-button-background: rgb(0, 120, 212);
+  --vscode-button-foreground: rgb(255, 255, 255);
+  --vscode-focusBorder: rgb(0, 120, 212);
+  --vscode-textLink-foreground: rgb(77, 170, 252);
+  --vscode-errorForeground: rgb(248, 81, 73);
+  --vscode-editorWarning-foreground: rgb(204, 167, 0);
+}
+
+:root.vscode-light {
+  --vscode-foreground: rgb(59, 59, 59);
+  --vscode-descriptionForeground: rgb(113, 113, 113);
+  --vscode-sideBar-background: rgb(248, 248, 248);
+  --vscode-editorWidget-background: rgb(248, 248, 248);
+  --vscode-editorWidget-border: rgb(200, 200, 200);
+  --vscode-input-background: rgb(255, 255, 255);
+  --vscode-input-foreground: rgb(59, 59, 59);
+  --vscode-button-background: rgb(0, 95, 184);
+  --vscode-focusBorder: rgb(0, 95, 184);
+  --vscode-textLink-foreground: rgb(0, 95, 184);
+  --vscode-editorWarning-foreground: rgb(191, 136, 3);
+}
+
+body {
+  color: var(--vscode-foreground);
+  font-family: var(--vscode-font-family);
+}

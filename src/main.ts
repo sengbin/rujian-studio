@@ -1,55 +1,108 @@
-import { app, BrowserWindow } from 'electron';
-import path from 'node:path';
-import started from 'electron-squirrel-startup';
+// ------------------------------------------------------------------------
+// 名称：main.ts
+// 说明：如见 Studio 主进程入口：单实例、注册协议与 IPC、创建窗口、装配应用，并在退出前执行收尾序列。
+// 作者：Lion
+// 邮箱：chengbin@3578.cn
+// 日期：2026-10-10
+// 备注：入口只做装配，业务逻辑位于 app、domain、infra 目录；单窗口应用，窗口全部关闭即退出。
+// ------------------------------------------------------------------------
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (started) {
+import { BrowserWindow, app, dialog, nativeTheme, safeStorage } from 'electron';
+import started from 'electron-squirrel-startup';
+import * as path from 'node:path';
+import { PanelManager } from './app/panels/panel-manager';
+import { ShellBridge } from './app/shell/shell-bridge';
+import { SIDEBAR_FRAME_ID } from './app/shell/shell-channels';
+import { ElectronSecretStore } from './infra/secrets/electron-secret-store';
+import { Application, createApplication } from './desktop/application';
+import { createAppWindow, getCurrentTheme } from './desktop/app-window';
+import { handleAppProtocol, registerAppProtocolScheme } from './desktop/app-protocol';
+import { createBackupHost, createDesktopNotifier, createWorkbenchHost, exportManualSkill, focusWindow } from './desktop/desktop-hosts';
+import { registerShellIpc } from './desktop/shell-ipc';
+
+/** 数据目录在 userData 下的子目录名。 */
+const DATA_DIRECTORY_NAME = 'rujian';
+
+/** 保存加密后密钥的文件名，位于数据目录。 */
+const SECRET_FILE_NAME = 'secrets.json';
+
+/** 错误对话框标题。 */
+const ERROR_TITLE = '如见 Studio';
+
+// 自定义协议必须在 app ready 之前声明。
+registerAppProtocolScheme();
+
+if (started || !app.requestSingleInstanceLock()) {
   app.quit();
+} else {
+  run();
 }
 
-const createWindow = () => {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.cjs'),
-    },
-  });
-
-  // and load the index.html of the app.
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-  } else {
-    mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
-    );
+/** 启动应用。 */
+function run(): void {
+  // 开发运行时没有安装信息，需要显式设置应用标识，系统通知才能显示。
+  if (!app.isPackaged) {
+    app.setAppUserModelId(process.execPath);
   }
-};
+  // 应用资源根目录：开发时是项目根目录，打包后是 resources 目录（resources 与 ui-kit 由打包配置复制到其下）。
+  const resourceRoot = app.isPackaged ? process.resourcesPath : app.getAppPath();
+  let mainWindow: BrowserWindow | undefined;
+  let application: Application | undefined;
+  let shuttingDown = false;
+  const getWindow = (): BrowserWindow | undefined => mainWindow;
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
-  createWindow();
-
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+  const bridge = new ShellBridge({
+    send: (channel, payload) => {
+      if (mainWindow !== undefined && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send(channel, payload);
+      }
     }
   });
-});
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+  app.on('second-instance', () => focusWindow(mainWindow));
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
+  // 退出前先执行收尾序列（等待阶段生成、停止队列、关闭数据库），完成后再真正退出。
+  app.on('before-quit', (event) => {
+    const shutdown = application?.shutdown;
+    if (shuttingDown || shutdown === undefined) {
+      return;
+    }
+    shuttingDown = true;
+    event.preventDefault();
+    void shutdown.run().finally(() => app.quit());
+  });
+
+  app.on('window-all-closed', () => app.quit());
+
+  void app.whenReady().then(() => {
+    const notify = createDesktopNotifier();
+    const dataRoot = path.join(app.getPath('userData'), DATA_DIRECTORY_NAME);
+    const panels = new PanelManager(bridge, getCurrentTheme);
+    application = createApplication({
+      dataRoot,
+      resourceRoot,
+      version: app.getVersion(),
+      getTheme: getCurrentTheme,
+      panels,
+      secrets: new ElectronSecretStore(path.join(dataRoot, SECRET_FILE_NAME), safeStorage),
+      workbenchHost: createWorkbenchHost(getWindow, notify),
+      backupHost: createBackupHost(getWindow),
+      notify,
+      focusWindow: () => focusWindow(mainWindow),
+      reportError: (message) => dialog.showErrorBox(ERROR_TITLE, message),
+      exportManual: () => exportManualSkill(resourceRoot, getWindow, notify)
+    });
+    bridge.registerFrame(SIDEBAR_FRAME_ID, { router: application.sidebar.router, html: application.sidebar.html });
+
+    handleAppProtocol(bridge, resourceRoot);
+    registerShellIpc(bridge, getWindow, getCurrentTheme);
+    nativeTheme.on('updated', () => bridge.notifyThemeChanged(getCurrentTheme()));
+
+    mainWindow = createAppWindow(resourceRoot, path.join(__dirname, 'preload.cjs'));
+    if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+      void mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+    } else {
+      void mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+    }
+  });
+}

@@ -1,0 +1,293 @@
+// ------------------------------------------------------------------------
+// 名称：generation-profile-service.test.ts
+// 说明：生成参数的自动化测试：修改请求的读取与校验、按本集 → 作品 → 项目默认合并并记录来源、SQLite 仓库的保存与恢复继承、服务的归属与模型校验、变化通知、作品删除时级联清除。
+// 作者：Lion
+// 邮箱：chengbin@3578.cn
+// 日期：2026-10-02
+// 备注：使用内存数据库；作品、集用 SQL 直接写入；模型经假适配器同步入库。
+// ------------------------------------------------------------------------
+
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { NotFoundError, ValidationError } from '../../domain/errors';
+import { EMPTY_PROFILE } from '../../domain/models/generation-profile';
+import { ProviderRegistry } from '../../domain/ports/provider-registry';
+import { FakeImageProvider, FakeVideoProvider } from '../../domain/ports/testing/fake-model-providers';
+import { MemoryAssetFileStore } from '../../domain/ports/testing/memory-asset-file-store';
+import { MemorySecretStore } from '../../domain/ports/testing/memory-secret-store';
+import { applyProfileChanges, readProfileChanges, resolveProfile } from '../../domain/rules/generation-profile-rules';
+import { IN_MEMORY_DATABASE_PATH, openDatabase } from '../../infra/database/database-connection';
+import { SqliteGenerationProfileRepository } from '../../infra/database/sqlite-generation-profile-repository';
+import { SqliteProjectRepository } from '../../infra/database/sqlite-project-repository';
+import { SqliteProviderRepository } from '../../infra/database/sqlite-provider-repository';
+import { SqliteScreenplayRepository } from '../../infra/database/sqlite-screenplay-repository';
+import { SqliteStageRunRepository } from '../../infra/database/sqlite-stage-run-repository';
+import { SqliteWorkRepository } from '../../infra/database/sqlite-work-repository';
+import { GenerationProfileService } from './generation-profile-service';
+import { ProjectService } from './project-service';
+import { ProviderService } from './provider-service';
+import { WorkService } from './work-service';
+
+/** 创建服务、一个带默认画幅的项目、两个作品各带集，以及视频与图像模型。 */
+function createFixture() {
+  const database = openDatabase(IN_MEMORY_DATABASE_PATH);
+  const files = new MemoryAssetFileStore();
+  const projects = new ProjectService(new SqliteProjectRepository(database));
+  const project = projects.createProject({ name: '项目甲', defaultAspectRatio: '16:9' });
+  const works = new WorkService(new SqliteWorkRepository(database, files), new SqliteStageRunRepository(database));
+  const providerRepository = new SqliteProviderRepository(database);
+  new ProviderService({
+    repository: providerRepository,
+    registry: new ProviderRegistry().register(new FakeVideoProvider()).register(new FakeImageProvider()),
+    secrets: new MemorySecretStore()
+  }).syncCatalog();
+  // 模型默认不启用，测试需要可用模型时先全部启用。
+  for (const model of providerRepository.listModels()) providerRepository.setModelEnabled(model.id, true);
+  const videoModel = providerRepository.listModels({ kind: 'video' })[0];
+  const imageModel = providerRepository.listModels({ kind: 'image' })[0];
+
+  const insert = (sql: string, ...params: Array<string | number>) => Number(database.prepare(sql).run(...params).lastInsertRowid);
+  const workA = insert("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (?, '作品甲', 'short_drama', 't', 't')", project.id);
+  const workB = insert("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (?, '作品乙', 'short_drama', 't', 't')", project.id);
+  const episode = (workId: number, seq: number) =>
+    insert("INSERT INTO episodes (work_id, seq, title, created_at, updated_at) VALUES (?, ?, '集', 't', 't')", workId, seq);
+  const episodeA1 = episode(workA, 1);
+  const episodeA2 = episode(workA, 2);
+  const episodeB1 = episode(workB, 1);
+
+  const repository = new SqliteGenerationProfileRepository(database);
+  const service = new GenerationProfileService({
+    profiles: repository,
+    works,
+    projects,
+    screenplays: new SqliteScreenplayRepository(database),
+    models: providerRepository,
+    now: () => new Date('2026-10-02T00:00:00.000Z')
+  });
+  return { database, service, repository, workA, workB, episodeA1, episodeA2, episodeB1, videoModel, imageModel };
+}
+
+test('读取修改请求：空串按恢复继承，未知字段、非法值与空修改被拒绝', () => {
+  assert.deepEqual(readProfileChanges({ aspectRatio: '9:16', resolution: '', modelId: 3, audioMode: 'none' }), {
+    aspectRatio: '9:16',
+    resolution: null,
+    modelId: 3,
+    audioMode: 'none'
+  });
+  assert.deepEqual(readProfileChanges({ modelId: null }), { modelId: null });
+  const fieldErrors = (changes: unknown) => {
+    try {
+      readProfileChanges(changes);
+    } catch (error) {
+      return error instanceof ValidationError ? error.fieldErrors : undefined;
+    }
+    return undefined;
+  };
+  assert.ok(fieldErrors({ modelId: 'x' })?.modelId);
+  assert.ok(fieldErrors({ modelId: 1.5 })?.modelId);
+  assert.ok(fieldErrors({ aspectRatio: 'x'.repeat(21) })?.aspectRatio);
+  assert.ok(fieldErrors({ resolution: 7 })?.resolution);
+  assert.ok(fieldErrors({ audioMode: 'invalid' })?.audioMode);
+  assert.ok(fieldErrors({ extraParams: {} })?.['']);
+  assert.ok(fieldErrors({})?.['']);
+  assert.ok(fieldErrors('x')?.['']);
+});
+
+test('合并：本集优先于作品，作品优先于项目默认，并记录每个值的来源', () => {
+  const work = { ...EMPTY_PROFILE, modelId: 1, resolution: '720P', audioMode: 'native' as const };
+  const episode = { ...EMPTY_PROFILE, resolution: '1080P' };
+  const effective = resolveProfile(work, episode, { aspectRatio: '16:9', resolution: '480P' });
+  assert.deepEqual(effective.values, { ...EMPTY_PROFILE, modelId: 1, aspectRatio: '16:9', resolution: '1080P', audioMode: 'native' });
+  assert.deepEqual(effective.sources, {
+    modelId: 'work',
+    aspectRatio: 'project',
+    resolution: 'episode',
+    audioMode: 'work',
+    audioElements: 'none',
+    seed: 'none',
+    durationSeconds: 'none',
+    negativeList: 'none',
+    promptExtend: 'none'
+  });
+
+  const none = resolveProfile(EMPTY_PROFILE, EMPTY_PROFILE, { aspectRatio: null, resolution: null });
+  assert.deepEqual(none.values, EMPTY_PROFILE);
+  assert.deepEqual(Object.values(none.sources), Array(9).fill('none'));
+  assert.deepEqual(applyProfileChanges(work, { resolution: null }), { ...work, resolution: null });
+});
+
+test('负向清单与提示词改写：空串的负向清单是有效值（不要负向清单），null 才是沿用上一级；改写开关为布尔，关闭也是有效值；本集优先于作品', () => {
+  assert.deepEqual(readProfileChanges({ negativeList: '  不要字幕  ', promptExtend: false }), { negativeList: '不要字幕', promptExtend: false });
+  assert.deepEqual(readProfileChanges({ negativeList: '' }), { negativeList: '' }, '空串不会被当成恢复继承');
+  assert.deepEqual(readProfileChanges({ negativeList: null, promptExtend: null }), { negativeList: null, promptExtend: null });
+  assert.deepEqual(readProfileChanges({ promptExtend: '' }), { promptExtend: null }, '改写开关的空串按恢复继承');
+  const fieldErrors = (changes: unknown) => {
+    try {
+      readProfileChanges(changes);
+    } catch (error) {
+      return error instanceof ValidationError ? error.fieldErrors : undefined;
+    }
+    return undefined;
+  };
+  assert.ok(fieldErrors({ negativeList: 3 })?.negativeList);
+  assert.ok(fieldErrors({ negativeList: 'x'.repeat(301) })?.negativeList);
+  assert.ok(fieldErrors({ promptExtend: 'yes' })?.promptExtend);
+
+  const work = { ...EMPTY_PROFILE, negativeList: '不要水印', promptExtend: true };
+  const episode = { ...EMPTY_PROFILE, negativeList: '', promptExtend: false };
+  const effective = resolveProfile(work, episode, { aspectRatio: null, resolution: null });
+  assert.deepEqual([effective.values.negativeList, effective.values.promptExtend], ['', false], '本集的空串与关闭覆盖作品的值');
+  assert.deepEqual([effective.sources.negativeList, effective.sources.promptExtend], ['episode', 'episode']);
+  const inherited = resolveProfile(work, EMPTY_PROFILE, { aspectRatio: null, resolution: null });
+  assert.deepEqual([inherited.values.negativeList, inherited.sources.negativeList], ['不要水印', 'work']);
+});
+
+test('保存与读取：作品与集各自保存，恢复继承后回退到上一级，项目默认作为最后回退', () => {
+  const { database, service, workA, episodeA1, episodeA2, videoModel } = createFixture();
+  try {
+    const initial = service.getView(workA, episodeA1);
+    assert.deepEqual(initial.work, EMPTY_PROFILE);
+    assert.deepEqual([initial.effective.values.aspectRatio, initial.effective.sources.aspectRatio], ['16:9', 'project']);
+
+    service.save({ scope: 'work', workId: workA, episodeId: episodeA1, changes: { modelId: videoModel.id, aspectRatio: '9:16', resolution: '720P' } });
+    const episodeSaved = service.save({ scope: 'episode', workId: workA, episodeId: episodeA1, changes: { resolution: '1080P' } });
+    assert.deepEqual(episodeSaved.effective.values, { ...EMPTY_PROFILE, modelId: videoModel.id, aspectRatio: '9:16', resolution: '1080P' });
+    assert.deepEqual(
+      [episodeSaved.effective.sources.modelId, episodeSaved.effective.sources.aspectRatio, episodeSaved.effective.sources.resolution, episodeSaved.effective.sources.audioMode],
+      ['work', 'work', 'episode', 'none']
+    );
+
+    const other = service.getView(workA, episodeA2);
+    assert.deepEqual([other.effective.values.resolution, other.effective.sources.resolution], ['720P', 'work'], '另一集不受本集覆盖影响');
+
+    const restored = service.save({ scope: 'episode', workId: workA, episodeId: episodeA1, changes: { resolution: null } });
+    assert.deepEqual([restored.effective.values.resolution, restored.effective.sources.resolution], ['720P', 'work']);
+    const cleared = service.save({ scope: 'work', workId: workA, episodeId: episodeA1, changes: { aspectRatio: null } });
+    assert.deepEqual([cleared.effective.values.aspectRatio, cleared.effective.sources.aspectRatio], ['16:9', 'project']);
+    assert.equal(cleared.work.modelId, videoModel.id, '只改传入的字段');
+    assert.equal(database.prepare('SELECT COUNT(*) AS n FROM generation_profiles').get()?.n, 1 + 1, '每个目标一行');
+  } finally {
+    database.close();
+  }
+});
+
+test('保存校验：集必须属于作品，模型必须是存在的视频模型，范围必须合法', () => {
+  const { database, service, workA, episodeA1, episodeB1, imageModel } = createFixture();
+  try {
+    assert.throws(() => service.save({ scope: 'work', workId: workA, episodeId: episodeB1, changes: { resolution: '720P' } }), NotFoundError);
+    assert.throws(() => service.save({ scope: 'work', workId: 9999, episodeId: episodeA1, changes: { resolution: '720P' } }), NotFoundError);
+    assert.throws(() => service.getView(workA, episodeB1), NotFoundError);
+    assert.throws(() => service.save({ scope: 'work', workId: workA, episodeId: episodeA1, changes: { modelId: 9999 } }), ValidationError);
+    assert.throws(() => service.save({ scope: 'work', workId: workA, episodeId: episodeA1, changes: { modelId: imageModel.id } }), ValidationError);
+    assert.throws(() => service.save({ scope: 'shot', workId: workA, episodeId: episodeA1, changes: { resolution: '720P' } }), ValidationError);
+    assert.throws(() => service.save({ scope: 'work', workId: 'x', episodeId: episodeA1, changes: { resolution: '720P' } }), ValidationError);
+  } finally {
+    database.close();
+  }
+});
+
+test('保存后通知订阅者；失败的保存不通知；删除作品时参数随之清除', () => {
+  const { database, service, workA, episodeA1 } = createFixture();
+  try {
+    let count = 0;
+    service.onDidChangeProfiles(() => {
+      count += 1;
+    });
+    service.save({ scope: 'work', workId: workA, episodeId: episodeA1, changes: { resolution: '720P' } });
+    service.save({ scope: 'episode', workId: workA, episodeId: episodeA1, changes: { audioMode: 'none' } });
+    assert.throws(() => service.save({ scope: 'work', workId: workA, episodeId: episodeA1, changes: {} }));
+    assert.equal(count, 2);
+
+    database.prepare('DELETE FROM works WHERE id = ?').run(workA);
+    assert.equal(database.prepare('SELECT COUNT(*) AS n FROM generation_profiles').get()?.n, 0);
+  } finally {
+    database.close();
+  }
+});
+
+test('作品默认：读取时回退到项目默认且不含集覆盖；保存只改出现的字段，校验模型并通知订阅者', () => {
+  const { database, service, workA, episodeA1, videoModel, imageModel } = createFixture();
+  try {
+    const changed: number[] = [];
+    service.onDidChangeProfiles(() => changed.push(1));
+    assert.deepEqual(service.getWorkDefaults(workA).values, { ...EMPTY_PROFILE, aspectRatio: '16:9' });
+
+    service.save({ scope: 'episode', workId: workA, episodeId: episodeA1, changes: { resolution: '1080P' } });
+    service.saveWorkDefaults(workA, { modelId: videoModel.id, resolution: '720P' });
+    service.saveWorkDefaults(workA, { aspectRatio: '9:16' });
+    assert.deepEqual(service.getWorkDefaults(workA).values, { ...EMPTY_PROFILE, modelId: videoModel.id, aspectRatio: '9:16', resolution: '720P' });
+    assert.equal(service.getView(workA, episodeA1).effective.values.resolution, '1080P', '本集覆盖仍然优先');
+
+    const before = changed.length;
+    assert.throws(() => service.saveWorkDefaults(workA, { modelId: imageModel.id }), ValidationError);
+    assert.throws(() => service.saveWorkDefaults(workA, {}), ValidationError);
+    assert.throws(() => service.saveWorkDefaults(9999, { aspectRatio: '16:9' }), NotFoundError);
+    assert.equal(changed.length, before);
+  } finally {
+    database.close();
+  }
+});
+
+test('读取修改请求：声音内容去重排序，种子、生成时长的取值范围与空值', () => {
+  assert.deepEqual(readProfileChanges({ audioElements: ['music', 'dialogue', 'music'], seed: 0, durationSeconds: 7.5 }), {
+    audioElements: ['dialogue', 'music'],
+    seed: 0,
+    durationSeconds: 7.5
+  });
+  assert.deepEqual(readProfileChanges({ audioElements: '', seed: '', durationSeconds: null }), { audioElements: null, seed: null, durationSeconds: null });
+  const fieldErrors = (changes: unknown) => {
+    try {
+      readProfileChanges(changes);
+    } catch (error) {
+      return error instanceof ValidationError ? error.fieldErrors : undefined;
+    }
+    return undefined;
+  };
+  assert.ok(fieldErrors({ audioElements: [] })?.audioElements);
+  assert.ok(fieldErrors({ audioElements: ['voice'] })?.audioElements);
+  assert.ok(fieldErrors({ audioElements: 'dialogue' })?.audioElements);
+  assert.ok(fieldErrors({ seed: -1 })?.seed);
+  assert.ok(fieldErrors({ seed: 1.5 })?.seed);
+  assert.ok(fieldErrors({ seed: 2147483648 })?.seed);
+  assert.ok(fieldErrors({ durationSeconds: 0 })?.durationSeconds);
+  assert.ok(fieldErrors({ durationSeconds: 3601 })?.durationSeconds);
+  assert.ok(fieldErrors({ durationSeconds: 'x' })?.durationSeconds);
+});
+
+test('合并：声音内容与种子按本集、作品取值并记录来源；生成时长不参与作品、集的合并', () => {
+  const work = { ...EMPTY_PROFILE, audioElements: ['dialogue' as const, 'sfx' as const], seed: 5 };
+  const episode = { ...EMPTY_PROFILE, seed: 9 };
+  const effective = resolveProfile(work, episode, { aspectRatio: null, resolution: null });
+  assert.deepEqual([effective.values.audioElements, effective.values.seed, effective.values.durationSeconds], [['dialogue', 'sfx'], 9, null]);
+  assert.deepEqual([effective.sources.audioElements, effective.sources.seed, effective.sources.durationSeconds], ['work', 'episode', 'none']);
+});
+
+test('保存：生成时长只能按镜头组设置；声音内容与种子可在作品、集保存，往返读取一致并可恢复继承', () => {
+  const { database, service, repository, workA, episodeA1 } = createFixture();
+  try {
+    const durationError = (scope: 'work' | 'episode') => {
+      try {
+        service.save({ scope, workId: workA, episodeId: episodeA1, changes: { durationSeconds: 8 } });
+      } catch (error) {
+        return error instanceof ValidationError ? error.fieldErrors.durationSeconds : undefined;
+      }
+      return undefined;
+    };
+    assert.match(durationError('work') ?? '', /只能按镜头组设置/);
+    assert.match(durationError('episode') ?? '', /只能按镜头组设置/);
+
+    service.save({ scope: 'work', workId: workA, episodeId: episodeA1, changes: { audioMode: 'native', audioElements: ['sfx', 'dialogue'], seed: 123 } });
+    const saved = service.save({ scope: 'episode', workId: workA, episodeId: episodeA1, changes: { seed: 0 } });
+    assert.deepEqual(saved.work.audioElements, ['dialogue', 'sfx']);
+    assert.deepEqual([saved.effective.values.seed, saved.effective.sources.seed], [0, 'episode'], '种子 0 是有效值，不当作空');
+    assert.deepEqual(repository.find({ scope: 'work', workId: workA })?.seed, 123);
+
+    const restored = service.save({ scope: 'episode', workId: workA, episodeId: episodeA1, changes: { seed: null } });
+    assert.deepEqual([restored.effective.values.seed, restored.effective.sources.seed], [123, 'work']);
+    const cleared = service.save({ scope: 'work', workId: workA, episodeId: episodeA1, changes: { audioElements: null } });
+    assert.equal(cleared.work.audioElements, null);
+    assert.equal(cleared.work.audioMode, 'native', '只改传入的字段');
+  } finally {
+    database.close();
+  }
+});

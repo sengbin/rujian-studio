@@ -10,6 +10,8 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    // 页面资源与提示词模板不经打包工具，原样复制到应用的 resources 目录（运行时见 main.ts 的 resourceRoot）
+    extraResource: ['./resources', './ui-kit'],
   },
   rebuildConfig: {},
   makers: [

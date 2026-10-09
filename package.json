@@ -33,7 +33,8 @@
     "release": "electron-forge release",
     "lint": "oxlint && oxfmt --check",
     "lint:fix": "oxlint --fix && oxfmt --write",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node -e \"require('fs').rmSync('.test-build',{recursive:true,force:true})\" && tsc -p tsconfig.test.json && node --test \".test-build/**/*.test.js\" \"ui-kit/test/**/*.test.mjs\""
   },
   "devDependencies": {
     "@electron-forge/cli": "^8.0.1",
@@ -46,7 +47,9 @@
     "@electron-forge/plugin-vite": "^8.0.1",
     "@electron/fuses": "^2.1.3",
     "@types/electron-squirrel-startup": "^1.0.2",
+    "@types/node": "^22.20.5",
     "electron": "44.7.0",
+    "jsdom": "^29.1.1",
     "oxfmt": "^0.41.0",
     "oxlint": "^1.87.0",
     "typescript": "^6.0.3",

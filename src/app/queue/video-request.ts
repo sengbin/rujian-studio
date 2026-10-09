@@ -1,0 +1,66 @@
+// ------------------------------------------------------------------------
+// 名称：video-request.ts
+// 说明：把任务请求快照与素材内容组装成与模型无关的视频生成请求，供提交前校验和队列提交共用。
+// 作者：Lion
+// 邮箱：chengbin@3578.cn
+// 日期：2026-10-02
+// 备注：素材已被删除时抛出参数类错误，提示用户重新绑定。
+// ------------------------------------------------------------------------
+
+import { ProviderError } from '../../domain/errors';
+import { JobSnapshot } from '../../domain/models/generation';
+import { JobMediaReader } from '../../domain/ports/generation-repository';
+import { MediaInput, VideoGenerationRequest } from '../../domain/ports/provider-adapters';
+
+/** 提交前校验用的占位首帧：尾帧还没截取时仍要校验素材组合，真正的图片在任务提交给服务商时才读取。 */
+export const PLACEHOLDER_FIRST_FRAME: MediaInput = { mimeType: 'image/jpeg', data: new Uint8Array(1) };
+
+/**
+ * 按快照读取素材内容并组装生成请求。
+ * @param snapshot 任务请求快照。
+ * @param firstFrameId 作为首帧的尾帧图片标识；没有首帧为 null。快照里指定了资产参考图首帧（firstFrameFileId）或本地指定图片首帧（firstFrameImageId）时，用它读取图片作首帧。
+ * @param media 素材读取器。
+ * @param modelCode 服务商侧的模型代码。
+ * @throws ProviderError 参考素材或首帧图片已不存在（分类为参数错误）。
+ */
+export function buildVideoRequest(snapshot: JobSnapshot, firstFrameId: number | null, media: JobMediaReader, modelCode: string): VideoGenerationRequest {
+  const loadAll = (ids: readonly number[]): MediaInput[] =>
+    ids.map((id) => {
+      const file = media.readAssetFile(id);
+      if (file === undefined) {
+        throw new ProviderError('invalid_request', '参考素材已被删除，请重新绑定资产后再生成。');
+      }
+      return file;
+    });
+  let firstFrame: MediaInput | null = null;
+  if (firstFrameId !== null) {
+    firstFrame = media.readResultFrame(firstFrameId) ?? null;
+    if (firstFrame === null) {
+      throw new ProviderError('invalid_request', '首帧图片已不存在，请重新生成前序镜头。');
+    }
+  } else if (snapshot.firstFrameFileId !== undefined && snapshot.firstFrameFileId !== null) {
+    firstFrame = media.readAssetFile(snapshot.firstFrameFileId) ?? null;
+    if (firstFrame === null) {
+      throw new ProviderError('invalid_request', '指定的首帧图片已被删除或替换，请在镜头编辑里重新选择后再生成。');
+    }
+  } else if (snapshot.firstFrameImageId !== undefined && snapshot.firstFrameImageId !== null) {
+    firstFrame = media.readShotFirstFrame(snapshot.firstFrameImageId) ?? null;
+    if (firstFrame === null) {
+      throw new ProviderError('invalid_request', '指定的首帧图片已被删除或替换，请在镜头编辑里重新选择后再生成。');
+    }
+  }
+  return {
+    modelCode,
+    prompt: snapshot.prompt,
+    firstFrame,
+    lastFrame: null,
+    referenceImages: loadAll(snapshot.referenceImageFileIds),
+    referenceAudios: loadAll(snapshot.referenceAudioFileIds),
+    aspectRatio: snapshot.params.aspectRatio,
+    resolution: snapshot.params.resolution,
+    durationSeconds: snapshot.params.durationSeconds,
+    audioMode: snapshot.params.audioMode,
+    seed: snapshot.params.seed,
+    extraParams: snapshot.params.extraParams
+  };
+}

@@ -1,0 +1,277 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：sidebar.css
+ * 说明：侧栏页面样式，包含亮暗主题令牌、分区卡片、菜单行、提示与底部状态条。
+ * 作者：Lion
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-09-30
+ * 备注：颜色统一使用 rgb() 写法，主题通过 body.vscode-light / body.vscode-dark 切换。
+ * ------------------------------------------------------------------------
+ */
+
+:root {
+  color-scheme: light dark;
+  --bg: var(--vscode-sideBar-background);
+  --focus-border: var(--vscode-focusBorder, rgb(0, 120, 212));
+  --page-padding: 8px 0 10px 16px;
+  --page-padding-end: 16px;
+  /* 分区标题与菜单项同字号，层级靠字重区分，避免标题看起来比菜单项小 */
+  --menu-font-size: 12px;
+  --menu-title-weight: 600;
+  --card-gap: 10px;
+  --card-padding: 8px;
+  --card-radius: 6px;
+  --card-background: color-mix(in srgb, var(--vscode-editorWidget-background, var(--bg)) 90%, rgb(255, 255, 255));
+  --card-shadow: none;
+  --divider: color-mix(in srgb, var(--vscode-foreground) 8%, transparent);
+  --row-hover-background: rgb(50, 50, 50);
+  --action-hover-background: rgb(61, 61, 61);
+  --row-pressed-background: rgb(47, 47, 47);
+  --action-pressed-background: rgb(56, 56, 56);
+}
+
+body.vscode-light {
+  --card-background: color-mix(in srgb, var(--bg) 62%, rgb(226, 226, 226));
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
+  --divider: color-mix(in srgb, rgb(0, 0, 0) 8%, transparent);
+  --row-hover-background: rgb(230, 230, 230);
+  --action-hover-background: rgb(220, 220, 220);
+  --row-pressed-background: rgb(222, 222, 222);
+  --action-pressed-background: rgb(212, 212, 212);
+}
+
+body.vscode-dark {
+  --card-background: color-mix(in srgb, var(--bg) 97%, rgb(255, 255, 255));
+  --divider: color-mix(in srgb, rgb(255, 255, 255) 8%, transparent);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 0;
+  margin: 0;
+  padding: var(--page-padding);
+  color: var(--vscode-foreground);
+  background: var(--bg);
+  font-size: var(--menu-font-size);
+  line-height: 1.4;
+}
+
+main {
+  flex: none;
+  display: grid;
+  gap: var(--card-gap);
+  padding-right: var(--page-padding-end);
+}
+
+/* 底部状态条：贴在页面底部，内容较多时跟在最后一张卡片之后；文字缩进与卡片内容对齐 */
+.status-bar {
+  margin-top: auto;
+  padding: 10px var(--page-padding-end) 0 0;
+  color: var(--vscode-descriptionForeground);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.status-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin: 0;
+  padding: 0 var(--card-padding);
+  list-style: none;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.status-item .menu-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.status-value[data-level='normal'] {
+  color: var(--vscode-foreground);
+}
+
+/* 版本号是辅助信息，沿用状态条的次要文字色，不与运行状态抢眼 */
+.status-version {
+  color: var(--vscode-descriptionForeground);
+}
+
+.status-value[data-level='warning'] {
+  color: var(--vscode-editorWarning-foreground, rgb(204, 167, 0));
+}
+
+.status-value[data-level='error'] {
+  color: var(--vscode-errorForeground, rgb(244, 71, 71));
+}
+
+/* 卡片外壳只负责布局，视觉表面由 .card-inner 承担 */
+.card {
+  width: 100%;
+  min-width: 0;
+}
+
+.card-inner {
+  min-width: 0;
+  padding: var(--card-padding);
+  background: var(--card-background);
+  border: 0;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+
+.card-flat {
+  box-shadow: none;
+}
+
+/* 分区标题，下方用 1px 分隔线与菜单行隔开 */
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  padding: 0 0 6px;
+  color: var(--vscode-foreground);
+  font-size: var(--menu-font-size);
+  font-weight: var(--menu-title-weight);
+  border-bottom: 1px solid var(--divider);
+}
+
+nav {
+  display: grid;
+  gap: 0;
+}
+
+/* 菜单行：主入口占满第一列，尾部操作按内容宽度 */
+.menu-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0;
+  padding: 0 0 0 2px;
+  border-radius: 4px;
+  transition: background-color var(--hover-duration) ease;
+}
+
+.menu-row + .menu-row {
+  margin-top: 4px;
+}
+
+.menu-row:hover {
+  background: var(--row-hover-background);
+}
+
+.menu-row.is-pressed {
+  background: var(--row-pressed-background);
+}
+
+/* 提示（如数据库无法打开）：文字说明为主，颜色只作强化；长路径允许在任意位置换行 */
+.notice {
+  margin: 0;
+  padding: 2px 6px;
+  color: var(--vscode-errorForeground, rgb(244, 71, 71));
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+button {
+  min-width: 0;
+  min-height: 32px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border: 0;
+  border-radius: 3px;
+  transition: background-color var(--hover-duration) ease, border-color var(--hover-duration) ease, color var(--hover-duration) ease;
+}
+
+button:focus-visible {
+  outline: 1px solid var(--focus-border);
+  outline-offset: 1px;
+}
+
+/* 内联 SVG 图标：线条与颜色由 SVG 属性和当前文字颜色决定，这里只定尺寸 */
+.menu-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+.menu-main,
+.menu-action {
+  min-height: 28px;
+}
+
+.menu-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  padding: 4px 6px;
+  overflow: hidden;
+  text-align: left;
+  background: transparent;
+}
+
+/* 中文字形在行框内略偏下，底部补 1px 内边距使文字上移约 0.5px；图标仍按行框居中 */
+h2 > span,
+.menu-title,
+.menu-action > span {
+  padding-bottom: 1px;
+}
+
+.menu-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--hover-duration) ease;
+}
+
+.menu-row:has(.menu-action:hover, .menu-action:focus-visible) .menu-title {
+  color: var(--vscode-descriptionForeground);
+}
+
+.menu-badge {
+  display: inline-block;
+  flex: none;
+  padding: 0 4px;
+  color: color-mix(in srgb, var(--vscode-foreground) 70%, transparent);
+  font-size: 11px;
+  line-height: 16px;
+  border: 1px solid color-mix(in srgb, var(--vscode-foreground) 24%, transparent);
+  border-radius: 3px;
+}
+
+.menu-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: var(--vscode-descriptionForeground);
+  background: transparent;
+}
+
+.menu-action:hover,
+.menu-action:focus-visible {
+  color: var(--vscode-textLink-foreground);
+  background: var(--action-hover-background);
+}
+
+.menu-action.is-pressed {
+  background: var(--action-pressed-background);
+}

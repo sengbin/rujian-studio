@@ -1,0 +1,160 @@
+// ------------------------------------------------------------------------
+// 名称：form-handlers.ts
+// 说明：把表单目录注册为路由请求：按名称打开表单（创建会话）、字段检查、提交、关闭，以及可用模型变化后重新生成表单定义。
+// 作者：Lion
+// 邮箱：chengbin@3578.cn
+// 日期：2026-10-07
+// 备注：不依赖 VS Code；表单在页面内以弹出页面显示，未保存修改的确认在页面完成，宿主只维护会话；表单动作在会话内执行，表单关闭时中止仍在运行的动作。
+// ------------------------------------------------------------------------
+
+import { FORM_LEVEL_ERROR_KEY, NotFoundError, ValidationError } from '../../domain/errors';
+import { readRecord } from '../../domain/rules/field-readers';
+import { MessageRouter } from '../messaging/message-router';
+import { FormCatalog, FormDefinition, FormValues } from './form-definition';
+
+/** 表单引擎使用的请求名称，需与 resources/form/form-runtime.js 一致。 */
+export const FORM_REQUESTS = {
+  open: 'form.open',
+  checkField: 'form.checkField',
+  submit: 'form.submit',
+  action: 'form.action',
+  cancelAction: 'form.cancelAction',
+  close: 'form.close',
+  refresh: 'form.refresh'
+} as const;
+
+/** 表单会话失效（已提交或已关闭）时的提示。 */
+const SESSION_EXPIRED_MESSAGE = '表单已失效，请重新打开。';
+const ACTION_RUNNING_MESSAGE = '正在执行，请等待完成或取消。';
+
+/** 一次打开的表单会话：定义、创建它的工厂与打开参数（用于刷新），以及正在运行的动作（动作键到取消控制器）。 */
+interface FormSession {
+  definition: FormDefinition;
+  readonly create: () => Promise<FormDefinition>;
+  readonly running: Map<string, AbortController>;
+}
+
+/**
+ * 在路由器上注册表单相关的全部请求处理函数。
+ * 每次打开表单创建一个会话，后续请求带上会话标识；提交成功或关闭后会话失效。
+ * @param router 页面的请求路由器。
+ * @param catalog 页面可以打开的表单目录。
+ */
+export function registerFormHandlers(router: MessageRouter, catalog: FormCatalog): void {
+  const sessions = new Map<number, FormSession>();
+  let nextFormId = 1;
+
+  const findSession = (payload: unknown): { formId: number; definition: FormDefinition; create: () => Promise<FormDefinition>; running: Map<string, AbortController> } => {
+    const formId = readRecord(payload).formId;
+    const session = typeof formId === 'number' ? sessions.get(formId) : undefined;
+    if (typeof formId !== 'number' || session === undefined) {
+      throw new NotFoundError(SESSION_EXPIRED_MESSAGE);
+    }
+    return { formId, ...session };
+  };
+
+  /** 会话结束时中止仍在运行的动作并移除会话。 */
+  const endSession = (formId: number): void => {
+    for (const controller of sessions.get(formId)?.running.values() ?? []) {
+      controller.abort();
+    }
+    sessions.delete(formId);
+  };
+
+  router.register(FORM_REQUESTS.open, async (payload) => {
+    const source = readRecord(payload);
+    const factory = catalog.get(readString(source.form, 'form'));
+    if (factory === undefined) {
+      throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: '不支持的表单。' });
+    }
+    const definition = await factory(source.params);
+    const formId = nextFormId++;
+    sessions.set(formId, { definition, create: async () => factory(source.params), running: new Map() });
+    return { formId, schema: definition.schema, values: definition.initialValues };
+  });
+
+  // 可用模型变化后由页面调用：用打开时的参数重新生成定义，后续的字段检查、提交和动作都用新定义。
+  router.register(FORM_REQUESTS.refresh, async (payload) => {
+    const { formId, create } = findSession(payload);
+    const definition = await create();
+    const session = sessions.get(formId);
+    // 重新生成期间会话已结束（提交或关闭）时，结果作废。
+    if (session === undefined) {
+      throw new NotFoundError(SESSION_EXPIRED_MESSAGE);
+    }
+    session.definition = definition;
+    return { schema: definition.schema, values: definition.initialValues };
+  });
+
+  router.register(FORM_REQUESTS.checkField, (payload) => {
+    const source = readRecord(payload);
+    const key = readString(source.key, 'key');
+    const value = readString(source.value, 'value');
+    return { error: findSession(payload).definition.checkField?.(key, value) };
+  });
+
+  router.register(FORM_REQUESTS.submit, async (payload) => {
+    const { formId, definition } = findSession(payload);
+    const source = readRecord(payload);
+    const submitKey = source.submitKey === undefined ? '' : readString(source.submitKey, 'submitKey');
+    const actions = definition.schema.submitActions;
+    if (actions !== undefined && !actions.some((action) => action.key === submitKey)) {
+      throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: '不支持的提交方式。' });
+    }
+    await definition.submit(readFormValues(source.values), submitKey);
+    endSession(formId);
+    return {};
+  });
+
+  router.register(FORM_REQUESTS.action, async (payload) => {
+    const { definition, running } = findSession(payload);
+    const source = readRecord(payload);
+    const key = readString(source.action, 'action');
+    const action = definition.actions?.[key];
+    if (action === undefined) {
+      throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: '不支持的操作。' });
+    }
+    if (running.has(key)) {
+      throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: ACTION_RUNNING_MESSAGE });
+    }
+    const controller = new AbortController();
+    running.set(key, controller);
+    try {
+      return { values: await action(readFormValues(source.values), controller.signal) };
+    } finally {
+      running.delete(key);
+    }
+  });
+
+  router.register(FORM_REQUESTS.cancelAction, (payload) => {
+    const { running } = findSession(payload);
+    running.get(readString(readRecord(payload).action, 'action'))?.abort();
+    return {};
+  });
+
+  router.register(FORM_REQUESTS.close, (payload) => {
+    const formId = readRecord(payload).formId;
+    if (typeof formId === 'number') {
+      endSession(formId);
+    }
+    return {};
+  });
+}
+
+/** 读取必须是文本的载荷字段。 */
+function readString(value: unknown, name: string): string {
+  if (typeof value !== 'string') {
+    throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: `请求参数 ${name} 必须是文本。` });
+  }
+  return value;
+}
+
+/** 读取提交的表单值：必须是所有值都为文本的对象。 */
+function readFormValues(value: unknown): FormValues {
+  const record = readRecord(value);
+  const values: Record<string, string> = {};
+  for (const [key, fieldValue] of Object.entries(record)) {
+    values[key] = readString(fieldValue, key);
+  }
+  return values;
+}

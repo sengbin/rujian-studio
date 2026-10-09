@@ -1,0 +1,652 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：stage-storyboard-preview.css
+ * 说明：分镜动画预览层（P10）的样式：状态行、舞台与镜头信息栏、播放控制行、时间线（镜头分段、镜头组标记、声音泳道、播放头）和检查列表。
+ * 作者：Lion
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-07
+ * 备注：颜色统一使用主题变量，只有舞台底色固定（它表示视频画面，不随主题变化）；不使用内联样式（Webview 的内容安全策略不允许，位置与宽度由脚本通过样式对象设置）；响应式用容器查询，按弹出页面自身宽度而不是视口宽度；类名与 stage-storyboard-preview.js 一致。
+ * ------------------------------------------------------------------------
+ */
+
+/* 预览层令牌：面板分隔线与表面、舞台固定底色、右侧信息栏宽度、窄宽度时信息栏高度 */
+.sbp {
+  --sbp-line: var(--vscode-editorWidget-border, color-mix(in srgb, var(--text) 12%, transparent));
+  --sbp-surface: color-mix(in srgb, var(--vscode-editorWidget-background, var(--bg)) 90%, var(--bg));
+  --sbp-stage-bg: #0d0e11;
+  --sbp-info-width: 300px;
+  --sbp-info-stacked-height: 220px;
+  --sbp-label-width: 40px;
+  --sbp-group-row-height: 14px;
+  --sbp-shot-row-height: 22px;
+  --sbp-lane-height: 10px;
+  --sbp-row-gap: 2px;
+  container: sbp / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+  min-width: 0;
+  font-size: 12px;
+}
+
+/* ---------- 状态行 ---------- */
+.sbp-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  min-height: 18px;
+}
+
+.sbp-status__text {
+  min-width: 0;
+  color: var(--text);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.sbp-status__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sbp-badge {
+  padding: 0 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 18px;
+  border: 1px solid var(--sbp-line);
+  border-radius: 9px;
+}
+
+.sbp-badge--history {
+  color: var(--text);
+  border-color: var(--status-warning);
+}
+
+.sbp-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sbp-error[hidden] {
+  display: none;
+}
+
+/* ---------- 视图切换：舞台、镜头对照、调度俯视图 ---------- */
+.sbp-modes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+}
+
+.sbp-modes__hint {
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.sbp-modes__hint:empty {
+  display: none;
+}
+
+/* ---------- 台词配音：声音模型下拉、播放时配音开关、合成按钮与状态 ---------- */
+.sbp-voice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.sbp-voice__label {
+  color: var(--text-muted);
+}
+
+.sbp-voice__model {
+  display: inline-block;
+  width: 260px;
+  max-width: 100%;
+}
+
+.sbp-voice__model:empty {
+  display: none;
+}
+
+.sbp-voice__hint[hidden] {
+  display: none;
+}
+
+.sbp-voice__info {
+  display: flex;
+  flex: 1 0 100%;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sbp-voice__summary,
+.sbp-voice__progress,
+.sbp-voice__status {
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.sbp-voice__summary:empty,
+.sbp-voice__progress:empty,
+.sbp-voice__status:empty {
+  display: none;
+}
+
+.sbp-voice__progress {
+  color: var(--text);
+}
+
+.sbp-voice__status.status-error {
+  color: var(--status-error, var(--vscode-errorForeground));
+}
+
+/* ---------- 主体：舞台与信息栏并排 ---------- */
+.sbp-main {
+  display: grid;
+  flex: 1 1 0;
+  grid-template-columns: minmax(0, 1fr) var(--sbp-info-width);
+  gap: 10px;
+  min-height: 220px;
+}
+
+.sbp-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--sbp-stage-bg);
+  border-radius: 6px;
+}
+
+.sbp-stage:focus-visible,
+.sbp-tl-tracks:focus-visible {
+  outline: 1px solid var(--focus-border);
+  outline-offset: 1px;
+}
+
+.sbp-canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.sbp-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--sbp-surface);
+  border: 1px solid var(--sbp-line);
+  border-radius: 6px;
+}
+
+/* ---------- 信息栏页签 ---------- */
+.sbp-tabs {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding: 0 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--sbp-line);
+}
+
+.sbp-tab {
+  position: relative;
+  flex: none;
+  min-height: 30px;
+  padding: 0 10px;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 12px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: background-color var(--hover-duration) ease;
+}
+
+.sbp-tab:hover {
+  background: var(--option-hover-bg);
+  border-radius: 4px 4px 0 0;
+}
+
+.sbp-tab:focus-visible {
+  outline: 1px solid var(--focus-border);
+  outline-offset: -2px;
+}
+
+.sbp-tab[aria-selected="true"] {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.sbp-tab[aria-selected="true"]::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--vscode-button-background);
+  border-radius: 2px 2px 0 0;
+  content: '';
+}
+
+.sbp-tab__count {
+  margin-left: 4px;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.sbp-tab__count:empty {
+  display: none;
+}
+
+.sbp-tab--warning .sbp-tab__count {
+  color: var(--status-warning);
+}
+
+.sbp-info__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 8px;
+  overflow-y: auto;
+}
+
+.sbp-panel[hidden] {
+  display: none;
+}
+
+.sbp-section__title {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sbp-facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 2px 10px;
+  margin: 0;
+}
+
+.sbp-fact {
+  display: contents;
+}
+
+.sbp-fact dt {
+  color: var(--text-muted);
+}
+
+.sbp-fact dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.sbp-prompt,
+.sbp-empty {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.sbp-prompt {
+  color: var(--text);
+}
+
+.sbp-list,
+.sbp-checks {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sbp-list__item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.sbp-list__item--sound {
+  display: grid;
+  gap: 0;
+}
+
+.sbp-sound-head {
+  color: var(--text-muted);
+}
+
+.sbp-sound-time,
+.sbp-sound-delivery {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.sbp-sound-voice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 2px;
+}
+
+.sbp-sound-voice--none {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.sbp-sound-voice__tag {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.sbp-sound-voice__state {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.sbp-sound-voice__state--pending {
+  color: var(--status-warning);
+}
+
+.sbp-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* ---------- 检查列表 ---------- */
+.sbp-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  border-radius: 4px;
+}
+
+.sbp-check--current {
+  background: var(--option-selected-bg);
+}
+
+.sbp-check__main {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  padding: 2px 4px;
+  color: var(--text);
+  font: inherit;
+  line-height: 1.45;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sbp-check__main:hover {
+  background: var(--option-hover-bg);
+}
+
+.sbp-check__main span {
+  overflow-wrap: anywhere;
+}
+
+.sbp-check__icon {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  color: var(--text-muted);
+}
+
+.sbp-check--warning .sbp-check__icon {
+  color: var(--status-warning);
+}
+
+/* ---------- 播放控制行 ---------- */
+.sbp-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.sbp-controls__transport {
+  display: flex;
+  gap: 4px;
+}
+
+.sbp-time {
+  min-width: 112px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.sbp-controls__rate {
+  width: 76px;
+}
+
+.sbp-controls__display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-left: auto;
+}
+
+.sbp .ui-button.sbp-pressed {
+  background: var(--option-selected-bg);
+  border-color: var(--focus-border);
+}
+
+/* ---------- 时间线 ---------- */
+.sbp-timeline {
+  display: grid;
+  grid-template-columns: var(--sbp-label-width) minmax(0, 1fr);
+  gap: 6px;
+  user-select: none;
+}
+
+.sbp-timeline--empty {
+  opacity: 0.5;
+}
+
+.sbp-tl-labels {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sbp-row-gap);
+  padding-top: calc(var(--sbp-group-row-height) + var(--sbp-shot-row-height) + var(--sbp-row-gap) * 2);
+}
+
+.sbp-tl-label {
+  height: var(--sbp-lane-height);
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: var(--sbp-lane-height);
+  white-space: nowrap;
+}
+
+.sbp-tl-tracks {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sbp-row-gap);
+  min-width: 0;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.sbp-tl-row {
+  position: relative;
+  height: var(--sbp-shot-row-height);
+}
+
+.sbp-tl-row--groups {
+  height: var(--sbp-group-row-height);
+}
+
+.sbp-tl-row--lane {
+  height: var(--sbp-lane-height);
+}
+
+.sbp-tl-lanes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sbp-row-gap);
+}
+
+.sbp-group-mark {
+  position: absolute;
+  top: 0;
+  box-sizing: border-box;
+  padding-left: 3px;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: var(--sbp-group-row-height);
+  white-space: nowrap;
+  border-left: 1px solid var(--text-muted);
+}
+
+.sbp-seg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 10px;
+  background: color-mix(in srgb, var(--text) 14%, transparent);
+  border-right: 1px solid var(--bg);
+}
+
+.sbp-seg--even {
+  background: color-mix(in srgb, var(--text) 24%, transparent);
+}
+
+.sbp-seg--group-start {
+  border-left: 2px solid var(--text-muted);
+}
+
+.sbp-seg--warn {
+  box-shadow: inset 0 -3px 0 var(--status-warning);
+}
+
+.sbp-seg--current {
+  background: color-mix(in srgb, var(--focus-border) 55%, transparent);
+}
+
+.sbp-sound {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  min-width: 2px;
+  border-radius: 2px;
+}
+
+.sbp-sound--dialogue {
+  background: var(--focus-border);
+}
+
+.sbp-sound--narration {
+  background: var(--text-muted);
+}
+
+.sbp-sound--sfx {
+  background: var(--status-warning);
+}
+
+.sbp-sound--music {
+  top: 3px;
+  bottom: 3px;
+  background: color-mix(in srgb, var(--status-success) 70%, transparent);
+}
+
+.sbp-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--status-error);
+  pointer-events: none;
+}
+
+.sbp-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+/* ---------- 窄宽度：信息栏移到舞台下方 ---------- */
+@container sbp (max-width: 880px) {
+  .sbp-main {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(160px, 1fr) var(--sbp-info-stacked-height);
+    min-height: calc(160px + var(--sbp-info-stacked-height) + 10px);
+  }
+
+  .sbp-controls__display {
+    margin-left: 0;
+  }
+}
+
+/* ---------- 生成音色对话框 ---------- */
+.sbp-draft {
+  display: grid;
+  gap: 10px;
+}
+
+.sbp-draft__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.sbp-draft__player:empty {
+  display: none;
+}
+
+.sbp-draft__message {
+  min-height: 1.4em;
+  margin: 0;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.sbp-draft__message.status-error {
+  color: var(--status-error, var(--vscode-errorForeground));
+}
+
+.sbp-draft__adopt {
+  display: grid;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--divider);
+}
+
+.sbp-draft__adopt[hidden] {
+  display: none;
+}

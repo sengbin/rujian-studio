@@ -1,0 +1,156 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：ui-tokens.css
+ * 说明：界面组件库的设计令牌：字体、颜色、状态色、控件与对话框的亮暗主题变量。
+ * 作者：Lion
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-06
+ * 备注：除全局字体的 body 规则外只定义 CSS 变量，侧栏与编辑器区页面都会加载，字体在此统一调整；颜色统一使用 rgb() 写法。
+ * ------------------------------------------------------------------------
+ */
+
+:root {
+  color-scheme: light dark;
+  /* 全局字体：默认跟随 VS Code 界面字体；要换字体，只改这一行 */
+  --font-family: var(--vscode-font-family);
+  --bg: var(--vscode-sideBar-background);
+  --text: var(--vscode-foreground);
+  --text-muted: var(--vscode-descriptionForeground);
+  --focus-border: var(--vscode-focusBorder, rgb(0, 120, 212));
+  /* 悬停、按下时背景色与边框色的过渡时长；减少动态效果时为 0 */
+  --hover-duration: 0.15s;
+  --divider: color-mix(in srgb, var(--vscode-foreground) 8%, transparent);
+
+  --status-success: rgb(79, 220, 138);
+  --status-warning: rgb(242, 177, 74);
+  --status-error: rgb(255, 123, 114);
+
+  /* 输入控件 */
+  --input-bg: color-mix(in srgb, var(--bg) 92%, rgb(0, 0, 0));
+  /* 边框由前景色与页面背景混合得出：VS Code 的 input.border 在多数主题中是透明或与背景同色，不能依赖 */
+  --input-border: color-mix(in srgb, var(--text) 28%, var(--bg));
+
+  /* 交互反馈统一规则：悬停比常态亮一点点（混入白色），按下比常态暗一点点（混入黑色）；
+     按钮、输入、下拉、单选、复选、开关共用，派生令牌见文件末尾的 :root, body.vscode-light 块 */
+  --state-lighten: rgb(255, 255, 255);
+  --state-darken: rgb(0, 0, 0);
+  --state-hover-amount: 10%;
+  --state-active-amount: 10%;
+
+  /* 选择类控件与下拉选项（透明底的列表项）：悬停亮一点点，按下暗一点点 */
+  --choice-mark-border: color-mix(in srgb, var(--text) 55%, transparent);
+  --option-hover-bg: rgba(255, 255, 255, 0.09);
+  --option-active-bg: rgba(0, 0, 0, 0.22);
+  --switch-off-bg: color-mix(in srgb, var(--text) 20%, transparent);
+
+  /* 按钮 */
+  --button-secondary-bg: rgba(255, 255, 255, 0.08);
+  --button-secondary-hover-bg: rgba(255, 255, 255, 0.12);
+  --button-secondary-active-bg: rgba(255, 255, 255, 0.05);
+  --button-secondary-text: rgba(237, 237, 237, 0.92);
+  --button-danger-bg: rgb(161, 51, 45);
+  --button-danger-hover-bg: rgb(180, 58, 51);
+  --button-danger-active-bg: rgb(141, 40, 35);
+  /* 强调色按钮：区别于默认的次要（灰）与主要（蓝）、危险（红，专用于删除）；
+     复用状态色里的“警示黄”，提示这是会替换当前内容、需要注意的特殊操作，不是常规次要操作；
+     深色主题背景偏亮，用深色文字；亮色主题背景偏暗，用浅色文字（见下方 body.vscode-light 覆盖） */
+  --button-accent-bg: var(--status-warning);
+  --button-accent-text: rgb(38, 26, 5);
+
+  /* 表格与标签：由文字色与背景色混合得出，亮暗主题自动适配 */
+  --table-surface: color-mix(in srgb, var(--text) 3%, var(--bg));
+  --table-header-bg: color-mix(in srgb, var(--text) 6%, var(--bg));
+  --table-border: color-mix(in srgb, var(--text) 12%, transparent);
+  --table-row-divider: color-mix(in srgb, var(--text) 8%, transparent);
+  --table-row-hover: color-mix(in srgb, var(--text) 6%, transparent);
+  --table-row-hover-solid: color-mix(in srgb, var(--text) 6%, var(--table-surface));
+
+  --chip-bg: color-mix(in srgb, var(--vscode-button-background) 22%, transparent);
+  --chip-border: color-mix(in srgb, var(--vscode-button-background) 45%, transparent);
+
+  /* 禁用态：所有控件共用，随主题文字色变化 */
+  --disabled-text: color-mix(in srgb, var(--text) 42%, transparent);
+  --disabled-bg: color-mix(in srgb, var(--text) 7%, transparent);
+  --disabled-border: color-mix(in srgb, var(--text) 14%, transparent);
+
+  /* 对话框 */
+  --dialog-bg: color-mix(in srgb, var(--vscode-editorWidget-background, var(--bg)) 90%, rgb(255, 255, 255));
+  --dialog-border: color-mix(in srgb, rgb(255, 255, 255) 16%, var(--bg));
+  --dialog-divider: color-mix(in srgb, var(--text) 18%, transparent);
+  --dialog-titlebar-bg: color-mix(in srgb, var(--text) 10%, var(--dialog-bg));
+  --dialog-shadow: 0 4px 20px color-mix(in srgb, rgb(0, 0, 0) 30%, transparent);
+  --dialog-overlay: rgba(0, 0, 0, 0.45);
+  --dialog-close-color: rgb(255, 123, 114);
+  --dialog-close-hover-color: rgb(255, 255, 255);
+  --dialog-close-hover-bg: rgb(196, 43, 28);
+  --dialog-close-active-bg: rgb(160, 33, 22);
+  --danger-notice-bg: rgb(92, 28, 24);
+  --danger-notice-border: rgb(196, 43, 28);
+  --danger-notice-text: rgb(255, 226, 223);
+}
+
+body.vscode-light {
+  --status-success: rgb(31, 122, 63);
+  --status-warning: rgb(169, 106, 16);
+  --status-error: rgb(180, 35, 24);
+
+  --input-bg: color-mix(in srgb, var(--vscode-input-background) 93%, rgb(217, 217, 217));
+  --input-border: color-mix(in srgb, var(--text) 34%, var(--bg));
+
+  --choice-mark-border: color-mix(in srgb, var(--text) 60%, transparent);
+  /* 亮主题的列表项底色是浅色，白色提亮看不出来，悬停与按下都用深色叠加，按下更深 */
+  --option-hover-bg: color-mix(in srgb, var(--text) 9%, transparent);
+  --option-active-bg: color-mix(in srgb, var(--text) 18%, transparent);
+
+  --button-secondary-bg: rgba(90, 90, 90, 0.14);
+  --button-secondary-hover-bg: rgba(90, 90, 90, 0.1);
+  --button-secondary-active-bg: rgba(90, 90, 90, 0.2);
+  --button-secondary-text: rgb(47, 47, 47);
+  --button-danger-bg: rgb(169, 48, 41);
+  --button-danger-hover-bg: rgb(186, 54, 46);
+  --button-danger-active-bg: rgb(150, 43, 37);
+  /* 亮主题的警示黄更深，深色文字对比不够，改用浅色文字 */
+  --button-accent-text: rgb(255, 255, 255);
+
+  --dialog-bg: color-mix(in srgb, var(--bg) 40%, rgb(255, 255, 255));
+  --dialog-border: color-mix(in srgb, rgb(0, 0, 0) 22%, rgb(255, 255, 255));
+  --dialog-titlebar-bg: color-mix(in srgb, rgb(0, 0, 0) 6%, var(--dialog-bg));
+  --dialog-close-color: rgb(180, 35, 24);
+  --danger-notice-bg: rgb(253, 232, 230);
+  --danger-notice-border: rgb(196, 43, 28);
+  --danger-notice-text: rgb(120, 20, 14);
+}
+
+/* 由常态派生的悬停与按下令牌：亮主题只在 body 上覆盖了输入底色与边框，所以在 body 上重新计算 */
+:root,
+body.vscode-light {
+  --accent-hover: color-mix(in srgb, var(--vscode-button-background), var(--state-lighten) var(--state-hover-amount));
+  --accent-active: color-mix(in srgb, var(--vscode-button-background), var(--state-darken) var(--state-active-amount));
+  --button-accent-hover-bg: color-mix(in srgb, var(--button-accent-bg), var(--state-lighten) var(--state-hover-amount));
+  --button-accent-active-bg: color-mix(in srgb, var(--button-accent-bg), var(--state-darken) var(--state-active-amount));
+
+  --input-border-hover: color-mix(in srgb, var(--input-border), var(--state-lighten) var(--state-hover-amount));
+  --input-border-active: color-mix(in srgb, var(--input-border), var(--state-darken) var(--state-active-amount));
+
+  --choice-mark-border-hover: color-mix(in srgb, var(--choice-mark-border), var(--state-lighten) var(--state-hover-amount));
+  --choice-mark-border-active: color-mix(in srgb, var(--choice-mark-border), var(--state-darken) var(--state-active-amount));
+  --choice-mark-hover-bg: color-mix(in srgb, var(--input-bg), var(--state-lighten) var(--state-hover-amount));
+  --choice-mark-active-bg: color-mix(in srgb, var(--input-bg), var(--state-darken) var(--state-active-amount));
+
+  --switch-off-hover-bg: color-mix(in srgb, var(--switch-off-bg), var(--state-lighten) var(--state-hover-amount));
+  --switch-off-active-bg: color-mix(in srgb, var(--switch-off-bg), var(--state-darken) var(--state-active-amount));
+
+  --option-selected-bg: color-mix(in srgb, var(--vscode-button-background) 30%, transparent);
+  --option-selected-hover-bg: color-mix(in srgb, var(--accent-hover) 30%, transparent);
+  --option-selected-active-bg: color-mix(in srgb, var(--accent-active) 30%, transparent);
+}
+
+body {
+  font-family: var(--font-family);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --hover-duration: 0s;
+  }
+}
