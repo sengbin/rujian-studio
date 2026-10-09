@@ -28,7 +28,7 @@
   list-style: none;
   background: var(--input-bg);
   border: 1px solid var(--input-border);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 .ui-file-picker__empty {
@@ -103,7 +103,7 @@
   cursor: zoom-in;
   background: var(--option-hover-bg);
   border: 1px solid var(--input-border);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   transition: border-color var(--hover-duration) ease;
 }
 

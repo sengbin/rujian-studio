@@ -144,47 +144,26 @@
       { id: 'checks', label: '检查' }
     ];
     let infoTab = 'shot';
-    const infoPanels = {};
-    const infoTabButtons = {};
     const infoCounts = {};
-    for (const tab of INFO_TABS) {
-      const tabId = aiUi.uid('sbp-tab');
-      const panelId = aiUi.uid('sbp-panel');
-      infoCounts[tab.id] = aiUi.h('span', { class: 'ui-tab__count sbp-tab__count' });
-      infoTabButtons[tab.id] = aiUi.h('button', { class: 'ui-tab sbp-tab', attrs: { type: 'button', role: 'tab', id: tabId, 'aria-controls': panelId } }, tab.label, infoCounts[tab.id]);
-      infoPanels[tab.id] = aiUi.h('div', { class: 'sbp-panel', attrs: { role: 'tabpanel', id: panelId, 'aria-labelledby': tabId } });
-    }
+    for (const tab of INFO_TABS) infoCounts[tab.id] = aiUi.h('span', { class: 'ui-tab__count sbp-tab__count' });
+    let infoBody = null;
+    const infoTabs = aiUi.tabs({
+      items: INFO_TABS.map((tab) => ({ id: tab.id, label: tab.label, count: infoCounts[tab.id], className: 'sbp-tab' })),
+      activeId: infoTab,
+      ariaLabel: '镜头信息类别',
+      className: 'sbp-tabs',
+      panelClass: 'sbp-panel',
+      onSelect: (id) => {
+        infoTab = id;
+        if (infoBody) infoBody.scrollTop = 0;
+      }
+    });
+    const infoPanels = infoTabs.panelById;
+    const infoTabButtons = infoTabs.buttons;
     const checkInfo = infoPanels.checks;
     checkInfo.classList.add('sbp-info__checks');
-    const infoBody = aiUi.h('div', { class: 'sbp-info__body' }, INFO_TABS.map((tab) => infoPanels[tab.id]));
-    const infoTabs = aiUi.h('div', { class: 'ui-tabs sbp-tabs', attrs: { role: 'tablist', 'aria-label': '镜头信息类别' } }, INFO_TABS.map((tab) => infoTabButtons[tab.id]));
-    const infoPanel = aiUi.h('aside', { class: 'sbp-info', attrs: { 'aria-label': '镜头信息与检查' } }, infoTabs, infoBody);
-    /** 选中信息页签：只显示它的面板，只有选中的页签在键盘 Tab 顺序里。 */
-    function selectInfoTab(id) {
-      infoTab = id;
-      for (const tab of INFO_TABS) {
-        const isActive = tab.id === id;
-        infoTabButtons[tab.id].setAttribute('aria-selected', String(isActive));
-        infoTabButtons[tab.id].tabIndex = isActive ? 0 : -1;
-        infoPanels[tab.id].hidden = !isActive;
-      }
-      infoBody.scrollTop = 0;
-    }
-    INFO_TABS.forEach((tab, index) => {
-      infoTabButtons[tab.id].addEventListener('click', () => selectInfoTab(tab.id));
-      infoTabButtons[tab.id].addEventListener('keydown', (event) => {
-        let target;
-        if (event.key === 'ArrowLeft') target = INFO_TABS[(index - 1 + INFO_TABS.length) % INFO_TABS.length];
-        else if (event.key === 'ArrowRight') target = INFO_TABS[(index + 1) % INFO_TABS.length];
-        else if (event.key === 'Home') target = INFO_TABS[0];
-        else if (event.key === 'End') target = INFO_TABS[INFO_TABS.length - 1];
-        else return;
-        event.preventDefault();
-        selectInfoTab(target.id);
-        infoTabButtons[target.id].focus();
-      });
-    });
-    selectInfoTab(infoTab);
+    infoBody = aiUi.h('div', { class: 'sbp-info__body' }, infoTabs.panels);
+    const infoPanel = aiUi.h('aside', { class: 'sbp-info', attrs: { 'aria-label': '镜头信息与检查' } }, infoTabs.element, infoBody);
     const timeLabel = aiUi.h('span', { class: 'sbp-time', text: `${formatClock(0)} / ${formatClock(0)}` });
     const groupRow = aiUi.h('div', { class: 'sbp-tl-row sbp-tl-row--groups' });
     const segmentRow = aiUi.h('div', { class: 'sbp-tl-row sbp-tl-row--shots' });
@@ -570,7 +549,7 @@
 
     // ---------- 信息栏 ----------
     function section(title, ...children) {
-      return aiUi.h('section', { class: 'sbp-section' }, aiUi.h('h3', { class: 'sbp-section__title', text: title }), ...children);
+      return aiUi.h('section', { class: 'sbp-section' }, aiUi.h('h3', { class: 'ui-heading sbp-section__title', text: title }), ...children);
     }
 
     function factRow(label, value) {

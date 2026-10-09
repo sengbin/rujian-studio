@@ -201,9 +201,9 @@
     return aiUi.h(
       'section',
       { class: 'settings-section' },
-      aiUi.h('h2', { text: '文本生成' }),
+      aiUi.h('h2', { class: 'ui-title', text: '文本生成' }),
       renderEngineSettings(view),
-      aiUi.h('h3', { class: 'settings-subtitle', text: '小说分段（所有文本模型通用）' }),
+      aiUi.h('h3', { class: 'ui-heading settings-subtitle', text: '小说分段（所有文本模型通用）' }),
       splitField.element,
       splitStatus.element,
       charsField.element,
@@ -444,49 +444,25 @@
   function renderModelTabs(provider, status) {
     const labels = [...new Set(provider.models.map((model) => model.kindLabel))];
     labels.sort((a, b) => kindOrder(a) - kindOrder(b));
-    const tabs = labels.map((label) => {
+    const items = labels.map((label) => {
       const models = provider.models.filter((model) => model.kindLabel === label);
-      const button = aiUi.h(
-        'button',
-        { class: 'ui-tab provider-tab', attrs: { type: 'button', role: 'tab' } },
+      return {
+        id: label,
         label,
-        aiUi.h('span', { class: 'ui-tab__count provider-tab__count', text: `${models.filter((model) => model.isEnabled).length}/${models.length}` })
-      );
-      const panel = aiUi.h('div', { class: 'provider-tabpanel', attrs: { role: 'tabpanel' } }, renderModelTable({ ...provider, models }, status));
-      return { label, button, panel };
+        className: 'provider-tab',
+        count: aiUi.h('span', { class: 'ui-tab__count provider-tab__count', text: `${models.filter((model) => model.isEnabled).length}/${models.length}` }),
+        content: renderModelTable({ ...provider, models }, status)
+      };
     });
-
-    /** 只显示选中的标签面板；只有选中的标签在键盘 Tab 顺序里。 */
-    function activate(label) {
-      for (const tab of tabs) {
-        const isActive = tab.label === label;
-        tab.button.setAttribute('aria-selected', String(isActive));
-        tab.button.tabIndex = isActive ? 0 : -1;
-        tab.panel.hidden = !isActive;
-      }
-      activeKindByProvider.set(provider.id, label);
-    }
-
-    tabs.forEach((tab, index) => {
-      tab.button.addEventListener('click', () => activate(tab.label));
-      tab.button.addEventListener('keydown', (event) => {
-        const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
-        if (step === 0) return;
-        event.preventDefault();
-        const target = tabs[(index + step + tabs.length) % tabs.length];
-        activate(target.label);
-        target.button.focus();
-      });
+    const tabs = aiUi.tabs({
+      items,
+      activeId: activeKindByProvider.get(provider.id),
+      ariaLabel: `${provider.displayName}的模型类型`,
+      className: 'provider-tabs',
+      panelClass: 'provider-tabpanel',
+      onSelect: (id) => activeKindByProvider.set(provider.id, id)
     });
-    const remembered = activeKindByProvider.get(provider.id);
-    activate(tabs.some((tab) => tab.label === remembered) ? remembered : tabs[0].label);
-
-    return aiUi.h(
-      'div',
-      { class: 'provider-models' },
-      aiUi.h('div', { class: 'ui-tabs provider-tabs', attrs: { role: 'tablist', 'aria-label': `${provider.displayName}的模型类型` } }, tabs.map((tab) => tab.button)),
-      tabs.map((tab) => tab.panel)
-    );
+    return aiUi.h('div', { class: 'provider-models' }, tabs.element, tabs.panels);
   }
 
   /** 一个服务商的设置区：标题与启用开关、访问密钥、设置项、模型表。 */
@@ -513,11 +489,11 @@
     return aiUi.h(
       'section',
       { class: 'settings-section settings-section--wide' },
-      aiUi.h('div', { class: 'provider-header' }, aiUi.h('h2', { text: provider.displayName }), enabledSwitch.element),
+      aiUi.h('div', { class: 'provider-header' }, aiUi.h('h2', { class: 'ui-title', text: provider.displayName }), enabledSwitch.element),
       status.element,
       renderApiKey(provider, resultSlots),
       settingElements,
-      aiUi.h('h3', { class: 'provider-models-title', text: '模型' }),
+      aiUi.h('h3', { class: 'ui-heading provider-models-title', text: '模型' }),
       provider.models.length === 0 ? aiUi.h('p', { class: 'description', text: '该服务商没有提供模型。' }) : renderModelTabs(provider, status)
     );
   }
@@ -538,7 +514,7 @@
       return aiUi.h(
         'section',
         { class: 'settings-section' },
-        aiUi.h('h2', { text: '模型服务商' }),
+        aiUi.h('h2', { class: 'ui-title', text: '模型服务商' }),
         aiUi.h('p', { class: 'description', text: '尚未接入模型。' })
       );
     }
@@ -585,7 +561,7 @@
     return aiUi.h(
       'section',
       { class: 'settings-section settings-section--wide' },
-      aiUi.h('h2', { text: '模型服务商' }),
+      aiUi.h('h2', { class: 'ui-title', text: '模型服务商' }),
       aiUi.table({ columns, rows: providers, ariaLabel: '模型服务商' }).element,
       aiUi.h(
         'div',

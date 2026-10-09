@@ -20,18 +20,6 @@
   width: 170px;
 }
 
-.assets-message {
-  margin: var(--space-md) 0;
-}
-
-.assets-state {
-  padding: var(--space-page) 0;
-}
-
-.assets-state .ui-button {
-  margin-top: var(--space-md);
-}
-
 /* 预览列：48px 的缩略图，没有图时显示占位文字 */
 .asset-thumb {
   display: flex;
@@ -41,7 +29,7 @@
   height: 48px;
   overflow: hidden;
   border: 1px solid var(--table-border);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
 }
 
 .asset-thumb--empty {
@@ -188,7 +176,7 @@
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--table-border);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--host-description-foreground);
   font-size: var(--font-size-caption);

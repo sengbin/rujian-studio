@@ -130,21 +130,15 @@
       const items = chapters.map((chapter) => {
         const hint = wordHintText(view, chapter);
         const isSelected = chapter.seq === selectedSeq;
-        return aiUi.h(
-          'button',
-          {
-            class: isSelected ? 'ui-list__item stage-item is-selected' : 'ui-list__item stage-item',
-            attrs: { type: 'button', 'aria-current': isSelected ? 'true' : undefined },
-            on: { click: () => void selectChapter(chapter.seq) }
-          },
+        return aiUi.listItem(
+          { selected: isSelected, className: 'stage-item', onClick: () => void selectChapter(chapter.seq) },
           aiUi.h('span', { class: 'stage-item__title', text: `${chapter.seq}. ${chapter.title}` }),
           aiUi.h('span', { class: 'stage-item__meta', text: chapter.reference ? `${chapter.wordCount} / ${chapter.reference.targetWords} 字` : `${chapter.wordCount} 字` }),
           hint ? aiUi.h('span', { class: chapter.reference && !chapter.reference.withinTolerance ? 'stage-item__hint status-error' : 'stage-item__hint status-warning', text: hint }) : null
         );
       });
-      return aiUi.h(
-        'aside',
-        { class: 'ui-list stage-list' },
+      return aiUi.list(
+        { tag: 'aside', className: 'stage-list' },
         aiUi.h('p', { class: 'description', text: `共 ${chapters.length} 章，共 ${totalWords} 字` }),
         chapters.length === 0 ? aiUi.h('p', { class: 'description', text: '章节生成后会陆续显示在这里。' }) : null,
         items

@@ -87,7 +87,7 @@
     return aiUi.h(
       'section',
       { class: 'backup-card' },
-      aiUi.h('h2', { class: 'backup-card__title', text: title }),
+      aiUi.h('h2', { class: 'ui-title backup-card__title', text: title }),
       ...descriptions.map((text) => aiUi.h('p', { class: 'backup-card__description', text })),
       ...content
     );

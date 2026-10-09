@@ -52,7 +52,7 @@ ${styleTags}
 <body class="${themeClass}">
   <header class="page-header">
     <div class="page-header__text">
-      <h1 class="page-header__title">${escapeHtml(options.title)}</h1>
+      <h1 class="ui-title page-header__title">${escapeHtml(options.title)}</h1>
       <p class="page-header__description">${escapeHtml(options.description)}</p>
     </div>
     <div id="page-toolbar" class="page-header__toolbar"></div>

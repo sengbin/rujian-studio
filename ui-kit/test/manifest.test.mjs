@@ -36,6 +36,8 @@ test('每个脚本只依赖排在它前面的脚本（按 aiUi.xxx 的使用检�
     'ui-file-picker.js': ['filePicker'],
     'ui-field.js': ['field'],
     'ui-table.js': ['table', 'tableMainCell', 'chip'],
+    'ui-tabs.js': ['tabs'],
+    'ui-list.js': ['list', 'listItem'],
     'ui-dialog.js': ['openDialog', 'alert', 'confirm', 'confirmDelete', 'openPage']
   };
   for (const [index, file] of scripts.entries()) {

@@ -391,7 +391,7 @@
 .ui-select__option {
   padding: var(--select-option-padding-y) var(--select-option-padding-x);
   overflow: hidden;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -457,7 +457,7 @@
 }
 
 .ui-choice:focus-visible {
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   outline: 1px solid var(--focus-border);
   outline-offset: 2px;
 }
@@ -488,7 +488,7 @@
 }
 
 .ui-choice__mark--checkbox {
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 .ui-choice[aria-checked="true"] .ui-choice__mark {
@@ -698,7 +698,7 @@
 
 .ui-tab:hover {
   background: var(--option-hover-bg);
-  border-radius: 4px 4px 0 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
 .ui-tab:focus-visible {
@@ -773,19 +773,56 @@
 }
 
 /* 选中项：选中底色加 3px 的内侧左标记，选中状态不只靠颜色区分 */
-.ui-list__item.is-selected,
 .ui-list__item[aria-current="true"] {
   background: var(--option-selected-bg);
   border-color: var(--focus-border);
   box-shadow: inset 3px 0 0 var(--host-button-background);
 }
 
-.ui-list__item.is-selected:hover,
 .ui-list__item[aria-current="true"]:hover {
   background: var(--option-selected-hover-bg);
 }
 
-.ui-list__item.is-selected:active,
 .ui-list__item[aria-current="true"]:active {
   background: var(--option-selected-active-bg);
+}
+
+/* ---------- 文字角色 ---------- */
+/* 标题的字号与字重由总控的字体角色决定；页面只管外边距，不再各写一遍 */
+.ui-display,
+.ui-title,
+.ui-heading,
+.ui-subheading {
+  margin: 0;
+  font-weight: var(--font-weight-strong);
+}
+
+.ui-display {
+  font-size: var(--font-size-display);
+}
+
+.ui-title {
+  font-size: var(--font-size-title);
+}
+
+.ui-heading {
+  font-size: var(--font-size-heading);
+}
+
+.ui-subheading {
+  font-size: var(--font-size-subheading);
+}
+
+/* ---------- 空状态与页内提示 ---------- */
+/* 列表、工作台等页面在没有内容或出错时显示的说明块（可带一个按钮），以及按钮操作后的状态提示 */
+.ui-state {
+  padding: var(--space-page) 0;
+}
+
+.ui-state .ui-button {
+  margin-top: var(--space-md);
+}
+
+.ui-message {
+  margin: var(--space-md) 0;
 }

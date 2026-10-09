@@ -46,7 +46,7 @@ test('按顺序引用全部样式与脚本，并有挂载点', () => {
 
 test('标题栏在挂载点之前，标题与描述上下排列，右侧有工具栏插槽，描述中的特殊字符被转义', () => {
   const html = createPageHtml({ ...OPTIONS, description: '<b>描述</b>' });
-  assert.match(html, /<h1 class="page-header__title">新建项目<\/h1>/);
+  assert.match(html, /<h1 class="ui-title page-header__title">新建项目<\/h1>/);
   assert.match(html, /<p class="page-header__description">&lt;b&gt;描述&lt;\/b&gt;<\/p>/);
   assert.match(html, /<div id="page-toolbar" class="page-header__toolbar"><\/div>/);
   assert.ok(html.indexOf('page-header__title') < html.indexOf('page-header__description'));

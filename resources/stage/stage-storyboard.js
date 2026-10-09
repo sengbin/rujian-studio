@@ -82,67 +82,11 @@
 
   /** 导航里的一个镜头按钮：序号、画面描述（过长时省略）与附加信息；isCurrent 为 true 时带当前标记。 */
   function createShotButton({ number, title, meta, isCurrent, label, onClick }) {
-    return aiUi.h(
-      'button',
-      { class: 'storyboard-shot', attrs: { type: 'button', 'aria-current': isCurrent ? 'true' : undefined, 'aria-label': label }, on: { click: onClick } },
+    return aiUi.listItem(
+      { selected: isCurrent, className: 'storyboard-shot', ariaLabel: label, onClick },
       aiUi.h('span', { class: 'storyboard-shot__number', text: String(number).padStart(SHOT_NUMBER_WIDTH, '0') }),
       aiUi.h('span', { class: 'storyboard-shot__copy' }, aiUi.h('span', { class: 'storyboard-shot__title', text: title }), aiUi.h('span', { class: 'storyboard-shot__meta', text: meta }))
     );
-  }
-
-  /**
-   * 页签栏与对应的面板：面板一次创建，切换时只显示、隐藏，各页签里的输入因此保持原样；支持左右方向键、Home、End 切换。
-   * @param items 页签 [{ id, label, count?, content }]：count 是跟在文字后的元素，content 是面板内容。
-   * @param activeId 初始选中的页签。
-   * @param onSelect 选中页签后调用，参数为页签标识。
-   * @returns { tablist, panels }。
-   */
-  function createTabs(items, activeId, onSelect) {
-    const tabs = items.map((item) => {
-      const tabId = aiUi.uid('storyboard-tab');
-      const panelId = aiUi.uid('storyboard-panel');
-      return {
-        id: item.id,
-        button: aiUi.h(
-          'button',
-          { class: 'ui-tab storyboard-tab', attrs: { type: 'button', role: 'tab', id: tabId, 'aria-controls': panelId } },
-          item.label,
-          item.count
-        ),
-        panel: aiUi.h('div', { class: 'storyboard-panel', attrs: { role: 'tabpanel', id: panelId, 'aria-labelledby': tabId, tabindex: '0' } }, item.content)
-      };
-    });
-
-    /** 只显示选中的页签面板，其余隐藏；只有选中的页签在键盘 Tab 顺序里。 */
-    function activate(id) {
-      for (const tab of tabs) {
-        const isActive = tab.id === id;
-        tab.button.setAttribute('aria-selected', String(isActive));
-        tab.button.tabIndex = isActive ? 0 : -1;
-        tab.panel.hidden = !isActive;
-      }
-      onSelect(id);
-    }
-
-    tabs.forEach((tab, index) => {
-      tab.button.addEventListener('click', () => activate(tab.id));
-      tab.button.addEventListener('keydown', (event) => {
-        let target;
-        if (event.key === 'ArrowLeft') target = tabs[(index - 1 + tabs.length) % tabs.length];
-        else if (event.key === 'ArrowRight') target = tabs[(index + 1) % tabs.length];
-        else if (event.key === 'Home') target = tabs[0];
-        else if (event.key === 'End') target = tabs[tabs.length - 1];
-        else return;
-        event.preventDefault();
-        activate(target.id);
-        target.button.focus();
-      });
-    });
-    activate(activeId);
-    return {
-      tablist: aiUi.h('div', { class: 'ui-tabs storyboard-tabs', attrs: { role: 'tablist', 'aria-label': '镜头信息类别' } }, tabs.map((tab) => tab.button)),
-      panels: tabs.map((tab) => tab.panel)
-    };
   }
 
   /**
@@ -252,7 +196,7 @@
         aiUi.h(
           'div',
           { class: 'storyboard-nav__head' },
-          aiUi.h('h2', { class: 'storyboard-nav__title', text: `镜头（${view.shots.length}）` }),
+          aiUi.h('h2', { class: 'ui-heading storyboard-nav__title', text: `镜头（${view.shots.length}）` }),
           view.actions.canEdit ? aiUi.button({ kind: 'add', text: ADD_TEXT, compact: true, onClick: () => void select(NEW_SHOT) }).element : null
         ),
         aiUi.h('div', { class: 'storyboard-nav__list', attrs: { role: 'group', 'aria-label': '本集全部镜头' } }, items)
@@ -363,7 +307,7 @@
         aiUi.h(
           'div',
           { class: 'storyboard-editor__heading' },
-          aiUi.h('h2', { class: 'storyboard-editor__title', text: shot.sceneLabel ? `第 ${shot.seq} 镜 · ${shot.sceneLabel}` : `第 ${shot.seq} 镜` }),
+          aiUi.h('h2', { class: 'ui-title storyboard-editor__title', text: shot.sceneLabel ? `第 ${shot.seq} 镜 · ${shot.sceneLabel}` : `第 ${shot.seq} 镜` }),
           group ? aiUi.h('span', { class: 'storyboard-tag', text: `第 ${group.seq} 组` }) : null,
           durationTag
         ),
@@ -441,18 +385,22 @@
         const seconds = Number(value);
         if (value.trim() !== '' && Number.isFinite(seconds) && seconds > 0) topline.durationTag.textContent = formatSeconds(seconds);
       });
-      const tabs = createTabs(
-        [
-          { id: TAB_BLOCKING, label: '调度', count: blockingCountElement, content: blocking.element },
-          { id: TAB_SHOT, label: '镜头', content: shotPanel.element },
-          { id: TAB_CONTENT, label: '画面与声音', count: contentCountElement, content: content.element }
+      const tabs = aiUi.tabs({
+        items: [
+          { id: TAB_BLOCKING, label: '调度', count: blockingCountElement, content: blocking.element, className: 'storyboard-tab' },
+          { id: TAB_SHOT, label: '镜头', content: shotPanel.element, className: 'storyboard-tab' },
+          { id: TAB_CONTENT, label: '画面与声音', count: contentCountElement, content: content.element, className: 'storyboard-tab' }
         ],
-        selectedTab,
-        (id) => {
+        activeId: selectedTab,
+        ariaLabel: '镜头信息类别',
+        className: 'storyboard-tabs',
+        panelClass: 'storyboard-panel',
+        focusablePanels: true,
+        onSelect: (id) => {
           selectedTab = id;
         }
-      );
-      const element = aiUi.h('section', { class: 'storyboard-editor', attrs: { 'aria-label': '镜头详情' } }, topline.element, tabs.tablist, tabs.panels);
+      });
+      const element = aiUi.h('section', { class: 'storyboard-editor', attrs: { 'aria-label': '镜头详情' } }, topline.element, tabs.element, tabs.panels);
       editorControls = { element, saveButton, setDirty, collect: () => ({ ...blocking.collect(), ...shotPanel.collect(), ...content.collect() }) };
       return element;
     }

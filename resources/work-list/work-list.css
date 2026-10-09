@@ -24,14 +24,3 @@
   width: 110px;
 }
 
-.works-message {
-  margin: var(--space-md) 0;
-}
-
-.works-state {
-  padding: var(--space-page) 0;
-}
-
-.works-state .ui-button {
-  margin-top: var(--space-md);
-}

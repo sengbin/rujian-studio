@@ -180,3 +180,16 @@ test('字体总控：除令牌文件外，样式不写死字号与字重，统�
   }
   assert.deepEqual(offenders, [], '这些位置写死了字号或字重');
 });
+test('间距与圆角总控：除令牌文件外，样式不写死 3 到 13px 的间距与圆角，统一引用 ui-tokens.css 的间距、圆角令牌', () => {
+  const resourcesRoot = join(sourceRoot, '..', '..', 'resources');
+  const offenders = [];
+  for (const path of [...listStyleFiles(sourceRoot), ...listStyleFiles(resourcesRoot)]) {
+    if (path.endsWith('ui-tokens.css')) continue;
+    readFileSync(path, 'utf8').split(/\r?\n/).forEach((line, index) => {
+      const declaration = /^\s*(margin|padding|gap|row-gap|column-gap|border-radius)[\w-]*:\s*([^;]+);/.exec(line);
+      if (!declaration || /(^|\s)-\d/.test(declaration[2])) return;
+      if (/(?<![\w.-])([3-9]|1[0-3])px\b/.test(declaration[2])) offenders.push(path + ':' + (index + 1) + ' ' + line.trim());
+    });
+  }
+  assert.deepEqual(offenders, [], '这些位置写死了间距或圆角');
+});

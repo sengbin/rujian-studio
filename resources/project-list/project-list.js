@@ -162,7 +162,7 @@
 
   /** 空状态、加载中和错误状态。 */
   function renderState(text, button) {
-    return aiUi.h('div', { class: 'list-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
+    return aiUi.h('div', { class: 'ui-state list-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
   }
 
   /** 按当前状态刷新内容区。 */
@@ -202,7 +202,7 @@
     const toolbar = document.getElementById('page-toolbar');
     toolbar.append(aiUi.h('div', { class: 'list-search' }, search.element));
 
-    messageElement = aiUi.h('p', { class: 'list-message', hidden: true, attrs: { role: 'status' } });
+    messageElement = aiUi.h('p', { class: 'ui-message list-message', hidden: true, attrs: { role: 'status' } });
     contentElement = aiUi.h('div');
     root.append(messageElement, contentElement);
   }

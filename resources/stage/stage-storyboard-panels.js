@@ -36,7 +36,7 @@
 
   /** 区块标题：标题加一行说明。 */
   function sectionHeading(title, note) {
-    return aiUi.h('div', {}, aiUi.h('h3', { class: 'storyboard-section__title', text: title }), note ? aiUi.h('p', { class: 'storyboard-section__note', text: note }) : null);
+    return aiUi.h('div', {}, aiUi.h('h3', { class: 'ui-heading storyboard-section__title', text: title }), note ? aiUi.h('p', { class: 'storyboard-section__note', text: note }) : null);
   }
 
   /**
@@ -74,7 +74,7 @@
         aiUi.h(
           'section',
           { class: 'storyboard-entity-group' },
-          aiUi.h('h4', { class: 'storyboard-entity-group__title' }, label, aiUi.h('span', { class: 'storyboard-entity-group__count', text: `${entities.length} 个` })),
+          aiUi.h('h4', { class: 'ui-subheading storyboard-entity-group__title' }, label, aiUi.h('span', { class: 'storyboard-entity-group__count', text: `${entities.length} 个` })),
           aiUi.h('div', { class: 'storyboard-entity-list' }, buttons)
         )
       );
@@ -443,7 +443,7 @@
         element: aiUi.h(
           'article',
           { class: 'storyboard-staging' },
-          aiUi.h('h4', { class: 'storyboard-staging__title' }, name, aiUi.h('span', { class: 'storyboard-staging__kind', text: entity.kindLabel })),
+          aiUi.h('h4', { class: 'ui-heading storyboard-staging__title' }, name, aiUi.h('span', { class: 'storyboard-staging__kind', text: entity.kindLabel })),
           aiUi.h(
             'div',
             { class: 'storyboard-staging__fields' },

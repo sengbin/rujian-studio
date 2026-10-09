@@ -408,7 +408,7 @@
     const progressValue = aiUi.h('div', { class: 'wb-progress__value' });
     const progress = aiUi.h('div', { class: 'wb-progress', hidden: true, attrs: { role: 'progressbar', 'aria-label': '素材绑定进度', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': 0 } }, progressValue);
     const matchButton = aiUi.button({ text: '按名称自动匹配', disabled: true, onClick: () => void autoMatch() });
-    const heading = aiUi.h('h3', { class: 'wb-entity-heading' });
+    const heading = aiUi.h('h3', { class: 'ui-subheading wb-entity-heading' });
     const listElement = aiUi.h('div', { class: 'wb-entity-list' });
     const element = aiUi.h(
       'div',

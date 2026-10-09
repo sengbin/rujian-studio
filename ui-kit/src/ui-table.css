@@ -63,7 +63,8 @@
 }
 
 .ui-table--compact th,
-.ui-table--compact td {
+.ui-table--compact td,
+.ui-table--compact thead th {
   padding: var(--table-compact-cell-padding-y) var(--table-compact-cell-padding-x);
 }
 

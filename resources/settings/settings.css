@@ -22,8 +22,6 @@
 .settings-section h2 {
   margin: 0 0 var(--space-page);
   padding: 0 0 var(--space-sm);
-  font-size: var(--font-size-title);
-  font-weight: var(--font-weight-strong);
   border-bottom: 1px solid var(--divider);
 }
 
@@ -38,8 +36,6 @@
 /* 分组内的小标题：区分引擎设置与对所有文本模型通用的设置 */
 .settings-section h3.settings-subtitle {
   margin: var(--space-page) 0 var(--space-md);
-  font-size: var(--font-size-heading);
-  font-weight: var(--font-weight-strong);
 }
 
 /* 保存状态文字紧跟字段，留出固定间距避免出现时整体跳动 */
@@ -104,8 +100,6 @@
 
 .provider-models-title {
   margin: var(--space-md) 0 var(--space-md);
-  font-size: var(--font-size-heading);
-  font-weight: var(--font-weight-strong);
 }
 
 /* 模型类型页签：样式见组件库的 ui-tabs，这里只管下方间距 */

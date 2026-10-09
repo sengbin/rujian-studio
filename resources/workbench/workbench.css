@@ -12,18 +12,15 @@
 /* ---------- 设计令牌 ---------- */
 :root {
   --wb-gap: var(--space-page);
-  --wb-radius: 8px;
-  --wb-inner-radius: 6px;
+  --wb-radius: var(--radius-xl);
+  --wb-inner-radius: var(--radius-lg);
   --wb-pane-height: 340px;
   --wb-shots-height: clamp(130px, 26vh, 260px);
   --wb-queue-max-height: min(24vh, 180px);
   --wb-accent: var(--host-button-background);
-  --wb-panel-bg: color-mix(in srgb, var(--host-widget-background, var(--bg)) 90%, rgb(255, 255, 255));
   --wb-panel-border: color-mix(in srgb, var(--text) 12%, var(--bg));
   --wb-line-strong: color-mix(in srgb, var(--text) 28%, transparent);
-  --wb-panel-shadow: none;
   --wb-inset-bg: color-mix(in srgb, var(--bg) 83%, rgb(0, 0, 0));
-  --wb-raised-bg: color-mix(in srgb, var(--text) 5%, var(--wb-panel-bg));
   --wb-selected-bg: color-mix(in srgb, var(--text) 8%, transparent);
 
   /* 本页的标签用灰色底，不带彩色背景 */
@@ -31,15 +28,18 @@
   --chip-border: color-mix(in srgb, var(--text) 18%, transparent);
 }
 
+/* 面板底色与阴影取总控的卡片令牌；别名要定义在 body 上，才能取到随主题切换的卡片令牌 */
+body {
+  --wb-panel-bg: var(--card-bg);
+  --wb-panel-shadow: var(--card-shadow);
+}
+
 body.theme-light {
-  --wb-panel-bg: color-mix(in srgb, var(--bg) 62%, rgb(226, 226, 226));
   --wb-panel-border: color-mix(in srgb, rgb(0, 0, 0) 22%, rgb(255, 255, 255));
-  --wb-panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
   --wb-inset-bg: color-mix(in srgb, var(--bg) 76%, rgb(216, 216, 216));
 }
 
 body.theme-dark {
-  --wb-panel-bg: color-mix(in srgb, var(--bg) 97%, rgb(255, 255, 255));
   --wb-panel-border: color-mix(in srgb, rgb(255, 255, 255) 7%, var(--bg));
 }
 
@@ -78,14 +78,6 @@ body {
   flex: none;
   margin: var(--space-xs) 0;
   white-space: pre-line;
-}
-
-.wb-state {
-  padding: var(--space-page) 0;
-}
-
-.wb-state .ui-button {
-  margin-top: var(--space-md);
 }
 
 .wb-notice {
@@ -133,7 +125,7 @@ body {
   padding: 0 var(--space-md);
   overflow: hidden;
   border: 1px dashed var(--input-border);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   color: var(--text-muted);
   font-size: var(--font-size-caption);
   text-overflow: ellipsis;
@@ -176,8 +168,6 @@ body {
 
 .wb-panel__title {
   margin: 0;
-  font-size: var(--font-size-title);
-  font-weight: var(--font-weight-strong);
 }
 
 .wb-panel__subtitle {
@@ -266,8 +256,6 @@ body {
 
 .wb-detail-title {
   margin: 0 0 2px;
-  font-size: var(--font-size-display);
-  font-weight: var(--font-weight-strong);
 }
 
 .wb-detail-summary {
@@ -384,8 +372,6 @@ body {
 
 .wb-section__title {
   margin: 0;
-  font-size: var(--font-size-subheading);
-  font-weight: var(--font-weight-strong);
 }
 
 .wb-section__actions {
@@ -476,9 +462,9 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 3px;
+  gap: var(--space-xs);
   min-width: 0;
-  padding: 5px var(--space-page);
+  padding: var(--space-sm) var(--space-page);
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
@@ -514,7 +500,7 @@ body {
 .wb-steps__tab-head {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-sm);
   min-width: 0;
   color: var(--text-muted);
 }
@@ -625,8 +611,6 @@ body {
   padding: 0 0 var(--space-xs);
   border-bottom: 1px solid var(--divider);
   color: var(--text-muted);
-  font-size: var(--font-size-subheading);
-  font-weight: var(--font-weight-strong);
 }
 
 .wb-entity-row {
@@ -635,7 +619,7 @@ body {
   justify-content: space-between;
   gap: var(--space-page);
   min-height: 30px;
-  padding: 3px 0;
+  padding: var(--space-xs) 0;
   border-bottom: 1px solid var(--divider);
   font-size: var(--font-size-body);
 }
@@ -645,7 +629,7 @@ body {
 }
 
 .wb-entity-type {
-  margin-left: 5px;
+  margin-left: var(--space-sm);
   color: var(--text-muted);
   font-size: var(--font-size-micro);
 }
@@ -713,7 +697,7 @@ body {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-caption);
 }
 
 .wb-bind-item__actions {
@@ -745,7 +729,7 @@ body {
   height: 36px;
   overflow: hidden;
   border: 1px solid var(--table-border);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
 }
 
 .wb-bind-thumb--empty {
@@ -880,7 +864,7 @@ body {
 }
 
 .wb-submit__group {
-  padding: 5px 0;
+  padding: var(--space-sm) 0;
   border-bottom: 1px solid var(--divider);
   font-size: var(--font-size-body);
   line-height: var(--line-height-body);
@@ -990,7 +974,6 @@ body {
 .wb-queue__empty {
   margin: 0;
   padding: var(--space-page);
-  font-size: var(--font-size-body);
   text-align: center;
 }
 
@@ -1083,7 +1066,7 @@ body {
 
   .wb-shot {
     grid-template-columns: 40px minmax(0, 1fr) auto;
-    gap: 7px;
+    gap: var(--space-md);
     padding: var(--space-page) var(--space-md);
   }
 

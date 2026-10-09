@@ -46,8 +46,6 @@ body {
 
 .page-header__title {
   margin: 0;
-  font-size: var(--font-size-title);
-  font-weight: var(--font-weight-strong);
 }
 
 .page-header__description {

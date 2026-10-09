@@ -684,13 +684,8 @@
       return aiUi.h(
         'li',
         {},
-        aiUi.h(
-          'button',
-          {
-            class: `ui-list__item wb-group-item${isSelected ? ' wb-group-item--selected' : ''}`,
-            attrs: { type: 'button', 'aria-current': isSelected ? 'true' : undefined },
-            on: { click: () => selectGroup(group) }
-          },
+        aiUi.listItem(
+          { selected: isSelected, className: `wb-group-item${isSelected ? ' wb-group-item--selected' : ''}`, onClick: () => selectGroup(group) },
           aiUi.h('span', { class: 'wb-group-item__name', text: `第 ${group.seq} 组` }),
           aiUi.h('span', { class: `wb-group-item__status ${status.className}`, text: status.text }),
           aiUi.h('span', { class: 'wb-group-item__meta description', text: `${group.shots.length} 个镜头 · ${group.totalSeconds} 秒` })
@@ -703,7 +698,7 @@
       aiUi.h(
         'div',
         { class: 'wb-panel__header' },
-        aiUi.h('div', {}, aiUi.h('h2', { class: 'wb-panel__title', text: '镜头组' }), aiUi.h('p', { class: 'wb-panel__subtitle', text: '选择一组查看内容与进度' })),
+        aiUi.h('div', {}, aiUi.h('h2', { class: 'ui-title wb-panel__title', text: '镜头组' }), aiUi.h('p', { class: 'wb-panel__subtitle', text: '选择一组查看内容与进度' })),
         aiUi.h('span', { class: 'wb-count', text: `${view.groups.length} 组` })
       ),
       aiUi.h('ul', { class: 'wb-panel__body wb-groups__list' }, items),
@@ -745,7 +740,7 @@
       aiUi.h(
         'div',
         { class: 'wb-detail-head' },
-        aiUi.h('div', {}, aiUi.h('h3', { class: 'wb-detail-title', text: `第 ${group.seq} 组` }), aiUi.h('p', { class: 'wb-detail-summary', text: summary })),
+        aiUi.h('div', {}, aiUi.h('h3', { class: 'ui-display wb-detail-title', text: `第 ${group.seq} 组` }), aiUi.h('p', { class: 'wb-detail-summary', text: summary })),
         aiUi.h('span', { class: `wb-detail-status ${status.className}`, text: status.text })
       ),
       exceedsModel(group) ? aiUi.h('p', { class: 'status-warning', text: `超过所选模型单次最长 ${max} 秒，请拆分这一组或换一个模型。` }) : null,
@@ -759,7 +754,7 @@
       aiUi.h(
         'div',
         { class: 'wb-panel__header' },
-        aiUi.h('div', {}, aiUi.h('h2', { class: 'wb-panel__title', text: '镜头组详情' }), aiUi.h('p', { class: 'wb-panel__subtitle', text: '分镜内容与出场实体集中查看' })),
+        aiUi.h('div', {}, aiUi.h('h2', { class: 'ui-title wb-panel__title', text: '镜头组详情' }), aiUi.h('p', { class: 'wb-panel__subtitle', text: '分镜内容与出场实体集中查看' })),
         aiUi.button({ text: '编辑镜头', ariaLabel: `编辑第 ${group.seq} 组的镜头`, onClick: () => editGroupShots(group) }).element
       ),
       body
@@ -806,7 +801,7 @@
     return aiUi.h(
       'section',
       { class: 'wb-section', attrs: { 'aria-label': label } },
-      aiUi.h('div', { class: 'wb-section__head' }, aiUi.h('h3', { class: 'wb-section__title', text: title }), aiUi.h('div', { class: 'wb-section__actions' }, actions)),
+      aiUi.h('div', { class: 'wb-section__head' }, aiUi.h('h3', { class: 'ui-subheading wb-section__title', text: title }), aiUi.h('div', { class: 'wb-section__actions' }, actions)),
       content
     );
   }
@@ -931,7 +926,7 @@
       aiUi.h(
         'div',
         { class: 'wb-queue__header' },
-        aiUi.h('div', { class: 'wb-queue__title' }, aiUi.h('h2', { class: 'wb-panel__title', text: '队列与结果' }), aiUi.h('span', { class: 'description', text: queueSummary() })),
+        aiUi.h('div', { class: 'wb-queue__title' }, aiUi.h('h2', { class: 'ui-title wb-panel__title', text: '队列与结果' }), aiUi.h('span', { class: 'description', text: queueSummary() })),
         toggle.element
       ),
       aiUi.h(
@@ -944,7 +939,7 @@
 
   /** 空状态和错误状态。 */
   function renderState(text, button) {
-    return aiUi.h('div', { class: 'wb-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
+    return aiUi.h('div', { class: 'ui-state wb-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
   }
 
   /** 内容区上方的提示：没有可用模型、生成参数需要调整、分镜脚本未确认。 */

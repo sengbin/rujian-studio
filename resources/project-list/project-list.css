@@ -15,14 +15,3 @@
   width: 240px;
 }
 
-.list-message {
-  margin: var(--space-md) 0;
-}
-
-.list-state {
-  padding: var(--space-page) 0;
-}
-
-.list-state .ui-button {
-  margin-top: var(--space-md);
-}

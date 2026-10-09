@@ -579,7 +579,7 @@
 
   /** 空状态和错误状态。 */
   function renderState(text, button) {
-    return aiUi.h('div', { class: 'works-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
+    return aiUi.h('div', { class: 'ui-state works-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
   }
 
   /** 按当前状态刷新内容区：先按项目、再按名称关键字筛选。 */
@@ -642,7 +642,7 @@
       .getElementById('page-toolbar')
       .append(aiUi.h('div', { class: 'works-search' }, search.element), projectSlot, statusSlot);
 
-    messageElement = aiUi.h('p', { class: 'works-message', hidden: true, attrs: { role: 'status' } });
+    messageElement = aiUi.h('p', { class: 'ui-message works-message', hidden: true, attrs: { role: 'status' } });
     contentElement = aiUi.h('div');
     root.append(messageElement, contentElement);
     renderProjectFilter();

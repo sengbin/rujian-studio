@@ -125,13 +125,8 @@
     /** 左侧列表中的一个按钮；warn 为 true 时补充文字标红（超出参考容差）。 */
     function renderItem(next, title, meta, warn) {
       const isSelected = next.type === selection.type && next.ref === selection.ref;
-      return aiUi.h(
-        'button',
-        {
-          class: isSelected ? 'ui-list__item stage-item is-selected' : 'ui-list__item stage-item',
-          attrs: { type: 'button', 'aria-current': isSelected ? 'true' : undefined },
-          on: { click: () => void select(next) }
-        },
+      return aiUi.listItem(
+        { selected: isSelected, className: 'stage-item', onClick: () => void select(next) },
         aiUi.h('span', { class: 'stage-item__title', text: title }),
         meta ? aiUi.h('span', { class: warn ? 'stage-item__meta status-error' : 'stage-item__meta', text: meta }) : null
       );
@@ -142,7 +137,7 @@
       return aiUi.h(
         'div',
         { class: 'stage-list__head' },
-        aiUi.h('p', { class: 'stage-list__heading', text }),
+        aiUi.h('p', { class: 'ui-heading stage-list__heading', text }),
         onAdd ? aiUi.button({ kind: 'add', text: ADD_TEXT, compact: true, onClick: onAdd }).element : null
       );
     }
@@ -154,9 +149,8 @@
       const isNew = (type) => selection.type === type && selection.ref === NEW_REF;
       // 单个短视频只有 1 集，不能增删集。
       const canAddEpisode = canEdit && view.work.multiEpisode;
-      return aiUi.h(
-        'aside',
-        { class: 'ui-list stage-list' },
+      return aiUi.list(
+        { tag: 'aside', className: 'stage-list' },
         renderItem({ type: TYPE_TEXT, ref: null }, '剧本包正文', view.screenplay ? `${view.screenplay.fullText.length} 字` : ''),
         hasStructure ? null : aiUi.h('p', { class: 'description', text: '集和实体抽取完成后会显示在这里。' }),
         hasStructure

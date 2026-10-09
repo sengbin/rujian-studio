@@ -101,8 +101,6 @@ body.theme-light .stage-view--workspace {
 /* 列表中的分组标题 */
 .stage-list__heading {
   margin: var(--space-md) 0 0;
-  font-size: var(--font-size-heading);
-  font-weight: var(--font-weight-strong);
 }
 
 /* 分组标题行：标题在左，“添加”按钮在右 */
@@ -166,7 +164,7 @@ body.theme-light .stage-view--workspace {
   gap: var(--space-xs) var(--space-md);
   padding: var(--space-xs) var(--space-md);
   border: 1px solid var(--table-border);
-  border-radius: 4px;
+  border-radius: var(--radius-md);
 }
 
 .stage-segment.is-uncertain {
@@ -223,7 +221,7 @@ body.theme-light .stage-view--workspace {
 .stage-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 3px var(--space-page);
+  gap: var(--space-xs) var(--space-page);
   color: var(--text-muted);
   font-size: var(--font-size-caption);
   line-height: var(--line-height-tight);

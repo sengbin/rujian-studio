@@ -88,20 +88,14 @@
       const { beats } = view;
       const items = beats.map((beat) => {
         const isSelected = beat.seq === selectedSeq;
-        return aiUi.h(
-          'button',
-          {
-            class: isSelected ? 'ui-list__item stage-item is-selected' : 'ui-list__item stage-item',
-            attrs: { type: 'button', 'aria-current': isSelected ? 'true' : undefined },
-            on: { click: () => void selectBeat(beat.seq) }
-          },
+        return aiUi.listItem(
+          { selected: isSelected, className: 'stage-item', onClick: () => void selectBeat(beat.seq) },
           aiUi.h('span', { class: 'stage-item__title', text: `${beat.seq}. ${beat.label}` }),
           aiUi.h('span', { class: 'stage-item__meta', text: budgetText(beat) })
         );
       });
-      return aiUi.h(
-        'aside',
-        { class: 'ui-list stage-list' },
+      return aiUi.list(
+        { tag: 'aside', className: 'stage-list' },
         aiUi.h('p', { class: 'description', text: `共 ${beats.length} 个节拍` }),
         beats.length === 0 ? aiUi.h('p', { class: 'description', text: '节拍表生成后会显示在这里。' }) : null,
         items

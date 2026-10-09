@@ -110,7 +110,7 @@
     const adoptSection = aiUi.h(
       'div',
       { class: 'sbp-draft__adopt', hidden: state.draft === null },
-      aiUi.h('h3', { class: 'sbp-section__title', text: '采用这个音色' }),
+      aiUi.h('h3', { class: 'ui-heading sbp-section__title', text: '采用这个音色' }),
       nameField.element,
       applyOthers === null ? null : applyOthers.element,
       ...adoptNotes.map((text) => aiUi.h('p', { class: 'description', text }))
