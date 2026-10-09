@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
-// 备注：取代 VS Code 版的 window.show*、env.openExternal 与 reloadWindow；业务代码只依赖 WorkbenchHost、BackupHost 接口。
+// 备注：业务代码只依赖 WorkbenchHost、BackupHost 接口。
 // ------------------------------------------------------------------------
 
 import { BrowserWindow, Notification, app, dialog, shell } from 'electron';
@@ -122,7 +122,7 @@ export function createBackupHost(getWindow: WindowGetter): BackupHost {
       return result.canceled ? undefined : result.filePaths[0];
     },
     // 经 quit 退出，让收尾序列先关闭数据库；下次启动时应用待恢复的备份。
-    reloadWindow: async () => {
+    restartApp: async () => {
       app.relaunch();
       app.quit();
     }

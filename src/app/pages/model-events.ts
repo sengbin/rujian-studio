@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
-// 备注：不依赖 VS Code；事件名称需与 resources/form/form-runtime.js、resources/asset-list/asset-generate.js 一致。
+// 备注：事件名称需与 resources/form/form-runtime.js、resources/asset-list/asset-generate.js 一致。
 // ------------------------------------------------------------------------
 
 import { ProviderService } from '../services/provider-service';

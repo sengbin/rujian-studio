@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：backup.js
-// 说明：数据备份页脚本：显示数据库路径、大小、版本和各类数据数量；“备份到文件…”导出一致的快照；“从文件恢复…”选择并校验备份文件，页内对话框确认后准备恢复，重新加载窗口后生效；数据库无法打开时只显示原因与恢复。
+// 说明：数据备份页脚本：显示数据库路径、大小、版本和各类数据数量；“备份到文件…”导出一致的快照；“从文件恢复…”选择并校验备份文件，页内对话框确认后准备恢复，重启应用后生效；数据库无法打开时只显示原因与恢复。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
@@ -15,14 +15,14 @@
   const REQUEST_CHOOSE_RESTORE_FILE = 'backup.chooseRestoreFile';
   const REQUEST_RESTORE = 'backup.restore';
   const REQUEST_CANCEL_RESTORE = 'backup.cancelRestore';
-  const REQUEST_RELOAD_WINDOW = 'backup.reloadWindow';
+  const REQUEST_RESTART_APP = 'backup.restartApp';
 
   const GENERIC_ERROR_TEXT = '操作失败，请重试。';
   const BACKUP_BUSY_TEXT = '正在备份…';
   const CHOOSE_BUSY_TEXT = '正在检查备份文件…';
   const RESTORE_BUSY_TEXT = '正在准备恢复…';
   const CANCEL_RESTORE_BUSY_TEXT = '正在取消恢复…';
-  const RELOAD_BUSY_TEXT = '正在重新加载窗口…';
+  const RESTART_BUSY_TEXT = '正在重启应用…';
   const CANCELLED_TEXT = '已取消，没有做任何改动。';
   const BYTE_UNITS = ['B', 'KB', 'MB', 'GB'];
   const BYTE_STEP = 1024;
@@ -138,23 +138,23 @@
     factsHost.append(list);
   }
 
-  /** 已准备的恢复：提示重新加载窗口后生效，提供“重新加载窗口”与“取消恢复”。 */
+  /** 已准备的恢复：提示重启应用后生效，提供“重启应用”与“取消恢复”。 */
   function renderPending() {
     pendingHost.textContent = '';
     pendingButtons = null;
     const pending = overview.pendingRestore;
     if (pending === null) return;
-    const reloadButton = aiUi.button({ text: '重新加载窗口', variant: 'primary', disabled: busy, onClick: () => void reloadWindow() });
+    const restartButton = aiUi.button({ text: '重启应用', variant: 'primary', disabled: busy, onClick: () => void restartApp() });
     const cancelButton = aiUi.button({ text: '取消恢复', disabled: busy, onClick: () => void cancelRestore() });
-    pendingButtons = [reloadButton, cancelButton];
+    pendingButtons = [restartButton, cancelButton];
     pendingHost.append(
       createCard(
-        '恢复已准备好，重新加载窗口后生效',
+        '恢复已准备好，重启应用后生效',
         [
-          `已在 ${formatTime(pending.stagedAt)} 准备好待恢复的数据（${formatBytes(pending.sizeBytes)}）。重新加载窗口时，当前数据库会先自动备份到 ${overview.autoBackupDirectory}（文件名带时间戳），再被备份数据替换。`,
-          '在重新加载窗口之前，当前数据没有任何改动，可以取消恢复。'
+          `已在 ${formatTime(pending.stagedAt)} 准备好待恢复的数据（${formatBytes(pending.sizeBytes)}）。重启应用时，当前数据库会先自动备份到 ${overview.autoBackupDirectory}（文件名带时间戳），再被备份数据替换。`,
+          '在重启应用之前，当前数据没有任何改动，可以取消恢复。'
         ],
-        aiUi.h('div', { class: 'backup-actions' }, reloadButton.element, cancelButton.element, pendingStatus.element)
+        aiUi.h('div', { class: 'backup-actions' }, restartButton.element, cancelButton.element, pendingStatus.element)
       )
     );
   }
@@ -217,11 +217,11 @@
         title: '从备份恢复',
         variant: 'danger',
         confirmText: '覆盖并恢复',
-        message: '恢复会用所选备份文件覆盖当前全部数据（项目、作品、资产、镜头、模型设置等），重新加载窗口后生效。',
+        message: '恢复会用所选备份文件覆盖当前全部数据（项目、作品、资产、镜头、模型设置等），重启应用后生效。',
         details: [
           `备份文件：${candidate.filePath}（${formatBytes(candidate.sizeBytes)}）`,
           upgradeText,
-          `重新加载窗口时，当前数据库会先自动备份到 ${overview.autoBackupDirectory}。`,
+          `重启应用时，当前数据库会先自动备份到 ${overview.autoBackupDirectory}。`,
           describeAssetFiles(candidate.assetFiles),
           '已下载到本地的结果视频文件不在备份内，不会被恢复，也不会被删除。'
         ]
@@ -232,7 +232,7 @@
       }
       restoreStatus.show(RESTORE_BUSY_TEXT, 'warning');
       await window.hostBridge.request(REQUEST_RESTORE, { token: candidate.token });
-      restoreStatus.show('恢复已准备好，请点上方的“重新加载窗口”使其生效。', 'success');
+      restoreStatus.show('恢复已准备好，请点上方的“重启应用”使其生效。', 'success');
       await refresh();
     });
   }
@@ -246,10 +246,10 @@
     });
   }
 
-  /** 请求宿主重新加载窗口，使已准备的恢复生效；窗口重新加载后本页随之关闭。 */
-  function reloadWindow() {
-    return runOperation(pendingStatus, RELOAD_BUSY_TEXT, async () => {
-      await window.hostBridge.request(REQUEST_RELOAD_WINDOW);
+  /** 请求宿主重启应用，使已准备的恢复生效。 */
+  function restartApp() {
+    return runOperation(pendingStatus, RESTART_BUSY_TEXT, async () => {
+      await window.hostBridge.request(REQUEST_RESTART_APP);
     });
   }
 
@@ -273,8 +273,8 @@
     const restoreCard = createCard(
       '恢复',
       [
-        '选择之前备份的文件，用它覆盖当前全部数据。结构版本低于当前的备份会在重新加载后自动升级，高于当前应用的备份会被拒绝。',
-        '确认后需要重新加载窗口才会生效；重新加载时先把当前数据库自动备份（文件名带时间戳），再替换。'
+        '选择之前备份的文件，用它覆盖当前全部数据。结构版本低于当前的备份会在重启应用后自动升级，高于当前应用的备份会被拒绝。',
+        '确认后需要重启应用才会生效；重启时先把当前数据库自动备份（文件名带时间戳），再替换。'
       ],
       aiUi.h('div', { class: 'backup-actions' }, restoreButton.element, restoreStatus.element)
     );

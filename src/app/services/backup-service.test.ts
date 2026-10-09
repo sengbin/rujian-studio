@@ -1,10 +1,10 @@
 // ------------------------------------------------------------------------
 // 名称：backup-service.test.ts
-// 说明：数据备份应用服务的自动化测试：展示概览、备份到所选文件、选择并校验备份文件、版本过高拒绝、确认恢复准备待恢复、确认与取消恢复的标识校验、取消恢复、重新加载窗口、数据库无法打开时的降级模式。
+// 说明：数据备份应用服务的自动化测试：展示概览、备份到所选文件、选择并校验备份文件、版本过高拒绝、确认恢复准备待恢复、确认与取消恢复的标识校验、取消恢复、重启应用、数据库无法打开时的降级模式。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
-// 备注：存储用临时目录里的真实数据库文件，宿主能力用假实现；不依赖 VS Code。
+// 备注：存储用临时目录里的真实数据库文件，宿主能力用假实现。
 // ------------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
@@ -25,7 +25,7 @@ const NOW = new Date(2026, 9, 3, 6, 5, 2);
 /** 记录宿主调用、按预设返回对话框选择的假宿主。 */
 class FakeBackupHost implements BackupHost {
   suggestedNames: string[] = [];
-  reloadCount = 0;
+  restartCount = 0;
   backupTarget: string | undefined;
   restoreSource: string | undefined;
   pickBackupTarget = async (suggestedName: string): Promise<string | undefined> => {
@@ -33,8 +33,8 @@ class FakeBackupHost implements BackupHost {
     return this.backupTarget;
   };
   pickRestoreSource = async (): Promise<string | undefined> => this.restoreSource;
-  reloadWindow = async (): Promise<void> => {
-    this.reloadCount += 1;
+  restartApp = async (): Promise<void> => {
+    this.restartCount += 1;
   };
 }
 
@@ -199,7 +199,7 @@ test('选择备份文件：不是数据库、不是如见 Studio 的数据库、
   }
 });
 
-test('确认恢复：准备待恢复，当前数据库不变；重新加载后先自动备份再替换', async () => {
+test('确认恢复：准备待恢复，当前数据库不变；重启后先自动备份再替换', async () => {
   const fixture = createBackupFixture();
   try {
     const { host, service } = createService(fixture);
@@ -211,7 +211,7 @@ test('确认恢复：准备待恢复，当前数据库不变；重新加载后�
     assert.deepEqual(listProjectNames(fixture.database), ['当前项目']);
     assert.deepEqual(service.getOverview().pendingRestore, pending);
 
-    // 模拟重新加载窗口：关闭当前连接后，下次启动先应用待恢复。
+    // 模拟重启应用：关闭当前连接后，下次启动先应用待恢复。
     fixture.database.close();
     const autoBackupPath = applyPendingRestore(fixture.paths, NOW);
     assert.ok(autoBackupPath !== undefined && existsSync(autoBackupPath));
@@ -256,7 +256,7 @@ test('确认恢复：选择之后备份文件被改坏，确认时重新校验�
   }
 });
 
-test('取消恢复与重新加载窗口', async () => {
+test('取消恢复与重启应用', async () => {
   const fixture = createBackupFixture();
   try {
     const { host, service } = createService(fixture);
@@ -268,8 +268,8 @@ test('取消恢复与重新加载窗口', async () => {
     assert.equal(service.getOverview().pendingRestore, null);
     assert.equal(existsSync(fixture.paths.pendingRestorePath), false);
 
-    await service.reloadWindow();
-    assert.equal(host.reloadCount, 1);
+    await service.restartApp();
+    assert.equal(host.restartCount, 1);
   } finally {
     fixture.cleanup();
   }

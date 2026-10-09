@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
-// 备注：不依赖 VS Code；只试听已保存的对白与旁白（模型会产生费用，没有音色的说话人不调用）；角色音色取本集绑定的主音色参考，旁白取作品的旁白音色，都没有时取暂存的试听音色；模型支持参考音频时用音色参考，否则用资产记录的预置音色，没有记录再按说话人固定挑一个；缓存键含模型、提示词、音色与参考音频内容，台词、说话方式、音色或模型任一变化都会重新调用模型，没有变化则直接用缓存；缓存先查内存再查本地磁盘（diskCache），重启扩展后仍可用，磁盘读写失败不影响合成；restore 只读缓存把本集已合成的配音返回（不调用模型）；render 同时供“按描述生成音色”使用。
+// 备注：只试听已保存的对白与旁白（模型会产生费用，没有音色的说话人不调用）；角色音色取本集绑定的主音色参考，旁白取作品的旁白音色，都没有时取暂存的试听音色；模型支持参考音频时用音色参考，否则用资产记录的预置音色，没有记录再按说话人固定挑一个；缓存键含模型、提示词、音色与参考音频内容，台词、说话方式、音色或模型任一变化都会重新调用模型，没有变化则直接用缓存；缓存先查内存再查本地磁盘（diskCache），重启应用后仍可用，磁盘读写失败不影响合成；restore 只读缓存把本集已合成的配音返回（不调用模型）；render 同时供“按描述生成音色”使用。
 // ------------------------------------------------------------------------
 
 import { createHash } from 'node:crypto';
@@ -101,7 +101,7 @@ export interface VoicePreviewServiceDependencies {
   readonly drafts: Pick<VoiceDraftStore, 'find'>;
   readonly providers: Pick<ProviderService, 'listUsableModels' | 'resolveAudioCall'>;
   readonly downloader: MediaDownloader;
-  /** 合成结果的本地磁盘缓存：重启扩展、重新打开预览后仍然可用；缺省只用内存缓存。 */
+  /** 合成结果的本地磁盘缓存：重启应用、重新打开预览后仍然可用；缺省只用内存缓存。 */
   readonly diskCache?: VoiceCache;
   /** 轮询间隔的等待函数，测试时可注入立即返回的实现。 */
   readonly wait?: (milliseconds: number) => Promise<void>;

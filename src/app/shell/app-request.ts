@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
-// 备注：不依赖 Electron，便于测试；静态文件只放行 WEBVIEW_ROOT_PATHS 内的路径，拒绝 `..`、绝对路径与目录外路径。
+// 备注：不依赖 Electron，便于测试；静态文件只放行 PAGE_ROOT_PATHS 内的路径，拒绝 `..`、绝对路径与目录外路径。
 // ------------------------------------------------------------------------
 
 import { resolveInsideRoot } from '../../infra/storage/relative-path';

@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：不依赖 VS Code；产出在所属页面内以弹出层显示，请求载荷带 workId 与 stage，由所属页面提供的 resolveWorkId 校验作品归属；重新生成表单由页面用表单请求在弹出页面中完成。
+// 备注：产出在所属页面内以弹出层显示，请求载荷带 workId 与 stage，由所属页面提供的 resolveWorkId 校验作品归属；重新生成表单由页面用表单请求在弹出页面中完成。
 // ------------------------------------------------------------------------
 
 import { FORM_LEVEL_ERROR_KEY, ValidationError } from '../../domain/errors';

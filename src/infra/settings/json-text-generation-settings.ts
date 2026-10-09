@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
-// 备注：每次读取都取文件最新值，修改后下一次生成立即生效；键名沿用 VS Code 版的设置键（text.defaultModel、novel.splitMode、novel.maxSegmentChars）。
+// 备注：每次读取都取文件最新值，修改后下一次生成立即生效；键名为 text.defaultModel、novel.splitMode、novel.maxSegmentChars。
 // ------------------------------------------------------------------------
 
 import { NovelSplitSettings } from '../../domain/rules/novel-splitter';

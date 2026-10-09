@@ -80,12 +80,12 @@ test('主题消息切换 html 与 body 的亮暗类，非法主题被忽略', ()
   const { document, dispatch } = loadBridge();
 
   dispatch({ type: 'theme', theme: 'light' });
-  assert.deepEqual([...document.documentElement.classes], ['vscode-light']);
-  assert.deepEqual([...document.body.classes], ['vscode-light']);
+  assert.deepEqual([...document.documentElement.classes], ['theme-light']);
+  assert.deepEqual([...document.body.classes], ['theme-light']);
 
   dispatch({ type: 'theme', theme: 'dark' });
-  assert.deepEqual([...document.body.classes], ['vscode-dark']);
+  assert.deepEqual([...document.body.classes], ['theme-dark']);
 
   dispatch({ type: 'theme', theme: 'neon' });
-  assert.deepEqual([...document.body.classes], ['vscode-dark']);
+  assert.deepEqual([...document.body.classes], ['theme-dark']);
 });

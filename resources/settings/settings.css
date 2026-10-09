@@ -153,7 +153,7 @@
   bottom: 0;
   left: 0;
   height: 2px;
-  background: var(--vscode-button-background);
+  background: var(--host-button-background);
   border-radius: 2px 2px 0 0;
   content: '';
 }

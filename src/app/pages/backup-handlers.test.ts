@@ -1,10 +1,10 @@
 // ------------------------------------------------------------------------
 // 名称：backup-handlers.test.ts
-// 说明：数据备份页请求处理的自动化测试：通过真实的消息路由器调用，覆盖读取概览、备份、选择并校验备份文件、确认恢复、取消恢复、重新加载窗口以及错误响应。
+// 说明：数据备份页请求处理的自动化测试：通过真实的消息路由器调用，覆盖读取概览、备份、选择并校验备份文件、确认恢复、取消恢复、重启应用以及错误响应。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
-// 备注：服务使用临时目录里的真实数据库文件和假宿主；不依赖 VS Code。
+// 备注：服务使用临时目录里的真实数据库文件和假宿主。
 // ------------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
@@ -21,14 +21,14 @@ const LATEST_VERSION = MIGRATIONS.length;
 
 function createRouter() {
   const fixture = createBackupFixture();
-  const choices: { backupTarget?: string; restoreSource?: string; reloadCount: number } = { reloadCount: 0 };
+  const choices: { backupTarget?: string; restoreSource?: string; restartCount: number } = { restartCount: 0 };
   const service = new BackupService({
     storage: fixture.storage,
     host: {
       pickBackupTarget: async () => choices.backupTarget,
       pickRestoreSource: async () => choices.restoreSource,
-      reloadWindow: async () => {
-        choices.reloadCount += 1;
+      restartApp: async () => {
+        choices.restartCount += 1;
       }
     },
     latestSchemaVersion: LATEST_VERSION
@@ -139,11 +139,11 @@ test('恢复：版本过高的备份文件返回校验错误并说明原因；�
   }
 });
 
-test('重新加载窗口：经宿主执行', async () => {
+test('重启应用：经宿主执行', async () => {
   const { fixture, choices, callOk } = createRouter();
   try {
-    assert.deepEqual(await callOk(BACKUP_REQUESTS.reloadWindow), { requested: true });
-    assert.equal(choices.reloadCount, 1);
+    assert.deepEqual(await callOk(BACKUP_REQUESTS.restartApp), { requested: true });
+    assert.equal(choices.restartCount, 1);
   } finally {
     fixture.cleanup();
   }

@@ -373,7 +373,7 @@
     render();
     const result = await runAction(REQUEST_SUBMIT, submitPayload(groups.map((group) => group.id)));
     groups.forEach((group) => submitting.delete(group.id));
-    // 提交结果、被拒绝的原因和提醒由宿主在 VS Code 右下角通知，页面只刷新状态。
+    // 提交结果、被拒绝的原因和提醒由宿主以系统通知提示，页面只刷新状态。
     await loadEpisode(false);
     return result;
   }
@@ -417,7 +417,7 @@
     await loadEpisode(false);
   }
 
-  /** 用系统播放器打开结果视频：VS Code 内置的页面不支持解码视频里的 AAC 声音，页内播放没有声音。 */
+  /** 用系统播放器打开结果视频。 */
   async function openResult(result) {
     await runAction(REQUEST_OPEN_RESULT, { resultId: result.id });
   }

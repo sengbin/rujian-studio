@@ -40,7 +40,7 @@ test('打开页面：登记页面 HTML（带资源地址与主题）并让外壳
   const html = bridge.getFrameHtml('project-list') ?? '';
   assert.match(html, /href="rujian-app:\/\/res\/resources\/a\.css"/);
   assert.match(html, /src="rujian-app:\/\/res\/resources\/a\.js"/);
-  assert.match(html, /<body class="vscode-light">/);
+  assert.match(html, /<body class="theme-light">/);
 });
 
 test('同一键重复打开只聚焦已有标签并返回同一个句柄', () => {

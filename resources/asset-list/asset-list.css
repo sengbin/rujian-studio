@@ -45,7 +45,7 @@
 }
 
 .asset-thumb--empty {
-  color: var(--vscode-descriptionForeground);
+  color: var(--host-description-foreground);
   font-size: 11px;
 }
 
@@ -57,7 +57,7 @@
 }
 
 .asset-thumb--button:focus-visible {
-  outline: 1px solid var(--vscode-focusBorder);
+  outline: 1px solid var(--host-focus-border);
   outline-offset: 1px;
 }
 
@@ -190,7 +190,7 @@
   border: 1px solid var(--table-border);
   border-radius: 4px;
   background: transparent;
-  color: var(--vscode-descriptionForeground);
+  color: var(--host-description-foreground);
   font-size: 11px;
   cursor: pointer;
 }

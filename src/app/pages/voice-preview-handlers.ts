@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
-// 备注：不依赖 VS Code；请求带 workId，由所属页面提供的 resolveWorkId 校验作品归属；服务商、访问密钥或模型开关变化时，页面推送 MODEL_EVENTS.changed（见 model-events.ts），预览层据此重新读取模型下拉。
+// 备注：请求带 workId，由所属页面提供的 resolveWorkId 校验作品归属；服务商、访问密钥或模型开关变化时，页面推送 MODEL_EVENTS.changed（见 model-events.ts），预览层据此重新读取模型下拉。
 // ------------------------------------------------------------------------
 
 import { MessageRouter } from '../messaging/message-router';

@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：local-voice-cache.ts
-// 说明：台词配音本地缓存的实现：把模型合成的语音按内容键保存为扩展存储目录下的文件，超过条数或总大小上限时淘汰最久没用的。
+// 说明：台词配音本地缓存的实现：把模型合成的语音按内容键保存为数据目录下的文件，超过条数或总大小上限时淘汰最久没用的。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
@@ -11,7 +11,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, s
 import * as path from 'node:path';
 import { VoiceCache, VoiceCacheEntry } from '../../domain/ports/voice-cache';
 
-/** 缓存在扩展存储根目录下的子目录名。 */
+/** 缓存在数据目录下的子目录名。 */
 export const VOICE_CACHE_DIRECTORY_NAME = 'voice-cache';
 
 /** 默认保留的条数与总大小上限。 */

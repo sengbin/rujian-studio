@@ -66,6 +66,6 @@ test('每次生成的 nonce 不同', () => {
 });
 
 test('html 与 body 带主题类，缺省为深色', () => {
-  assert.match(createPageHtml(OPTIONS), /<html lang="zh-CN" class="vscode-dark">[\s\S]*<body class="vscode-dark">/);
-  assert.match(createPageHtml({ ...OPTIONS, theme: 'light' }), /<html lang="zh-CN" class="vscode-light">[\s\S]*<body class="vscode-light">/);
+  assert.match(createPageHtml(OPTIONS), /<html lang="zh-CN" class="theme-dark">[\s\S]*<body class="theme-dark">/);
+  assert.match(createPageHtml({ ...OPTIONS, theme: 'light' }), /<html lang="zh-CN" class="theme-light">[\s\S]*<body class="theme-light">/);
 });

@@ -25,7 +25,7 @@ export interface PageHtmlOptions {
   readonly styleUris: readonly string[];
   /** 脚本文件地址，按顺序执行。 */
   readonly scriptUris: readonly string[];
-  /** 初始主题，写入 html 与 body 的类（页面样式按 vscode-light、vscode-dark 切换）；缺省为深色。 */
+  /** 初始主题，写入 html 与 body 的类（页面样式按 theme-light、theme-dark 切换）；缺省为深色。 */
   readonly theme?: ShellTheme;
 }
 
@@ -39,7 +39,7 @@ export function createPageHtml(options: PageHtmlOptions): string {
   const scriptTags = options.scriptUris
     .map((uri) => `  <script nonce="${nonce}" src="${escapeHtml(uri)}"></script>`)
     .join('\n');
-  const themeClass = `vscode-${options.theme ?? 'dark'}`;
+  const themeClass = `theme-${options.theme ?? 'dark'}`;
   return `<!doctype html>
 <html lang="zh-CN" class="${themeClass}">
 <head>

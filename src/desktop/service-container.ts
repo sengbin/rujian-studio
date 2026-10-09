@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
-// 备注：迁自 VS Code 版 extension.ts 的 activate，装配顺序不变；只做装配，业务逻辑位于 app、domain、infra 目录。
+// 备注：只做装配，业务逻辑位于 app、domain、infra 目录。
 // ------------------------------------------------------------------------
 
 import * as path from 'node:path';

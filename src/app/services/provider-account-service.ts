@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-09
-// 备注：不依赖 VS Code；密钥只经 SecretStore 读写，不进入任何视图；查询失败（鉴权、网络等）不抛出，而是在结果里说明原因；没有账户适配器的服务商只显示说明。
+// 备注：密钥只经 SecretStore 读写，不进入任何视图；查询失败（鉴权、网络等）不抛出，而是在结果里说明原因；没有账户适配器的服务商只显示说明。
 // ------------------------------------------------------------------------
 
 import { FORM_LEVEL_ERROR_KEY, NotFoundError, ProviderError, ValidationError } from '../../domain/errors';

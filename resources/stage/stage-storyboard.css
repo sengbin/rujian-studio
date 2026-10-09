@@ -131,7 +131,7 @@
 .storyboard-shot[aria-current="true"] {
   background: var(--option-selected-bg);
   border-color: var(--focus-border);
-  box-shadow: inset 3px 0 0 var(--vscode-button-background);
+  box-shadow: inset 3px 0 0 var(--host-button-background);
 }
 
 .storyboard-shot[aria-current="true"]:hover {
@@ -156,8 +156,8 @@
 }
 
 .storyboard-shot[aria-current="true"] .storyboard-shot__number {
-  color: var(--vscode-button-foreground);
-  background: var(--vscode-button-background);
+  color: var(--host-button-foreground);
+  background: var(--host-button-background);
 }
 
 .storyboard-shot__copy {
@@ -296,7 +296,7 @@
   bottom: 0;
   left: 0;
   height: 2px;
-  background: var(--vscode-button-background);
+  background: var(--host-button-background);
   border-radius: 2px 2px 0 0;
   content: '';
 }
@@ -474,7 +474,7 @@
 /* 已绑定：边框与底色 */
 .storyboard-entity[aria-pressed="true"] {
   background: var(--option-selected-bg);
-  border-color: color-mix(in srgb, var(--vscode-button-background) 60%, var(--stage-line));
+  border-color: color-mix(in srgb, var(--host-button-background) 60%, var(--stage-line));
 }
 
 .storyboard-entity[aria-pressed="true"]:hover:not(:disabled) {

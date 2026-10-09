@@ -5,20 +5,20 @@
  * 作者：Lion
  * 邮箱：chengbin@3578.cn
  * 日期：2026-09-30
- * 备注：颜色统一使用主题变量；不使用内联样式（Webview 的内容安全策略不允许）；工作区布局内的阶段内容（如分镜脚本）样式在各自的文件中，使用这里定义的 --stage-* 令牌；工作区布局按弹出页面的宽度用容器查询响应，不用视口媒体查询。
+ * 备注：颜色统一使用主题变量；不使用内联样式（页面的内容安全策略不允许）；工作区布局内的阶段内容（如分镜脚本）样式在各自的文件中，使用这里定义的 --stage-* 令牌；工作区布局按弹出页面的宽度用容器查询响应，不用视口媒体查询。
  * ------------------------------------------------------------------------
  */
 
 /* 工作区布局令牌：分隔线、面板表面、面板阴影（亮主题才有）与控件高度；悬停与按下颜色不在这里定义，直接用 ui-tokens.css 的总控令牌 */
 .stage-view--workspace {
-  --stage-line: var(--vscode-editorWidget-border, color-mix(in srgb, var(--text) 12%, transparent));
-  --stage-surface: color-mix(in srgb, var(--vscode-editorWidget-background, var(--bg)) 90%, var(--bg));
+  --stage-line: var(--host-widget-border, color-mix(in srgb, var(--text) 12%, transparent));
+  --stage-surface: color-mix(in srgb, var(--host-widget-background, var(--bg)) 90%, var(--bg));
   --stage-shadow: none;
   --stage-control-height: 26px;
   --stage-compact-height: 22px;
 }
 
-body.vscode-light .stage-view--workspace {
+body.theme-light .stage-view--workspace {
   --stage-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
 }
 
@@ -113,7 +113,7 @@ body.vscode-light .stage-view--workspace {
   background: var(--option-selected-bg);
   border-color: var(--focus-border);
   /* 3px 内侧左标记：选中状态不只靠颜色区分 */
-  box-shadow: inset 3px 0 0 var(--vscode-button-background);
+  box-shadow: inset 3px 0 0 var(--host-button-background);
 }
 
 .stage-item.is-selected:hover {
@@ -212,7 +212,7 @@ body.vscode-light .stage-view--workspace {
 }
 
 .stage-segment.is-uncertain {
-  border-color: var(--vscode-editorWarning-foreground, var(--table-border));
+  border-color: var(--host-warning-foreground, var(--table-border));
 }
 
 .stage-segment__kind {

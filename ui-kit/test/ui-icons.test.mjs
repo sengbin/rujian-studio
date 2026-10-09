@@ -24,7 +24,7 @@ function setup() {
 
 afterEach(() => env?.close());
 
-/** 按钮文字与应匹配图标名称的对照，覆盖扩展里各页面的主要按钮。 */
+/** 按钮文字与应匹配图标名称的对照，覆盖应用里各页面的主要按钮。 */
 const EXPECTED_ICONS = [
   ['保存', 'device-floppy'],
   ['保存并继续', 'device-floppy'],

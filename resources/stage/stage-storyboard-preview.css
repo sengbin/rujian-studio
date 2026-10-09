@@ -5,14 +5,14 @@
  * 作者：Lion
  * 邮箱：chengbin@3578.cn
  * 日期：2026-10-07
- * 备注：颜色统一使用主题变量，只有舞台底色固定（它表示视频画面，不随主题变化）；不使用内联样式（Webview 的内容安全策略不允许，位置与宽度由脚本通过样式对象设置）；响应式用容器查询，按弹出页面自身宽度而不是视口宽度；类名与 stage-storyboard-preview.js 一致。
+ * 备注：颜色统一使用主题变量，只有舞台底色固定（它表示视频画面，不随主题变化）；不使用内联样式（页面的内容安全策略不允许，位置与宽度由脚本通过样式对象设置）；响应式用容器查询，按弹出页面自身宽度而不是视口宽度；类名与 stage-storyboard-preview.js 一致。
  * ------------------------------------------------------------------------
  */
 
 /* 预览层令牌：面板分隔线与表面、舞台固定底色、右侧信息栏宽度、窄宽度时信息栏高度 */
 .sbp {
-  --sbp-line: var(--vscode-editorWidget-border, color-mix(in srgb, var(--text) 12%, transparent));
-  --sbp-surface: color-mix(in srgb, var(--vscode-editorWidget-background, var(--bg)) 90%, var(--bg));
+  --sbp-line: var(--host-widget-border, color-mix(in srgb, var(--text) 12%, transparent));
+  --sbp-surface: color-mix(in srgb, var(--host-widget-background, var(--bg)) 90%, var(--bg));
   --sbp-stage-bg: #0d0e11;
   --sbp-info-width: 300px;
   --sbp-info-stacked-height: 220px;
@@ -149,7 +149,7 @@
 }
 
 .sbp-voice__status.status-error {
-  color: var(--status-error, var(--vscode-errorForeground));
+  color: var(--status-error, var(--host-error-foreground));
 }
 
 /* ---------- 主体：舞台与信息栏并排 ---------- */
@@ -240,7 +240,7 @@
   bottom: 0;
   left: 0;
   height: 2px;
-  background: var(--vscode-button-background);
+  background: var(--host-button-background);
   border-radius: 2px 2px 0 0;
   content: '';
 }
@@ -637,7 +637,7 @@
 }
 
 .sbp-draft__message.status-error {
-  color: var(--status-error, var(--vscode-errorForeground));
+  color: var(--status-error, var(--host-error-foreground));
 }
 
 .sbp-draft__adopt {

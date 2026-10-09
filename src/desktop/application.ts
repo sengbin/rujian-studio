@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
-// 备注：迁自 VS Code 版 extension.ts；入口只做装配，业务逻辑位于 app、domain、infra 目录；宿主能力（对话框、通知、密钥等）由 ApplicationEnvironment 注入。
+// 备注：入口只做装配，业务逻辑位于 app、domain、infra 目录；宿主能力（对话框、通知、密钥等）由 ApplicationEnvironment 注入。
 // ------------------------------------------------------------------------
 
 import { mkdirSync } from 'node:fs';

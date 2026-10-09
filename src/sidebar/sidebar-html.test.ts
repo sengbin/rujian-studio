@@ -41,11 +41,11 @@ test('没有提示时不渲染提示卡片', () => {
 
 test('html 与 body 带主题类，缺省为深色', () => {
   const dark = createSidebarHtml({ ...BASE_OPTIONS, sections: SIDEBAR_SECTIONS });
-  assert.match(dark, /<html lang="zh-CN" class="vscode-dark">/);
-  assert.match(dark, /<body class="vscode-dark">/);
+  assert.match(dark, /<html lang="zh-CN" class="theme-dark">/);
+  assert.match(dark, /<body class="theme-dark">/);
   const light = createSidebarHtml({ ...BASE_OPTIONS, sections: SIDEBAR_SECTIONS, theme: 'light' });
-  assert.match(light, /<html lang="zh-CN" class="vscode-light">/);
-  assert.match(light, /<body class="vscode-light">/);
+  assert.match(light, /<html lang="zh-CN" class="theme-light">/);
+  assert.match(light, /<body class="theme-light">/);
 });
 
 test('没有首次使用提示条', () => {

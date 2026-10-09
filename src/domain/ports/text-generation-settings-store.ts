@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
-// 备注：领域层不依赖 VS Code；扩展中由 VS Code 用户设置实现，测试中用内存实现。
+// 备注：应用中由数据目录下的设置文件实现，测试中用内存实现。
 // ------------------------------------------------------------------------
 
 import { TextGenerationSettings, TextGenerationSettingsPatch } from '../rules/text-generation-settings';

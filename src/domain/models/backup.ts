@@ -73,7 +73,7 @@ export interface BackupAssetFileInspection {
   readonly availableCount: number;
 }
 
-/** 已准备好、重新加载窗口后生效的恢复。 */
+/** 已准备好、重启应用后生效的恢复。 */
 export interface PendingRestore {
   /** 待恢复数据库的大小，单位为字节。 */
   readonly sizeBytes: number;

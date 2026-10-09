@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：不依赖 VS Code；打开文件由宿主注入的 openFile 完成；“编辑镜头 / 确认分镜脚本”复用阶段产出层，所以一并注册阶段请求。
+// 备注：打开文件由宿主注入的 openFile 完成；“编辑镜头 / 确认分镜脚本”复用阶段产出层，所以一并注册阶段请求。
 // ------------------------------------------------------------------------
 
 import { FORM_LEVEL_ERROR_KEY, ValidationError } from '../../domain/errors';
@@ -76,7 +76,7 @@ export interface WorkbenchHost {
   readonly revealFile: (absolutePath: string) => Promise<void>;
   /** 读取本机文件的全部内容。 */
   readonly readFile: (absolutePath: string) => Promise<Uint8Array>;
-  /** 在 VS Code 右下角弹出通知。 */
+  /** 弹出系统通知。 */
   readonly notify: (level: NoticeLevel, message: string) => void;
 }
 

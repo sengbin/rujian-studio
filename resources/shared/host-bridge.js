@@ -42,14 +42,14 @@
   }
 
   /**
-   * 切换页面主题：样式按 html 与 body 上的 vscode-light、vscode-dark 类区分亮暗。
+   * 切换页面主题：样式按 html 与 body 上的 theme-light、theme-dark 类区分亮暗。
    * @param {'light' | 'dark'} theme 目标主题。
    */
   function applyTheme(theme) {
     for (const element of [document.documentElement, document.body]) {
       if (!element) continue;
-      element.classList.remove('vscode-light', 'vscode-dark');
-      element.classList.add('vscode-' + theme);
+      element.classList.remove('theme-light', 'theme-dark');
+      element.classList.add('theme-' + theme);
     }
   }
 

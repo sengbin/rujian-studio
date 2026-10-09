@@ -42,7 +42,7 @@ export interface SidebarHtmlOptions {
  */
 export function createSidebarHtml(options: SidebarHtmlOptions): string {
   const nonce = createNonce();
-  const themeClass = `vscode-${options.theme ?? 'dark'}`;
+  const themeClass = `theme-${options.theme ?? 'dark'}`;
   const noticeHtml = options.notice === undefined ? [] : [renderNotice(options.notice)];
   const sectionsHtml = [...noticeHtml, ...options.sections.map(renderSection)].join('\n');
   const styleTags = options.styleUris.map((uri) => `  <link rel="stylesheet" href="${escapeHtml(uri)}">`).join('\n');

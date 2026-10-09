@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
-// 备注：不依赖 VS Code；创建、编辑分类由页面用表单请求（asset-category-form.ts）完成，分类列表随资产列表一起加载（asset-list-handlers.ts）；删除确认在页面内对话框完成。
+// 备注：创建、编辑分类由页面用表单请求（asset-category-form.ts）完成，分类列表随资产列表一起加载（asset-list-handlers.ts）；删除确认在页面内对话框完成。
 // ------------------------------------------------------------------------
 
 import { readEntityId } from '../../domain/rules/field-readers';

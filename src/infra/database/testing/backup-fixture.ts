@@ -26,12 +26,12 @@ const ASSET_FILE_DIRECTORY_NAME = 'asset-files';
 
 /** 备份测试夹具。 */
 export interface BackupFixture {
-  /** 临时目录，相当于扩展的全局存储目录。 */
+  /** 临时目录，相当于应用的数据目录。 */
   readonly directory: string;
   readonly paths: DatabaseFilePaths;
   readonly database: DatabaseSync;
   readonly storage: SqliteBackupStorage;
-  /** 资产文件目录（相当于扩展存储目录下的 asset-files）。 */
+  /** 资产文件目录（相当于数据目录下的 asset-files）。 */
   readonly assetDirectory: string;
   /** 在临时目录里创建一个已升级到最新结构、含指定项目的备份文件，返回其路径。 */
   createBackupFile(fileName: string, projectNames: readonly string[]): string;

@@ -24,7 +24,7 @@ import {
 } from './page-resources';
 
 /** 编译产物位于 .test-build/app/panels，项目根目录在其上三级。 */
-const EXTENSION_ROOT = resolve(__dirname, '..', '..', '..');
+const APP_ROOT = resolve(__dirname, '..', '..', '..');
 const UI_KIT_PREFIX = 'ui-kit/src/';
 const PAGES: ReadonlyArray<readonly [string, PageResources]> = [
   ['项目列表页', PROJECT_LIST_PAGE_RESOURCES],
@@ -44,7 +44,7 @@ function uiKitFiles(files: readonly string[]): string[] {
 test('每个页面清单中的样式与脚本文件都存在', () => {
   for (const [name, page] of PAGES) {
     for (const file of [...page.styles, ...page.scripts]) {
-      assert.ok(existsSync(join(EXTENSION_ROOT, ...file.split('/'))), `${name}引用的 ${file} 不存在`);
+      assert.ok(existsSync(join(APP_ROOT, ...file.split('/'))), `${name}引用的 ${file} 不存在`);
     }
   }
 });
@@ -76,11 +76,11 @@ test('令牌样式最先加载，通信桥与组件核心先于其他脚本', ()
 });
 
 test('页面加载的组件库文件与顺序和 ui-kit/manifest.json 一致，且没有遗漏', () => {
-  const manifest = JSON.parse(readFileSync(join(EXTENSION_ROOT, 'ui-kit', 'manifest.json'), 'utf8')) as {
+  const manifest = JSON.parse(readFileSync(join(APP_ROOT, 'ui-kit', 'manifest.json'), 'utf8')) as {
     styles: string[];
     scripts: string[];
   };
-  const srcFiles = readdirSync(join(EXTENSION_ROOT, 'ui-kit', 'src')).sort();
+  const srcFiles = readdirSync(join(APP_ROOT, 'ui-kit', 'src')).sort();
   assert.deepEqual([...manifest.styles, ...manifest.scripts].sort(), srcFiles, 'manifest.json 与 ui-kit/src 不一致');
   for (const [name, page] of PAGES) {
     // 侧栏页面不加载基础样式，但组件库样式与脚本仍须完整、顺序一致。

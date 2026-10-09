@@ -45,8 +45,8 @@
 }
 
 .ui-button--primary {
-  color: var(--vscode-button-foreground);
-  background: var(--vscode-button-background);
+  color: var(--host-button-foreground);
+  background: var(--host-button-background);
 }
 
 .ui-button--primary:hover {
@@ -142,8 +142,8 @@
 .ui-audio-preview__button--playing,
 .ui-audio-preview__button--playing:hover,
 .ui-audio-preview__button--playing:active {
-  color: var(--vscode-button-foreground);
-  background: var(--vscode-button-background);
+  color: var(--host-button-foreground);
+  background: var(--host-button-background);
 }
 
 .ui-audio-preview__button--playing:hover {
@@ -176,7 +176,7 @@
   box-sizing: border-box;
   width: 100%;
   margin: 0;
-  color: var(--vscode-input-foreground);
+  color: var(--host-input-foreground);
   font: inherit;
   background: transparent;
   border: 0;
@@ -293,7 +293,7 @@
   min-height: 0;
   height: 24px;
   padding: 0 24px 0 6px;
-  color: var(--vscode-input-foreground);
+  color: var(--host-input-foreground);
   font: inherit;
   font-size: 11px;
   text-align: left;
@@ -440,7 +440,7 @@
   cursor: pointer;
   user-select: none;
   /* 开启状态的强调色，悬停与按下时逐级加深 */
-  --choice-accent: var(--vscode-button-background);
+  --choice-accent: var(--host-button-background);
 }
 
 .ui-choice:not([aria-disabled="true"]):hover {
@@ -501,7 +501,7 @@
   left: 3px;
   width: 3px;
   height: 7px;
-  border: solid var(--vscode-button-foreground);
+  border: solid var(--host-button-foreground);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
@@ -576,7 +576,7 @@
 }
 
 .ui-switch[aria-checked="true"] {
-  background: var(--vscode-button-background);
+  background: var(--host-button-background);
 }
 
 .ui-switch[aria-checked="true"]:hover {
@@ -602,7 +602,7 @@
 .ui-switch:disabled[aria-checked="true"],
 .ui-switch:disabled[aria-checked="true"]:hover,
 .ui-switch:disabled[aria-checked="true"]:active {
-  background: color-mix(in srgb, var(--vscode-button-background) 35%, transparent);
+  background: color-mix(in srgb, var(--host-button-background) 35%, transparent);
 }
 
 .ui-switch:disabled .ui-switch__thumb {

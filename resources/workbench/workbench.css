@@ -5,7 +5,7 @@
  * 作者：Lion
  * 邮箱：chengbin@3578.cn
  * 日期：2026-10-02
- * 备注：背景与面板全部为灰度，随 VS Code 亮暗主题切换（body.vscode-light / body.vscode-dark）；颜色统一使用 rgb() 写法；下拉、输入框和按钮都沿用组件库的外观与尺寸，与其他页面的表单一致（这里只调宽度）；表格样式见 ui-kit/src/ui-table.css。
+ * 备注：背景与面板全部为灰度，随亮暗主题切换（body.theme-light / body.theme-dark）；颜色统一使用 rgb() 写法；下拉、输入框和按钮都沿用组件库的外观与尺寸，与其他页面的表单一致（这里只调宽度）；表格样式见 ui-kit/src/ui-table.css。
  * ------------------------------------------------------------------------
  */
 
@@ -17,8 +17,8 @@
   --wb-pane-height: 340px;
   --wb-shots-height: clamp(130px, 26vh, 260px);
   --wb-queue-max-height: min(24vh, 180px);
-  --wb-accent: var(--vscode-button-background);
-  --wb-panel-bg: color-mix(in srgb, var(--vscode-editorWidget-background, var(--bg)) 90%, rgb(255, 255, 255));
+  --wb-accent: var(--host-button-background);
+  --wb-panel-bg: color-mix(in srgb, var(--host-widget-background, var(--bg)) 90%, rgb(255, 255, 255));
   --wb-panel-border: color-mix(in srgb, var(--text) 12%, var(--bg));
   --wb-line-strong: color-mix(in srgb, var(--text) 28%, transparent);
   --wb-panel-shadow: none;
@@ -31,14 +31,14 @@
   --chip-border: color-mix(in srgb, var(--text) 18%, transparent);
 }
 
-body.vscode-light {
+body.theme-light {
   --wb-panel-bg: color-mix(in srgb, var(--bg) 62%, rgb(226, 226, 226));
   --wb-panel-border: color-mix(in srgb, rgb(0, 0, 0) 22%, rgb(255, 255, 255));
   --wb-panel-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
   --wb-inset-bg: color-mix(in srgb, var(--bg) 76%, rgb(216, 216, 216));
 }
 
-body.vscode-dark {
+body.theme-dark {
   --wb-panel-bg: color-mix(in srgb, var(--bg) 97%, rgb(255, 255, 255));
   --wb-panel-border: color-mix(in srgb, rgb(255, 255, 255) 7%, var(--bg));
 }
@@ -808,7 +808,7 @@ body {
 }
 
 .wb-bind-thumb--button:focus-visible {
-  outline: 1px solid var(--vscode-focusBorder);
+  outline: 1px solid var(--host-focus-border);
   outline-offset: 1px;
 }
 

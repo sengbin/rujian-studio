@@ -1,10 +1,10 @@
 // ------------------------------------------------------------------------
 // 名称：backup-service.ts
-// 说明：数据备份应用服务：展示数据库状态，备份到用户选择的文件，选择并校验备份文件，准备恢复（重新加载窗口后生效）；数据库无法打开时降级为只能恢复。
+// 说明：数据备份应用服务：展示数据库状态，备份到用户选择的文件，选择并校验备份文件，准备恢复（重启应用后生效）；数据库无法打开时降级为只能恢复。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
-// 备注：不依赖 VS Code：数据库文件经 BackupStorage 访问，文件对话框与重新加载窗口经 BackupHost 注入；恢复只准备，替换数据库文件发生在下次启动打开数据库之前；确认与取消恢复都带标识，与当前选择、待恢复项不一致时拒绝。
+// 备注：数据库文件经 BackupStorage 访问，文件对话框与重启应用经 BackupHost 注入；恢复只准备，替换数据库文件发生在下次启动打开数据库之前；确认与取消恢复都带标识，与当前选择、待恢复项不一致时拒绝。
 // ------------------------------------------------------------------------
 
 import { randomUUID } from 'node:crypto';
@@ -20,14 +20,14 @@ const BACKUP_FILE_PREFIX = 'rujian-backup-';
 /** 备份文件的扩展名。 */
 const BACKUP_FILE_EXTENSION = '.sqlite';
 
-/** 备份功能需要的宿主能力，由扩展入口用 VS Code 接口实现。 */
+/** 备份功能需要的宿主能力，由桌面端实现。 */
 export interface BackupHost {
   /** 让用户选择备份文件的保存位置；用户取消时返回 undefined。 */
   readonly pickBackupTarget: (suggestedName: string) => Promise<string | undefined>;
   /** 让用户选择要恢复的备份文件；用户取消时返回 undefined。 */
   readonly pickRestoreSource: () => Promise<string | undefined>;
-  /** 重新加载窗口。 */
-  readonly reloadWindow: () => Promise<void>;
+  /** 重启应用。 */
+  readonly restartApp: () => Promise<void>;
 }
 
 /** 备份服务依赖的对象。 */
@@ -52,7 +52,7 @@ export interface BackupOverview {
   readonly autoBackupDirectory: string;
   /** 扩展支持的最高数据库结构版本，用于说明备份文件版本是否需要升级。 */
   readonly latestSchemaVersion: number;
-  /** 已准备、重新加载窗口后生效的恢复；没有时为 null。 */
+  /** 已准备、重启应用后生效的恢复；没有时为 null。 */
   readonly pendingRestore: PendingRestore | null;
 }
 
@@ -163,7 +163,7 @@ export class BackupService {
   }
 
   /**
-   * 确认恢复：把已选中的备份文件准备为待恢复，重新加载窗口时才替换当前数据库，并先自动备份当前数据库。
+   * 确认恢复：把已选中的备份文件准备为待恢复，重启应用时才替换当前数据库，并先自动备份当前数据库。
    * @param token 选择备份文件时返回的标识；必须与当前记住的选择一致，防止过期或错位的确认恢复了别的文件。
    * @returns 准备好的待恢复信息。
    * @throws ValidationError 还没有选择备份文件、标识与当前选择不一致，或备份文件已不再合法。
@@ -203,9 +203,9 @@ export class BackupService {
     this.storage.discardPendingRestore();
   }
 
-  /** 重新加载窗口，使已准备的恢复生效。 */
-  async reloadWindow(): Promise<void> {
-    await this.host.reloadWindow();
+  /** 重启应用，使已准备的恢复生效。 */
+  async restartApp(): Promise<void> {
+    await this.host.restartApp();
   }
 
   /** 读取并校验备份文件，返回其信息（不含本次选择的标识）；不合法时抛出带原因的校验错误。 */

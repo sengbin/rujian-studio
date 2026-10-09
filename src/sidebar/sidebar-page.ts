@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
-// 备注：取代 VS Code 版的侧栏视图提供者；资源清单见 app/panels/page-resources.ts。
+// 备注：资源清单见 app/panels/page-resources.ts。
 // ------------------------------------------------------------------------
 
 import { SIDEBAR_PAGE_RESOURCES } from '../app/panels/page-resources';

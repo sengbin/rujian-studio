@@ -48,7 +48,7 @@ test('滚动条：鼠标悬停在滚动条各部分上保持箭头光标', () =>
 
 test('滚动条：只允许把 scrollbar-color 重置为 auto（非 auto 时 Chromium 会忽略 -webkit-scrollbar 样式）', () => {
   const scrollbarCss = readStyle('ui-scrollbar.css');
-  assert.match(ruleBody(scrollbarCss, '*'), /scrollbar-color:\s*auto/, '需要重置 VS Code 在 html 上设置的 scrollbar-color');
+  assert.match(ruleBody(scrollbarCss, '*'), /scrollbar-color:\s*auto/, '需要重置外层在 html 上可能设置的 scrollbar-color');
   assert.doesNotMatch(scrollbarCss, /scrollbar-width\s*:/);
   assert.doesNotMatch(scrollbarCss, /scrollbar-color:\s*(?!auto\b)\S/);
   for (const file of ['ui-controls.css', 'ui-dialog.css']) {
@@ -100,7 +100,7 @@ test('全局字体：由令牌统一定义并应用到 body，对话框沿用令
   const tokens = readStyle('ui-tokens.css');
   assert.ok(tokens.includes('--font-family:'), '缺少令牌 --font-family');
   assert.match(ruleBody(tokens, 'body'), /font-family:\s*var\(--font-family\)/);
-  assert.ok(!readStyle('ui-dialog.css').includes('--vscode-font-family'), '对话框不应绕过全局字体令牌');
+  assert.ok(!readStyle('ui-dialog.css').includes('--host-font-family'), '对话框不应绕过全局字体令牌');
 });
 
 test('表格：样式只使用令牌颜色，令牌已定义；数字列靠右，操作列收缩到内容宽度', () => {

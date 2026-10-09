@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
-// 备注：不依赖 VS Code；界面提交的内容不可信，标识一律在这里校验；说话人用 speakerKey 区分：角色为 entity:标识，旁白为 narrator。
+// 备注：界面提交的内容不可信，标识一律在这里校验；说话人用 speakerKey 区分：角色为 entity:标识，旁白为 narrator。
 // ------------------------------------------------------------------------
 
 import { FORM_LEVEL_ERROR_KEY, ValidationError } from '../errors';

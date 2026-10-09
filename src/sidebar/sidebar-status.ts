@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-05
-// 备注：不依赖 VS Code；页面脚本按条目 id 刷新文案，字段需与 resources/sidebar/sidebar.js 一致。
+// 备注：页面脚本按条目 id 刷新文案，字段需与 resources/sidebar/sidebar.js 一致。
 // ------------------------------------------------------------------------
 
 import { ProviderRepository } from '../domain/ports/provider-repository';

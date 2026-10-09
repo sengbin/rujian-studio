@@ -10,7 +10,7 @@
  */
 
 :root {
-  --backup-card-bg: color-mix(in srgb, var(--vscode-editorWidget-background, var(--bg)) 90%, rgb(255, 255, 255));
+  --backup-card-bg: color-mix(in srgb, var(--host-widget-background, var(--bg)) 90%, rgb(255, 255, 255));
   --backup-page-padding: 12px;
   --backup-card-gap: 12px;
   --backup-card-padding: 12px;
@@ -19,11 +19,11 @@
   --backup-label-width: 88px;
 }
 
-body.vscode-light {
+body.theme-light {
   --backup-card-bg: color-mix(in srgb, var(--bg) 62%, rgb(226, 226, 226));
 }
 
-body.vscode-dark {
+body.theme-dark {
   --backup-card-bg: color-mix(in srgb, var(--bg) 97%, rgb(255, 255, 255));
 }
 

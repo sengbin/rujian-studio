@@ -1,10 +1,10 @@
 // ------------------------------------------------------------------------
 // 名称：backup-handlers.ts
-// 说明：数据备份页的请求处理：读取概览，备份到文件，选择并校验备份文件，确认恢复、取消恢复、重新加载窗口；确认与取消恢复都必须带标识。
+// 说明：数据备份页的请求处理：读取概览，备份到文件，选择并校验备份文件，确认恢复、取消恢复、重启应用；确认与取消恢复都必须带标识。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
-// 备注：不依赖 VS Code；请求名称需与 resources/backup/backup.js 一致；恢复的文件路径只在宿主内保存，页面确认时不回传路径。
+// 备注：请求名称需与 resources/backup/backup.js 一致；恢复的文件路径只在宿主内保存，页面确认时不回传路径。
 // ------------------------------------------------------------------------
 
 import { FORM_LEVEL_ERROR_KEY, ValidationError } from '../../domain/errors';
@@ -19,7 +19,7 @@ export const BACKUP_REQUESTS = {
   chooseRestoreFile: 'backup.chooseRestoreFile',
   restore: 'backup.restore',
   cancelRestore: 'backup.cancelRestore',
-  reloadWindow: 'backup.reloadWindow'
+  restartApp: 'backup.restartApp'
 } as const;
 
 /**
@@ -37,8 +37,8 @@ export function registerBackupHandlers(router: MessageRouter, service: BackupSer
     service.cancelRestore(readToken(payload));
     return { cancelled: true };
   });
-  router.register(BACKUP_REQUESTS.reloadWindow, async () => {
-    await service.reloadWindow();
+  router.register(BACKUP_REQUESTS.restartApp, async () => {
+    await service.restartApp();
     return { requested: true };
   });
 }

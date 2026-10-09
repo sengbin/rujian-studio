@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
-// 备注：设置来自用户可自由编辑的 VS Code 设置，不可信；不合法的值回退为默认值或夹到允许范围内。
+// 备注：设置来自用户可自由编辑的设置文件，不可信；不合法的值回退为默认值或夹到允许范围内。
 // ------------------------------------------------------------------------
 
 import { FORM_LEVEL_ERROR_KEY, ValidationError } from '../errors';
@@ -33,7 +33,7 @@ export interface RawTextGenerationSettings {
 
 /**
  * 把原始设置整理为可用的设置。
- * @param raw 从 VS Code 设置读到的值。
+ * @param raw 从设置文件读到的值。
  */
 export function normalizeTextGenerationSettings(raw: RawTextGenerationSettings): TextGenerationSettings {
   const configuredModel = typeof raw.defaultModel === 'string' ? raw.defaultModel.trim() : '';

@@ -21,10 +21,10 @@ export const PAGE_ROOT_PATHS = ['resources', UI_KIT_DIR] as const;
 
 /** 界面组件库的令牌样式，其他样式依赖它，必须最先加载。 */
 const UI_TOKENS_STYLE = `${UI_KIT_DIR}/ui-tokens.css`;
-/** 应用主题变量（--vscode-* 的亮暗两套），紧随令牌样式加载。 */
+/** 应用主题变量（--host-* 的亮暗两套），紧随令牌样式加载。 */
 const HOST_THEME_STYLE = 'resources/shared/host-theme.css';
-/** 编辑器区页面的基础样式（页面外观、标题、状态文字）。 */
-const EDITOR_PAGE_THEME_STYLE = 'resources/shared/theme.css';
+/** 标签页页面的基础样式（页面外观、标题、状态文字）。 */
+const TAB_PAGE_THEME_STYLE = 'resources/shared/theme.css';
 /** 界面组件库的控件、表格、对话框与滚动条样式。 */
 const UI_COMPONENT_STYLES = ['ui-controls.css', 'ui-file-picker.css', 'ui-table.css', 'ui-dialog.css', 'ui-scrollbar.css'].map((name) => `${UI_KIT_DIR}/${name}`);
 
@@ -48,19 +48,19 @@ const UI_LIBRARY_SCRIPTS = [
   ].map((name) => `${UI_KIT_DIR}/${name}`)
 ];
 
-/** 把相对 resources 目录的路径转换为相对扩展根目录的路径。 */
+/** 把相对 resources 目录的路径转换为相对应用资源根目录的路径。 */
 function toResourcePath(path: string): string {
   return `resources/${path}`;
 }
 
 /**
- * 组装编辑器区页面的资源：组件库在前，页面自己的样式和脚本在后。
+ * 组装标签页页面的资源：组件库在前，页面自己的样式和脚本在后。
  * @param pageStyles 页面自己的样式，相对 resources 目录。
  * @param pageScripts 页面自己的脚本，相对 resources 目录。
  */
 function createEditorPageResources(pageStyles: readonly string[], pageScripts: readonly string[]): PageResources {
   return {
-    styles: [UI_TOKENS_STYLE, HOST_THEME_STYLE, EDITOR_PAGE_THEME_STYLE, ...UI_COMPONENT_STYLES, ...pageStyles.map(toResourcePath)],
+    styles: [UI_TOKENS_STYLE, HOST_THEME_STYLE, TAB_PAGE_THEME_STYLE, ...UI_COMPONENT_STYLES, ...pageStyles.map(toResourcePath)],
     scripts: [...UI_LIBRARY_SCRIPTS, ...pageScripts.map(toResourcePath)]
   };
 }
@@ -130,7 +130,7 @@ export const SETTINGS_PAGE_RESOURCES: PageResources = createEditorPageResources(
 /** 数据备份页：备份与恢复的确认都用组件库的对话框，没有表单。 */
 export const BACKUP_PAGE_RESOURCES: PageResources = createEditorPageResources(['backup/backup.css'], ['backup/backup.js']);
 
-/** 侧栏页面：有自己的布局，不加载编辑器区的基础样式。 */
+/** 侧栏页面：有自己的布局，不加载标签页页面的基础样式。 */
 export const SIDEBAR_PAGE_RESOURCES: PageResources = {
   styles: [UI_TOKENS_STYLE, HOST_THEME_STYLE, ...UI_COMPONENT_STYLES, toResourcePath('sidebar/sidebar.css')],
   scripts: [...UI_LIBRARY_SCRIPTS, toResourcePath('sidebar/sidebar.js')]

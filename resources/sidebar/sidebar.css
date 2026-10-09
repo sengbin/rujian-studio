@@ -5,14 +5,14 @@
  * 作者：Lion
  * 邮箱：chengbin@3578.cn
  * 日期：2026-09-30
- * 备注：颜色统一使用 rgb() 写法，主题通过 body.vscode-light / body.vscode-dark 切换。
+ * 备注：颜色统一使用 rgb() 写法，主题通过 body.theme-light / body.theme-dark 切换。
  * ------------------------------------------------------------------------
  */
 
 :root {
   color-scheme: light dark;
-  --bg: var(--vscode-sideBar-background);
-  --focus-border: var(--vscode-focusBorder, rgb(0, 120, 212));
+  --bg: var(--host-sidebar-background);
+  --focus-border: var(--host-focus-border, rgb(0, 120, 212));
   --page-padding: 8px 0 10px 16px;
   --page-padding-end: 16px;
   /* 分区标题与菜单项同字号，层级靠字重区分，避免标题看起来比菜单项小 */
@@ -21,16 +21,16 @@
   --card-gap: 10px;
   --card-padding: 8px;
   --card-radius: 6px;
-  --card-background: color-mix(in srgb, var(--vscode-editorWidget-background, var(--bg)) 90%, rgb(255, 255, 255));
+  --card-background: color-mix(in srgb, var(--host-widget-background, var(--bg)) 90%, rgb(255, 255, 255));
   --card-shadow: none;
-  --divider: color-mix(in srgb, var(--vscode-foreground) 8%, transparent);
+  --divider: color-mix(in srgb, var(--host-foreground) 8%, transparent);
   --row-hover-background: rgb(50, 50, 50);
   --action-hover-background: rgb(61, 61, 61);
   --row-pressed-background: rgb(47, 47, 47);
   --action-pressed-background: rgb(56, 56, 56);
 }
 
-body.vscode-light {
+body.theme-light {
   --card-background: color-mix(in srgb, var(--bg) 62%, rgb(226, 226, 226));
   --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
   --divider: color-mix(in srgb, rgb(0, 0, 0) 8%, transparent);
@@ -40,7 +40,7 @@ body.vscode-light {
   --action-pressed-background: rgb(212, 212, 212);
 }
 
-body.vscode-dark {
+body.theme-dark {
   --card-background: color-mix(in srgb, var(--bg) 97%, rgb(255, 255, 255));
   --divider: color-mix(in srgb, rgb(255, 255, 255) 8%, transparent);
 }
@@ -56,7 +56,7 @@ body {
   min-width: 0;
   margin: 0;
   padding: var(--page-padding);
-  color: var(--vscode-foreground);
+  color: var(--host-foreground);
   background: var(--bg);
   font-size: var(--menu-font-size);
   line-height: 1.4;
@@ -73,7 +73,7 @@ main {
 .status-bar {
   margin-top: auto;
   padding: 10px var(--page-padding-end) 0 0;
-  color: var(--vscode-descriptionForeground);
+  color: var(--host-description-foreground);
   font-size: 11px;
   line-height: 1.4;
 }
@@ -100,20 +100,20 @@ main {
 }
 
 .status-value[data-level='normal'] {
-  color: var(--vscode-foreground);
+  color: var(--host-foreground);
 }
 
 /* 版本号是辅助信息，沿用状态条的次要文字色，不与运行状态抢眼 */
 .status-version {
-  color: var(--vscode-descriptionForeground);
+  color: var(--host-description-foreground);
 }
 
 .status-value[data-level='warning'] {
-  color: var(--vscode-editorWarning-foreground, rgb(204, 167, 0));
+  color: var(--host-warning-foreground, rgb(204, 167, 0));
 }
 
 .status-value[data-level='error'] {
-  color: var(--vscode-errorForeground, rgb(244, 71, 71));
+  color: var(--host-error-foreground, rgb(244, 71, 71));
 }
 
 /* 卡片外壳只负责布局，视觉表面由 .card-inner 承担 */
@@ -142,7 +142,7 @@ h2 {
   gap: 6px;
   margin: 0 0 6px;
   padding: 0 0 6px;
-  color: var(--vscode-foreground);
+  color: var(--host-foreground);
   font-size: var(--menu-font-size);
   font-weight: var(--menu-title-weight);
   border-bottom: 1px solid var(--divider);
@@ -179,7 +179,7 @@ nav {
 .notice {
   margin: 0;
   padding: 2px 6px;
-  color: var(--vscode-errorForeground, rgb(244, 71, 71));
+  color: var(--host-error-foreground, rgb(244, 71, 71));
   font-size: 12px;
   line-height: 1.5;
   overflow-wrap: anywhere;
@@ -241,17 +241,17 @@ h2 > span,
 }
 
 .menu-row:has(.menu-action:hover, .menu-action:focus-visible) .menu-title {
-  color: var(--vscode-descriptionForeground);
+  color: var(--host-description-foreground);
 }
 
 .menu-badge {
   display: inline-block;
   flex: none;
   padding: 0 4px;
-  color: color-mix(in srgb, var(--vscode-foreground) 70%, transparent);
+  color: color-mix(in srgb, var(--host-foreground) 70%, transparent);
   font-size: 11px;
   line-height: 16px;
-  border: 1px solid color-mix(in srgb, var(--vscode-foreground) 24%, transparent);
+  border: 1px solid color-mix(in srgb, var(--host-foreground) 24%, transparent);
   border-radius: 3px;
 }
 
@@ -262,13 +262,13 @@ h2 > span,
   width: 28px;
   height: 28px;
   padding: 0;
-  color: var(--vscode-descriptionForeground);
+  color: var(--host-description-foreground);
   background: transparent;
 }
 
 .menu-action:hover,
 .menu-action:focus-visible {
-  color: var(--vscode-textLink-foreground);
+  color: var(--host-link-foreground);
   background: var(--action-hover-background);
 }
 

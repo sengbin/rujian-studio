@@ -18,7 +18,7 @@ export class FilePromptTemplates implements PromptTemplates {
   private readonly cache = new Map<string, string>();
 
   /**
-   * @param directory 模板目录的绝对路径，如扩展根目录下的 resources/prompts。
+   * @param directory 模板目录的绝对路径，如应用资源根目录下的 resources/prompts。
    */
   constructor(private readonly directory: string) {}
 

@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
-// 备注：请求处理的业务逻辑在 project-list-handlers.ts 与 form-handlers.ts；删除确认在页面内对话框完成，不使用 VS Code 的弹窗。
+// 备注：请求处理的业务逻辑在 project-list-handlers.ts 与 form-handlers.ts；删除确认在页面内对话框完成。
 // ------------------------------------------------------------------------
 
 import { createProjectFormCatalog } from '../forms/project-form';

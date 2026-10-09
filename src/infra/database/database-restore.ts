@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
-// 备注：必须在打开数据库连接之前调用（Windows 上不能替换已打开的文件），因此恢复需重新加载窗口后生效；失败时丢弃待恢复文件，避免每次启动都重复失败。
+// 备注：必须在打开数据库连接之前调用（Windows 上不能替换已打开的文件），因此恢复需重启应用后生效；失败时丢弃待恢复文件，避免每次启动都重复失败。
 // ------------------------------------------------------------------------
 
 import { copyFileSync, existsSync, mkdirSync, renameSync, rmSync } from 'node:fs';
@@ -37,7 +37,7 @@ export interface DatabaseFilePaths {
 
 /**
  * 按存储目录和数据库文件名确定各相关文件的路径。
- * @param storageDirectory 扩展的全局存储目录。
+ * @param storageDirectory 数据目录。
  * @param databaseFileName 数据库文件名。
  */
 export function resolveDatabaseFilePaths(storageDirectory: string, databaseFileName: string): DatabaseFilePaths {

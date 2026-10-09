@@ -5,7 +5,7 @@
  * 作者：Lion
  * 邮箱：chengbin@3578.cn
  * 日期：2026-09-30
- * 备注：作用于页面内所有可滚动元素（含对话框、下拉弹层、多行文本框）；VS Code Webview 基于 Chromium，使用 -webkit-scrollbar 系列伪元素；悬停标记由 ui-scrollbar.js 提供。
+ * 备注：作用于页面内所有可滚动元素（含对话框、下拉弹层、多行文本框）；Chromium 使用 -webkit-scrollbar 系列伪元素；悬停标记由 ui-scrollbar.js 提供。
  * ------------------------------------------------------------------------
  */
 
@@ -16,7 +16,7 @@
   --scrollbar-thumb-active-bg: color-mix(in srgb, var(--text) 64%, transparent);
 }
 
-/* VS Code 在 html 上设置了会被继承的 scrollbar-color，Chromium 遇到它就忽略 -webkit-scrollbar 样式，因此在所有元素上恢复为 auto */
+/* html 上若设置了会被继承的 scrollbar-color，Chromium 遇到它就忽略 -webkit-scrollbar 样式，因此在所有元素上恢复为 auto */
 * {
   scrollbar-color: auto;
 }

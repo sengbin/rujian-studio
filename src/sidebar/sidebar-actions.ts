@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
-// 备注：未注册动作的入口视为功能尚未开放；不依赖 VS Code。
+// 备注：未注册动作的入口视为功能尚未开放。
 // ------------------------------------------------------------------------
 
 import { SidebarMenuItem, SidebarMenuSection } from './sidebar-menu-config';
