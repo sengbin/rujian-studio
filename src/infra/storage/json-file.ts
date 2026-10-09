@@ -25,6 +25,29 @@ export function readJsonObject(filePath: string): Record<string, unknown> {
 }
 
 /**
+ * 读取 JSON 文件中的顶层对象，供“读—改—写”前确认不会覆盖损坏的文件。
+ * @param filePath 文件的绝对路径。
+ * @returns 顶层对象的副本；文件不存在时返回空对象。
+ * @throws Error 文件无法读取、内容损坏或顶层不是对象。
+ */
+export function readJsonObjectStrict(filePath: string): Record<string, unknown> {
+  let text: string;
+  try {
+    text = readFileSync(filePath, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return {};
+    }
+    throw error;
+  }
+  const parsed: unknown = JSON.parse(text);
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new Error('顶层不是对象。');
+  }
+  return { ...(parsed as Record<string, unknown>) };
+}
+
+/**
  * 把对象写入 JSON 文件；先写临时文件再改名，避免留下写了一半的文件，必要时创建目录。
  * @param filePath 文件的绝对路径。
  * @param content 要写入的对象。

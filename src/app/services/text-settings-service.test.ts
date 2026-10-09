@@ -20,13 +20,12 @@ import {
   TextGenerationSettingsPatch
 } from '../../domain/rules/text-generation-settings';
 import {
-  DEFAULT_FALLBACK_HINT,
+  DEFAULT_MODEL_UNAVAILABLE_HINT,
   MODEL_NOT_ENABLED_MESSAGE,
   NO_TEXT_MODEL_NOTE,
   TextModelSource,
   TextSettingsService,
-  WORK_MODEL_UNAVAILABLE_HINT,
-  WORK_MODEL_UNAVAILABLE_NO_FALLBACK_HINT
+  WORK_MODEL_UNAVAILABLE_HINT
 } from './text-settings-service';
 
 const QIANWEN_KEY = 'model:fake/fake-text';
@@ -108,12 +107,12 @@ test('设置视图：已启用的服务商文本模型出现在列表中并作�
   assert.deepEqual((await service.getView()).choices, []);
 });
 
-test('设置视图：已保存的默认模型不可用时显示实际使用的模型并提示', async () => {
+test('设置视图：已保存的默认模型不可用时不换成别的模型，只提示重新选择', async () => {
   const { store, models, service } = createService();
   store.settings = { ...store.settings, defaultModel: 'model:fake/gone' };
   models.enabled = true;
-  const fallback = await service.getView();
-  assert.deepEqual([fallback.defaultModel, fallback.modelNote], [QIANWEN_KEY, DEFAULT_FALLBACK_HINT(QIANWEN_LABEL)]);
+  const unavailable = await service.getView();
+  assert.deepEqual([unavailable.defaultModel, unavailable.modelNote], ['', DEFAULT_MODEL_UNAVAILABLE_HINT]);
 
   models.enabled = false;
   const none = await service.getView();
@@ -175,10 +174,10 @@ test('作品的文本模型：候选与默认名称随设置变化，选择只�
   assert.equal((await service.getWorkState(7)).selectedKey, QIANWEN_KEY);
   assert.equal((await service.getWorkState(8)).selectedKey, null);
 
-  // 模型被停用后作品的选择不再出现在候选中，没有任何可用模型时提示生成会失败；记录保留，重新启用后恢复。
+  // 模型被停用后作品的选择不再出现在候选中并提示重新选择；记录保留，重新启用后恢复。
   models.enabled = false;
   const stopped = await service.getWorkState(7);
-  assert.deepEqual([stopped.selectedKey, stopped.unavailableHint], [null, WORK_MODEL_UNAVAILABLE_NO_FALLBACK_HINT]);
+  assert.deepEqual([stopped.selectedKey, stopped.unavailableHint], [null, WORK_MODEL_UNAVAILABLE_HINT]);
   assert.equal((await service.getWorkState(8)).unavailableHint, null, '没有单独选择不提示');
   assert.equal((await service.getWorkState(null)).unavailableHint, null);
   models.enabled = true;
@@ -189,13 +188,13 @@ test('作品的文本模型：候选与默认名称随设置变化，选择只�
   assert.equal(workModels.find(7), null);
 });
 
-test('作品的文本模型：原选择失效后提示改用当前默认的文本模型；无法识别的旧选择视为失效', async () => {
+test('作品的文本模型：原选择失效后提示重新选择，不自动改用默认；无法识别的旧选择视为失效', async () => {
   const { models, workModels, service } = createService();
   models.enabled = true;
   workModels.save(7, 'other:gpt-4o');
   const state = await service.getWorkState(7);
   assert.deepEqual([state.selectedKey, state.defaultLabel], [null, QIANWEN_LABEL]);
-  assert.equal(state.unavailableHint, WORK_MODEL_UNAVAILABLE_HINT(QIANWEN_LABEL));
+  assert.equal(state.unavailableHint, WORK_MODEL_UNAVAILABLE_HINT);
 });
 
 test('作品的文本模型：选用不可用的模型被拒绝', async () => {

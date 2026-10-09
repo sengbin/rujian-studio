@@ -130,6 +130,7 @@
       const modelSelect = aiUi.select({
         options: view.choices.map((choice) => ({ value: choice.key, label: choice.label })),
         value: view.defaultModel,
+        placeholder: '请重新选择',
         allowEmpty: false,
         ariaLabel: '默认文本模型',
         onChange: (value) => void saveSetting({ defaultModel: value }, modelStatus)

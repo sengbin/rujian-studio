@@ -49,17 +49,16 @@ function run(): void {
   let mainWindow: BrowserWindow | undefined;
   let application: Application | undefined;
   let shuttingDown = false;
-  const getWindow = (): BrowserWindow | undefined => mainWindow;
+  // 窗口关闭后进入收尾阶段时引用已销毁，返回 undefined，避免对已销毁窗口调用方法。
+  const getWindow = (): BrowserWindow | undefined => (mainWindow !== undefined && !mainWindow.isDestroyed() ? mainWindow : undefined);
 
   const bridge = new ShellBridge({
     send: (channel, payload) => {
-      if (mainWindow !== undefined && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send(channel, payload);
-      }
+      getWindow()?.webContents.send(channel, payload);
     }
   });
 
-  app.on('second-instance', () => focusWindow(mainWindow));
+  app.on('second-instance', () => focusWindow(getWindow()));
 
   // 退出前先执行收尾序列（等待阶段生成、停止队列、关闭数据库），完成后再真正退出。
   app.on('before-quit', (event) => {
@@ -74,7 +73,17 @@ function run(): void {
 
   app.on('window-all-closed', () => app.quit());
 
-  void app.whenReady().then(() => {
+  void app
+    .whenReady()
+    .then(() => startApplication())
+    .catch((error: unknown) => {
+      // 装配失败时没有窗口也不会有人退出，必须提示并退出，不能留下占着单实例锁的空进程。
+      dialog.showErrorBox(ERROR_TITLE, `启动失败：${error instanceof Error ? error.message : String(error)}`);
+      app.quit();
+    });
+
+  /** 装配应用并创建主窗口。 */
+  function startApplication(): void {
     const notify = createDesktopNotifier();
     const dataRoot = path.join(app.getPath('userData'), DATA_DIRECTORY_NAME);
     const panels = new PanelManager(bridge, getCurrentTheme);
@@ -88,7 +97,7 @@ function run(): void {
       workbenchHost: createWorkbenchHost(getWindow, notify),
       backupHost: createBackupHost(getWindow),
       notify,
-      focusWindow: () => focusWindow(mainWindow),
+      focusWindow: () => focusWindow(getWindow()),
       postSidebarEvent: (name) => bridge.postEvent(SIDEBAR_FRAME_ID, name),
       reportError: (message) => dialog.showErrorBox(ERROR_TITLE, message)
     });
@@ -99,10 +108,12 @@ function run(): void {
     nativeTheme.on('updated', () => bridge.notifyThemeChanged(getCurrentTheme()));
 
     mainWindow = createAppWindow(resourceRoot, path.join(__dirname, 'preload.cjs'));
-    if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-      void mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-    } else {
-      void mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
-    }
-  });
+    const loading = MAIN_WINDOW_VITE_DEV_SERVER_URL
+      ? mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL)
+      : mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+    loading.catch((error: unknown) => {
+      dialog.showErrorBox(ERROR_TITLE, `界面加载失败：${error instanceof Error ? error.message : String(error)}`);
+      app.quit();
+    });
+  }
 }

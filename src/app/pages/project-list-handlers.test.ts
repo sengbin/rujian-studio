@@ -13,6 +13,7 @@ import { Project } from '../../domain/models/project';
 import { IN_MEMORY_DATABASE_PATH, openDatabase } from '../../infra/database/database-connection';
 import { SqliteProjectRepository } from '../../infra/database/sqlite-project-repository';
 import { MessageRouter } from '../messaging/message-router';
+import { DeletionService } from '../services/deletion-service';
 import { ProjectService } from '../services/project-service';
 import { PROJECT_LIST_REQUESTS, ProjectListRequest, registerProjectListHandlers } from './project-list-handlers';
 
@@ -20,9 +21,17 @@ import { PROJECT_LIST_REQUESTS, ProjectListRequest, registerProjectListHandlers 
 function createFixture() {
   const database = openDatabase(IN_MEMORY_DATABASE_PATH);
   const service = new ProjectService(new SqliteProjectRepository(database));
+  // 这里只验证请求处理：项目下没有需要停掉的后台任务，编排的取消行为见 deletion-service.test.ts。
+  const deletion = new DeletionService({
+    projects: service,
+    works: { getWork: () => assert.fail('不应读取作品'), listWorks: () => [], deleteWork: () => assert.fail('不应删除作品') },
+    stages: { cancelRunningForWork: async () => undefined },
+    jobs: { listJobsByStatus: () => [], getGroupLocation: () => undefined },
+    scheduler: { cancel: async () => assert.fail('不应取消任务') }
+  });
   const state: { pendingAction: ProjectListRequest | undefined } = { pendingAction: undefined };
   const router = new MessageRouter();
-  registerProjectListHandlers(router, service, {
+  registerProjectListHandlers(router, service, deletion, {
     takePendingAction: () => {
       const taken = state.pendingAction;
       state.pendingAction = undefined;

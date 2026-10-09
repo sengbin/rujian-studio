@@ -37,7 +37,7 @@ export interface WorkTextModels extends TextModelStates {
 
 /** “沿用默认”选项的文字，带上当前默认模型的名称。 */
 export function defaultTextModelOption(state: WorkTextModelState): string {
-  return `沿用默认（${state.defaultLabel ?? '没有可用的文本模型'}）`;
+  return `沿用默认（${state.defaultLabel ?? '没有可用的默认文本模型'}）`;
 }
 
 /**

@@ -226,10 +226,10 @@ test('删除前取消：作品有正在生成的记录时先取消', async () =>
   const { database, stages, runner, work, runs } = createFixture(() => new Promise<string>(() => undefined));
   try {
     const run = await stages.startCreative(work.id, PARAMS);
-    stages.cancelRunningForWork(work.id);
+    await stages.cancelRunningForWork(work.id);
     await runner.whenIdle();
     assert.equal(runs.findById(run.id)?.status, 'canceled');
-    stages.cancelRunningForWork(work.id);
+    await stages.cancelRunningForWork(work.id);
   } finally {
     database.close();
   }

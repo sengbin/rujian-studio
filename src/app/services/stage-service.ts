@@ -272,21 +272,24 @@ export class StageService {
   }
 
   /**
-   * 取消作品各阶段正在进行的生成；没有则什么都不做。删除作品前调用。
+   * 取消作品各阶段正在进行的生成并等待它们结束；没有则什么都不做。删除作品前调用。
    */
-  cancelRunningForWork(workId: number): void {
+  async cancelRunningForWork(workId: number): Promise<void> {
+    const { runs, runner, screenplays } = this.dependencies;
+    const running: number[] = [];
     for (const stage of ['beat_sheet', 'creative', 'screenplay'] as const) {
-      const running = this.dependencies.runs.findRunning({ workId, stage, episodeId: null });
-      if (running !== undefined) {
-        this.dependencies.runner.cancel(running.id);
+      const found = runs.findRunning({ workId, stage, episodeId: null });
+      if (found !== undefined) {
+        running.push(found.id);
       }
     }
-    for (const episode of this.dependencies.screenplays.listEpisodes(workId)) {
-      const running = this.dependencies.runs.findRunning({ workId, stage: 'storyboard_script', episodeId: episode.id });
-      if (running !== undefined) {
-        this.dependencies.runner.cancel(running.id);
+    for (const episode of screenplays.listEpisodes(workId)) {
+      const found = runs.findRunning({ workId, stage: 'storyboard_script', episodeId: episode.id });
+      if (found !== undefined) {
+        running.push(found.id);
       }
     }
+    await Promise.all(running.map((runId) => runner.cancelAndWait(runId)));
   }
 
   /**

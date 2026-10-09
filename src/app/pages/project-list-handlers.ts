@@ -10,6 +10,7 @@
 import { ValidationError } from '../../domain/errors';
 import { readEntityId, readRecord } from '../../domain/rules/field-readers';
 import { MessageRouter } from '../messaging/message-router';
+import { DeletionService } from '../services/deletion-service';
 import { ProjectService } from '../services/project-service';
 
 /** 项目列表页使用的请求名称，需与 resources/project-list/project-list.js 一致。 */
@@ -47,11 +48,13 @@ export interface ProjectListActions {
  * 在路由器上注册项目列表页的请求处理函数。
  * @param router 面板的请求路由器。
  * @param service 项目服务。
+ * @param deletion 删除编排服务：先停掉项目下作品的后台生成再删除。
  * @param actions 外部提供的能力。
  */
 export function registerProjectListHandlers(
   router: MessageRouter,
   service: ProjectService,
+  deletion: DeletionService,
   actions: ProjectListActions
 ): void {
   router.register(PROJECT_LIST_REQUESTS.list, () => service.listProjects());
@@ -63,12 +66,12 @@ export function registerProjectListHandlers(
     return { name: project.name, ...service.getDeletionImpact(project.id) };
   });
 
-  router.register(PROJECT_LIST_REQUESTS.delete, (payload) => {
+  router.register(PROJECT_LIST_REQUESTS.delete, async (payload) => {
     const project = service.getProject(readEntityId(payload, '项目'));
     if (readRecord(payload).confirmName !== project.name) {
       throw new ValidationError({ confirmName: CONFIRM_NAME_MISMATCH_MESSAGE });
     }
-    service.deleteProject(project.id);
+    await deletion.deleteProject(project.id);
     return { deleted: true, name: project.name };
   });
 }

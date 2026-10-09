@@ -9,6 +9,7 @@
 
 import { ProviderError, ProviderFailure } from '../../../domain/errors';
 import { ProviderCallContext } from '../../../domain/ports/provider-adapters';
+import { requireSecureEndpoint } from '../shared/provider-endpoint';
 import { FetchFunction, HttpTimeouts, ProviderHttpTransport } from '../shared/provider-http-transport';
 import { readObject } from '../shared/provider-payload';
 import { MINIMAX_ENDPOINT_SETTING_KEY, MINIMAX_PROVIDER_NAME } from './minimax-catalog';
@@ -199,13 +200,9 @@ function buildHeaders(context: ProviderCallContext, extraHeaders: Readonly<Recor
   return { Authorization: `Bearer ${context.apiKey}`, ...extraHeaders };
 }
 
-/** 取接口地址；未配置时在发请求前报参数错误。 */
+/** 取接口地址；未配置或不是 https 地址时在发请求前报参数错误。 */
 function readEndpoint(context: ProviderCallContext): string {
-  const endpoint = context.settings[MINIMAX_ENDPOINT_SETTING_KEY];
-  if (endpoint === undefined || endpoint === '') {
-    throw new ProviderError('invalid_request', `尚未配置${MINIMAX_PROVIDER_NAME}的接口地址。`);
-  }
-  return endpoint.replace(/\/+$/, '');
+  return requireSecureEndpoint(context.settings[MINIMAX_ENDPOINT_SETTING_KEY], `尚未配置${MINIMAX_PROVIDER_NAME}的接口地址。`);
 }
 
 /** 把非 2xx 响应转换为带分类的错误：平台错误码取自 base_resp，或 error.message 末尾的括号；都没有时取 error.type 作为错误标识。 */

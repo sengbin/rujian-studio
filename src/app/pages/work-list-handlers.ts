@@ -12,6 +12,7 @@ import { WorkSourceType } from '../../domain/models/work';
 import { readEntityId, readRecord } from '../../domain/rules/field-readers';
 import { MessageRouter } from '../messaging/message-router';
 import { BeatSheetService } from '../services/beat-sheet-service';
+import { DeletionService } from '../services/deletion-service';
 import { ProjectService } from '../services/project-service';
 import { ScreenplayService } from '../services/screenplay-service';
 import { StageService } from '../services/stage-service';
@@ -75,7 +76,7 @@ export interface WorkListActions {
  * 在路由器上注册作品列表页的请求处理函数。
  * @param router 面板的请求路由器。
  * @param view 页面绑定的视图。
- * @param services 项目、作品、阶段、剧本与分镜脚本服务。
+ * @param services 项目、作品、删除编排、阶段、剧本与分镜脚本服务。
  * @param actions 外部提供的能力。
  */
 export function registerWorkListHandlers(
@@ -84,6 +85,7 @@ export function registerWorkListHandlers(
   services: {
     readonly projects: ProjectService;
     readonly works: WorkService;
+    readonly deletion: DeletionService;
     readonly beatSheets: BeatSheetService;
     readonly stages: StageService;
     readonly screenplays: ScreenplayService;
@@ -91,7 +93,7 @@ export function registerWorkListHandlers(
   },
   actions: WorkListActions
 ): void {
-  const { projects, works, beatSheets, stages, screenplays, storyboards } = services;
+  const { projects, works, deletion, beatSheets, stages, screenplays, storyboards } = services;
 
   router.register(WORK_LIST_REQUESTS.load, () => {
     const summaries = projects.listProjects();
@@ -129,13 +131,12 @@ export function registerWorkListHandlers(
 
   router.register(WORK_LIST_REQUESTS.prepareDelete, (payload) => ({ name: works.getWork(readEntityId(payload, '作品')).name }));
 
-  router.register(WORK_LIST_REQUESTS.delete, (payload) => {
+  router.register(WORK_LIST_REQUESTS.delete, async (payload) => {
     const work = works.getWork(readEntityId(payload, '作品'));
     if (readRecord(payload).confirmName !== work.name) {
       throw new ValidationError({ confirmName: CONFIRM_NAME_MISMATCH_MESSAGE });
     }
-    stages.cancelRunningForWork(work.id);
-    works.deleteWork(work.id);
+    await deletion.deleteWork(work.id);
     return { deleted: true, name: work.name };
   });
 }

@@ -593,7 +593,7 @@ test('删除作品：先取消正在进行的剧本生成，级联清除剧本�
     const run = await generate(fixture);
     stages.approve(run.id);
     assert.equal(database.prepare('SELECT COUNT(*) AS n FROM screenplays').get()?.n, 1);
-    stages.cancelRunningForWork(work.id);
+    await stages.cancelRunningForWork(work.id);
     works.deleteWork(work.id);
     await runner.whenIdle();
     assert.equal(database.prepare('SELECT COUNT(*) AS n FROM screenplays').get()?.n, 0);

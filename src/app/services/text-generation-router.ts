@@ -1,10 +1,10 @@
 // ------------------------------------------------------------------------
 // 名称：text-generation-router.ts
-// 说明：文本生成的路由实现：按本次生成指定的模型、作品的单独选择、全局默认的顺序决定使用哪个服务商的文本模型。
+// 说明：文本生成的路由实现：按本次生成指定的模型、作品的单独选择、全局默认的优先级决定使用哪个服务商的文本模型。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
-// 备注：每次 resolveModel 重新按当时的设置选定模型，之后同一个端口的 countTokens 与 generate 沿用该选择，不同作品的生成互不影响；选择的模型已不可用（被停用或服务商被停用）时依次回退到全局默认、第一个可用的服务商文本模型；服务商调用失败统一转换为 TextGenerationError。
+// 备注：每次 resolveModel 重新按当时的设置选定模型，之后同一个端口的 countTokens 与 generate 沿用该选择，不同作品的生成互不影响；只取优先级最高的那个选择，它已不可用（被停用或服务商被停用）时直接报错，不换成别的模型（模型价格不同，悄悄换会带来意外费用）；只有从未设置过全局默认时才使用第一个可用的文本模型（设置页同样显示它）；服务商调用失败统一转换为 TextGenerationError。
 // ------------------------------------------------------------------------
 
 import { ProviderError, TextGenerationError } from '../../domain/errors';
@@ -24,6 +24,15 @@ import { providerModelKey } from '../../domain/rules/text-model-selection';
 
 /** 没有任何可用的文本模型时的提示。 */
 export const NO_TEXT_ENGINE_MESSAGE = '没有可用的文本模型：请到“模型设置”启用一个服务商（如千问AI平台、火山引擎）的文本模型。';
+
+/** 本次指定的文本模型已不可用。 */
+export const REQUESTED_MODEL_UNAVAILABLE_MESSAGE = '指定的文本模型已不可用，请重新选择。';
+
+/** 作品单独选择的文本模型已不可用。 */
+export const WORK_MODEL_UNAVAILABLE_MESSAGE = '作品选择的文本模型已不可用，请在“编辑作品”中重新选择，或改为“沿用默认”。';
+
+/** 全局默认文本模型已不可用。 */
+export const DEFAULT_MODEL_UNAVAILABLE_MESSAGE = '默认文本模型已不可用，请到“模型设置”重新选择。';
 
 /** 路由依赖的服务商能力：列出可选的文本模型、取得调用文本模型所需的内容。 */
 export interface TextProviderCalls {
@@ -58,10 +67,7 @@ class RoutedTextPort implements TextGenerationPort {
   ) {}
 
   async resolveModel(): Promise<TextModelInfo> {
-    const model = this.candidates()[0];
-    if (model === undefined) {
-      throw new TextGenerationError('unavailable', NO_TEXT_ENGINE_MESSAGE);
-    }
+    const model = this.selectModel();
     let call: ResolvedTextCall;
     try {
       call = await this.dependencies.providers.resolveTextCall(model.model.id);
@@ -101,24 +107,38 @@ class RoutedTextPort implements TextGenerationPort {
     return this.active as ResolvedTextCall;
   }
 
-  /** 按“本次指定的模型、作品的选择、全局默认、第一个可用的服务商文本模型”的顺序列出可用候选（已去重）。 */
-  private candidates(): UsableModel[] {
+  /**
+   * 按“本次指定的模型、作品的选择、全局默认”的优先级取模型，只看最高优先级的那个选择。
+   * @throws TextGenerationError 该选择已不可用，或从未设置默认且没有任何可用的文本模型。
+   */
+  private selectModel(): UsableModel {
     const { settings, providers, workModels } = this.dependencies;
-    const { defaultModel } = settings.read();
     const selectable = providers.listSelectableTextModels();
-    const providerKeys = new Map(selectable.map((item) => [providerModelKey(item.providerCode, item.model.code), item]));
-
     const workKey = this.workId === null ? null : workModels.find(this.workId);
-    const keys = [this.requestedKey, workKey, defaultModel, [...providerKeys.keys()][0] ?? null];
-    const candidates = new Map<string, UsableModel>();
-    for (const key of keys) {
-      const model = key === null ? undefined : providerKeys.get(key);
-      if (key !== null && model !== undefined && !candidates.has(key)) {
-        candidates.set(key, model);
-      }
+    const { defaultModel } = settings.read();
+
+    const chosen = chooseKey(this.requestedKey, workKey, defaultModel);
+    // 从未设置过默认：设置页显示并使用第一个可用的文本模型。
+    const model =
+      chosen === null
+        ? selectable[0]
+        : selectable.find((item) => providerModelKey(item.providerCode, item.model.code) === chosen.key);
+    if (model === undefined) {
+      throw new TextGenerationError('unavailable', chosen === null ? NO_TEXT_ENGINE_MESSAGE : chosen.message);
     }
-    return [...candidates.values()];
+    return model;
   }
+}
+
+/** 取优先级最高的选择及其不可用时的提示；全都没有（含默认为空串）时返回 null。 */
+function chooseKey(requestedKey: string | null, workKey: string | null, defaultModel: string): { key: string; message: string } | null {
+  if (requestedKey !== null) {
+    return { key: requestedKey, message: REQUESTED_MODEL_UNAVAILABLE_MESSAGE };
+  }
+  if (workKey !== null) {
+    return { key: workKey, message: WORK_MODEL_UNAVAILABLE_MESSAGE };
+  }
+  return defaultModel === '' ? null : { key: defaultModel, message: DEFAULT_MODEL_UNAVAILABLE_MESSAGE };
 }
 
 /** 把服务商调用的失败转换为文本生成错误：用户可读的原因直接沿用。 */

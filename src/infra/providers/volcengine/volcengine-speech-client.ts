@@ -10,6 +10,7 @@
 import { randomUUID } from 'node:crypto';
 import { ProviderError, ProviderFailure } from '../../../domain/errors';
 import { ProviderCallContext } from '../../../domain/ports/provider-adapters';
+import { requireSecureEndpoint } from '../shared/provider-endpoint';
 import { FetchFunction, HttpTimeouts, ProviderHttpTransport } from '../shared/provider-http-transport';
 import { readObject } from '../shared/provider-payload';
 import { DEFAULT_VOLCENGINE_TIMEOUTS } from './volcengine-api-client';
@@ -76,13 +77,9 @@ export class VolcengineSpeechClient {
   }
 }
 
-/** 取语音合成接口地址；未配置时在发请求前报参数错误。 */
+/** 取语音合成接口地址；未配置或不是 https 地址时在发请求前报参数错误。 */
 function readEndpoint(context: ProviderCallContext): string {
-  const endpoint = context.settings[VOLCENGINE_ENDPOINT_SETTING_KEY];
-  if (endpoint === undefined || endpoint === '') {
-    throw new ProviderError('invalid_request', `尚未配置${SPEECH_NAME}的接口地址。`);
-  }
-  return endpoint.replace(/\/+$/, '');
+  return requireSecureEndpoint(context.settings[VOLCENGINE_ENDPOINT_SETTING_KEY], `尚未配置${SPEECH_NAME}的接口地址。`);
 }
 
 /** 解析响应的一行 JSON；不是 JSON 对象时视为服务端异常。 */

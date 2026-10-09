@@ -7,7 +7,7 @@
 // 备注：使用系统原生标题栏，不设应用菜单；快捷键在主进程拦截，页面 iframe 获得焦点时同样有效。
 // ------------------------------------------------------------------------
 
-import { BrowserWindow, Input, Menu, app, nativeTheme, shell } from 'electron';
+import { BrowserWindow, Input, Menu, app, dialog, nativeTheme, shell } from 'electron';
 import * as path from 'node:path';
 import { SHELL_CHANNELS, ShellCommand, ShellTheme } from '../app/shell/shell-channels';
 
@@ -44,6 +44,15 @@ export function createAppWindow(resourceRoot: string, preloadPath: string): Brow
     return { action: 'deny' };
   });
   window.webContents.on('will-navigate', (event) => event.preventDefault());
+  // 界面进程崩溃后窗口只剩白屏且面板状态已失效：提示后重启应用（经 quit 退出，收尾序列会先关闭数据库）。
+  window.webContents.on('render-process-gone', (_event, details) => {
+    if (details.reason === 'clean-exit') {
+      return;
+    }
+    dialog.showErrorBox(WINDOW_TITLE, `界面进程意外退出（${details.reason}），应用将重新启动。`);
+    app.relaunch();
+    app.quit();
+  });
   window.webContents.on('before-input-event', (event, input) => {
     const command = toShellCommand(input);
     if (command !== undefined) {

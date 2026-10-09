@@ -75,6 +75,12 @@ export interface AssetGenerationQueueDependencies {
   readonly maxRunningMs?: number;
 }
 
+/** 准备好的提交：发起提交的函数，以及按远端任务编号取消的函数（服务商不支持取消时为 undefined）。 */
+interface PreparedSubmission {
+  submit(): Promise<{ remoteJobId: string }>;
+  readonly cancel: ((remoteJobId: string) => Promise<void>) | undefined;
+}
+
 /** 资产生成队列。 */
 export class AssetGenerationQueue {
   private readonly now: () => Date;
@@ -214,22 +220,25 @@ export class AssetGenerationQueue {
   /** 提交一个版本；成功变为生成中并返回 true，可重试的失败保持排队，其他失败记为失败。 */
   private async submitOne(version: AssetVersionRecord): Promise<boolean> {
     const { assets, versions } = this.dependencies;
-    let submit: () => Promise<{ remoteJobId: string }>;
+    let prepared: PreparedSubmission;
     try {
       const asset = assets.findById(version.assetId);
       if (asset === undefined) {
         throw new ProviderError('invalid_request', '资产已被删除。');
       }
-      submit = await this.prepare(version, asset);
+      prepared = await this.prepare(version, asset);
     } catch (error) {
       this.fail(version, toFailure(error));
       return false;
     }
     try {
-      const ref = await submit();
+      const ref = await prepared.submit();
       if (versions.markSubmitted(version.id, ref.remoteJobId, this.timestamp())) {
         this.submitRetries.delete(version.id);
         this.dependencies.notify({ assetId: version.assetId, versionId: version.id });
+      } else {
+        // 提交期间版本已被取消或结束，平台上刚创建的任务没有人跟踪，必须取消以免继续计费。
+        await this.cancelUntracked(prepared, ref.remoteJobId);
       }
       return true;
     } catch (error) {
@@ -243,18 +252,31 @@ export class AssetGenerationQueue {
     }
   }
 
-  /** 解析模型、构造并校验请求，返回真正发起提交的函数；校验失败抛出参数错误。 */
-  private async prepare(version: AssetVersionRecord, asset: AssetRecord): Promise<() => Promise<{ remoteJobId: string }>> {
+  /** 解析模型、构造并校验请求，返回真正发起提交与取消的函数；校验失败抛出参数错误。 */
+  private async prepare(version: AssetVersionRecord, asset: AssetRecord): Promise<PreparedSubmission> {
     if (asset.kind === 'audio') {
       const call = await this.dependencies.calls.resolveAudioCall(version.modelId);
       const request = buildAudioRequest(version, asset, call.modelCode);
       assertValid(call.adapter.validate(request));
-      return () => call.adapter.submit(request, call.context);
+      return { submit: () => call.adapter.submit(request, call.context), cancel: remoteCanceller(call) };
     }
     const call = await this.dependencies.calls.resolveImageCall(version.modelId);
     const request = buildImageRequest(version, this.dependencies.assets.listReferenceFiles(asset.id), call.modelCode);
     assertValid(call.adapter.validate(request));
-    return () => call.adapter.submit(request, call.context);
+    return { submit: () => call.adapter.submit(request, call.context), cancel: remoteCanceller(call) };
+  }
+
+  /** 取消平台上已创建、本地却不再跟踪的任务；服务商不支持取消或取消失败时只能记录日志。 */
+  private async cancelUntracked(prepared: PreparedSubmission, remoteJobId: string): Promise<void> {
+    if (prepared.cancel === undefined) {
+      console.error(`资产版本在提交期间已被取消，但服务商不支持取消远端任务（${remoteJobId}），平台上的任务可能仍会计费。`);
+      return;
+    }
+    try {
+      await prepared.cancel(remoteJobId);
+    } catch (error) {
+      console.error(`资产版本在提交期间已被取消，取消远端任务（${remoteJobId}）失败，平台上的任务可能仍会计费：`, error);
+    }
   }
 
   private async resolveCall(version: AssetVersionRecord): Promise<ResolvedImageCall | ResolvedAudioCall> {
@@ -426,6 +448,16 @@ function assertValid(issues: readonly string[]): void {
   if (issues.length > 0) {
     throw new ProviderError('invalid_request', issues.join('；'));
   }
+}
+
+/** 构造按远端任务编号取消的函数；服务商不支持取消时返回 undefined。 */
+function remoteCanceller(call: ResolvedImageCall | ResolvedAudioCall): PreparedSubmission['cancel'] {
+  const { adapter, modelCode, context } = call;
+  const cancel = adapter.cancel;
+  if (cancel === undefined) {
+    return undefined;
+  }
+  return (remoteJobId) => cancel.call(adapter, { modelCode, remoteJobId }, context);
 }
 
 /** 按 MIME 类型给出文件扩展名。 */

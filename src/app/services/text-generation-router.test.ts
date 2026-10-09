@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：text-generation-router.test.ts
-// 说明：文本生成路由的自动化测试：本次指定、作品选择、全局默认、第一个可用模型的选用顺序，没有可用模型时的错误，服务商失败转换为文本生成错误，不同作品互不影响。
+// 说明：文本生成路由的自动化测试：本次指定、作品选择、全局默认的优先级，选择不可用时报错而不回退，没有可用模型时的错误，服务商失败转换为文本生成错误，不同作品互不影响。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
@@ -15,7 +15,13 @@ import { ModelRecord, UsableModel } from '../../domain/models/model-provider';
 import { ProviderCallContext, ResolvedTextCall, TextModelProvider } from '../../domain/ports/provider-adapters';
 import { TextGenerationRequest } from '../../domain/ports/text-generation-port';
 import { estimateTokens } from '../../domain/rules/token-estimate';
-import { NO_TEXT_ENGINE_MESSAGE, TextGenerationRouter } from './text-generation-router';
+import {
+  DEFAULT_MODEL_UNAVAILABLE_MESSAGE,
+  NO_TEXT_ENGINE_MESSAGE,
+  REQUESTED_MODEL_UNAVAILABLE_MESSAGE,
+  TextGenerationRouter,
+  WORK_MODEL_UNAVAILABLE_MESSAGE
+} from './text-generation-router';
 
 const CAPABILITY: TextCapability = { contextTokens: 1000, maxOutputTokens: 200, imageInput: true };
 const REQUEST: TextGenerationRequest = { system: 's', user: 'u', tool: { name: 't', description: 'd', inputSchema: { type: 'object' } } };
@@ -110,23 +116,31 @@ test('作品的选择优先于全局默认，不同作品互不影响，没有�
   assert.deepEqual(await Promise.all(ports.map((port) => port.generate(REQUEST))), [{ from: 'provider:a' }, { from: 'provider:b' }, { from: 'provider:b' }]);
 });
 
-test('本次指定的模型优先于作品的选择与全局默认，指定的模型已不可用时回退到作品的选择', async () => {
+test('本次指定的模型优先于作品的选择与全局默认', async () => {
   const { router } = createRouter({ defaultModel: 'model:fake/c', models: [usable(1, 'a'), usable(2, 'b'), usable(3, 'c')], workModels: { 1: 'model:fake/b' } });
   assert.deepEqual(await router.forWork(1, 'model:fake/a').generate(REQUEST), { from: 'provider:a' });
   assert.deepEqual(await router.forWork(1, null).generate(REQUEST), { from: 'provider:b' });
-  assert.deepEqual(await router.forWork(1, 'model:fake/gone').generate(REQUEST), { from: 'provider:b' });
-  assert.deepEqual(await router.forWork(null, 'model:fake/gone').generate(REQUEST), { from: 'provider:c' });
+  assert.deepEqual(await router.forWork(null, null).generate(REQUEST), { from: 'provider:c' });
 });
 
-test('选择的模型已不可用：作品回退到全局默认，默认也不可用（含无法识别的键、没有设置）时回退到第一个可用模型', async () => {
+test('选择的模型已不可用：直接报错，不回退到低优先级的选择或第一个可用模型（价格不同）', async () => {
   const models = [usable(1, 'a'), usable(2, 'b')];
-  const stopped = createRouter({ defaultModel: 'model:fake/b', models, workModels: { 1: 'model:fake/gone' } });
-  assert.deepEqual(await stopped.router.forWork(1).generate(REQUEST), { from: 'provider:b' });
+  const requested = createRouter({ defaultModel: 'model:fake/b', models, workModels: { 1: 'model:fake/a' } });
+  assert.equal((await rejectedWith(requested.router.forWork(1, 'model:fake/gone').generate(REQUEST))).message, REQUESTED_MODEL_UNAVAILABLE_MESSAGE);
 
-  const legacy = createRouter({ defaultModel: 'other:gpt-4o', models, workModels: { 1: 'other:' } });
-  assert.deepEqual(await legacy.router.forWork(1).generate(REQUEST), { from: 'provider:a' });
+  const work = createRouter({ defaultModel: 'model:fake/b', models, workModels: { 1: 'model:fake/gone' } });
+  assert.equal((await rejectedWith(work.router.forWork(1).generate(REQUEST))).message, WORK_MODEL_UNAVAILABLE_MESSAGE);
 
-  const unset = createRouter({ models });
+  const stoppedDefault = createRouter({ defaultModel: 'model:fake/gone', models });
+  assert.equal((await rejectedWith(stoppedDefault.router.forWork(null).generate(REQUEST))).message, DEFAULT_MODEL_UNAVAILABLE_MESSAGE);
+  // 无法识别的旧键同样视为不可用。
+  const legacy = createRouter({ defaultModel: 'other:gpt-4o', models });
+  assert.equal((await rejectedWith(legacy.router.forWork(null).generate(REQUEST))).category, 'unavailable');
+  assert.deepEqual([requested.resolved, work.resolved, stoppedDefault.resolved], [[], [], []]);
+});
+
+test('从未设置过全局默认时使用第一个可用的文本模型', async () => {
+  const unset = createRouter({ models: [usable(1, 'a'), usable(2, 'b')] });
   assert.deepEqual(await unset.router.forWork(null).generate(REQUEST), { from: 'provider:a' });
 });
 

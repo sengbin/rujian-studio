@@ -13,6 +13,7 @@ import { SqliteAdaptationChecklistRepository } from '../../../infra/database/sql
 import { SqliteAssetRepository } from '../../../infra/database/sqlite-asset-repository';
 import { SqliteBeatSheetRepository } from '../../../infra/database/sqlite-beat-sheet-repository';
 import { SqliteBindingRepository } from '../../../infra/database/sqlite-binding-repository';
+import { SqliteGenerationRepository } from '../../../infra/database/sqlite-generation-repository';
 import { SqliteProjectRepository } from '../../../infra/database/sqlite-project-repository';
 import { SqliteScreenplayRepository } from '../../../infra/database/sqlite-screenplay-repository';
 import { SqliteChapterRepository, SqliteStageRunRepository } from '../../../infra/database/sqlite-stage-run-repository';
@@ -29,6 +30,7 @@ import { StoryboardWorkflow } from '../../stages/storyboard-workflow';
 import { FILE_PROMPTS, Responder, ScriptedText, standardResponder } from '../../stages/testing/scripted-text';
 import { BeatSheetService } from '../beat-sheet-service';
 import { ChangeNotifier } from '../change-notifier';
+import { DeletionService } from '../deletion-service';
 import { ProjectService } from '../project-service';
 import { ScreenplayService } from '../screenplay-service';
 import { StageChange, StageService } from '../stage-service';
@@ -44,6 +46,7 @@ export interface ServiceFixture {
   readonly runs: SqliteStageRunRepository;
   readonly projects: ProjectService;
   readonly works: WorkService;
+  readonly deletion: DeletionService;
   readonly beatSheets: BeatSheetService;
   readonly stages: StageService;
   readonly screenplays: ScreenplayService;
@@ -130,5 +133,17 @@ export function createServiceFixture(responder: Responder = standardResponder, s
     stages
   });
   const project = projects.createProject({ name: '项目甲' });
-  return { database, files, runs, projects, works, beatSheets, stages, screenplays, storyboards, runner, text, changes, changed, project };
+  // 夹具没有视频队列：没有进行中的视频任务，调度器不会被调用。
+  const deletion = new DeletionService({
+    projects,
+    works,
+    stages,
+    jobs: new SqliteGenerationRepository(database, files),
+    scheduler: {
+      cancel: async () => {
+        throw new Error('夹具没有视频队列。');
+      }
+    }
+  });
+  return { database, files, runs, projects, works, deletion, beatSheets, stages, screenplays, storyboards, runner, text, changes, changed, project };
 }

@@ -121,12 +121,13 @@ export function createApplication(environment: ApplicationEnvironment): Applicat
   const services = {
     projects: container.projectService,
     works: container.workService,
+    deletion: container.deletionService,
     beatSheets: container.beatSheetService,
     stages: container.stageService,
     screenplays: container.screenplayService,
     storyboards: container.storyboardService
   };
-  const projectPages = new ProjectPages(container.projectService, panels);
+  const projectPages = new ProjectPages(container.projectService, container.deletionService, panels);
   const workListPages = new WorkListPages(
     { ...services, profiles: container.profileService, providers: container.providerService, textModels: container.textSettingsService, voices: container.voicePreviewService, voiceDrafts: container.voiceDraftService },
     panels

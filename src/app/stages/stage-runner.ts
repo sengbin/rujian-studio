@@ -158,6 +158,20 @@ export class StageRunner {
     return true;
   }
 
+  /**
+   * 取消正在生成的记录并等待它结束（已写入最终状态）。
+   * @returns 是否找到了正在执行的生成。
+   */
+  async cancelAndWait(runId: number): Promise<boolean> {
+    const active = this.active.get(runId);
+    if (active === undefined) {
+      return false;
+    }
+    active.controller.abort();
+    await active.done;
+    return true;
+  }
+
   /** 等待当前所有后台生成结束，主要用于测试与应用退出。 */
   async whenIdle(): Promise<void> {
     await Promise.all([...this.active.values()].map((active) => active.done));
@@ -195,19 +209,21 @@ export class StageRunner {
    */
   private launch(run: StageRun, workflow: StageWorkflow, model: TextModelInfo, text: TextGenerationPort): void {
     const controller = new AbortController();
-    let finish!: { resolve: () => void; reject: (error: unknown) => void };
-    const done = new Promise<void>((resolve, reject) => {
-      finish = { resolve, reject };
+    let finish!: () => void;
+    const done = new Promise<void>((resolve) => {
+      finish = resolve;
     });
     this.active.set(run.id, { controller, done });
     this.execute(run, workflow, model, text, controller.signal).then(
       () => {
         this.active.delete(run.id);
-        finish.resolve();
+        finish();
       },
       (error: unknown) => {
+        // execute 自身不抛异常；走到这里说明记录结果时数据库出错。done 只表示“已结束”，不能把失败变成无人处理的拒绝。
+        console.error(`阶段生成（记录 ${run.id}）结束时出现未预期的错误：`, error);
         this.active.delete(run.id);
-        finish.reject(error);
+        finish();
       }
     );
   }

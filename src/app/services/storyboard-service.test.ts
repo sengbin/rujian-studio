@@ -475,7 +475,7 @@ test('取消与删除：删除作品前取消各集正在进行的生成；没�
     const episodeIds = fixture.storyboards.listEpisodeStatuses(fixture.work.id).map((status) => status.episodeId);
     const runs = await fixture.storyboards.start(fixture.work.id, episodeIds, {});
     assert.equal(runs.length, 2);
-    fixture.stages.cancelRunningForWork(fixture.work.id);
+    await fixture.stages.cancelRunningForWork(fixture.work.id);
     await fixture.runner.whenIdle();
     assert.deepEqual(fixture.storyboards.listEpisodeStatuses(fixture.work.id).map((status) => status.display), ['canceled', 'canceled']);
 

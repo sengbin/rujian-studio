@@ -258,6 +258,9 @@ export class JobQueue {
       if (this.dependencies.jobs.markSubmitted(job.id, ref.remoteJobId, this.timestamp())) {
         this.submitRetries.delete(job.id);
         this.dependencies.notify({ jobId: job.id, groupId: job.groupId });
+      } else {
+        // 提交期间任务已被取消或结束，平台上刚创建的任务没有人跟踪，必须取消以免继续计费。
+        await this.cancelUntracked(call, ref.remoteJobId);
       }
       return true;
     } catch (error) {
@@ -268,6 +271,19 @@ export class JobQueue {
       }
       this.fail(job, toFailure(error));
       return false;
+    }
+  }
+
+  /** 取消平台上已创建、本地却不再跟踪的任务；服务商不支持取消或取消失败时只能记录日志。 */
+  private async cancelUntracked(call: ResolvedVideoCall, remoteJobId: string): Promise<void> {
+    if (call.adapter.cancel === undefined) {
+      console.error(`任务在提交期间已被取消，但服务商不支持取消远端任务（${remoteJobId}），平台上的任务可能仍会计费。`);
+      return;
+    }
+    try {
+      await call.adapter.cancel({ modelCode: call.modelCode, remoteJobId }, call.context);
+    } catch (error) {
+      console.error(`任务在提交期间已被取消，取消远端任务（${remoteJobId}）失败，平台上的任务可能仍会计费：`, error);
     }
   }
 

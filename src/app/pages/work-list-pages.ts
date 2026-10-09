@@ -18,6 +18,7 @@ import { MessageRouter } from '../messaging/message-router';
 import { WORK_LIST_PAGE_RESOURCES } from '../panels/page-resources';
 import { OpenedPanel, PanelManager } from '../panels/panel-manager';
 import { BeatSheetService } from '../services/beat-sheet-service';
+import { DeletionService } from '../services/deletion-service';
 import { GenerationProfileService } from '../services/generation-profile-service';
 import { ProjectService } from '../services/project-service';
 import { ProviderService } from '../services/provider-service';
@@ -73,6 +74,7 @@ export class WorkListPages {
     private readonly services: {
       readonly projects: ProjectService;
       readonly works: WorkService;
+      readonly deletion: DeletionService;
       readonly beatSheets: BeatSheetService;
       readonly stages: StageService;
       readonly screenplays: ScreenplayService;

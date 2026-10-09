@@ -9,6 +9,7 @@
 
 import { ProviderError, ProviderFailure } from '../../../domain/errors';
 import { ProviderCallContext } from '../../../domain/ports/provider-adapters';
+import { requireSecureEndpoint } from '../shared/provider-endpoint';
 import { FetchFunction, HttpTimeouts, ProviderHttpTransport } from '../shared/provider-http-transport';
 import { readObject } from '../shared/provider-payload';
 import {
@@ -177,13 +178,9 @@ function readMediaEndpoint(context: ProviderCallContext): string {
   return readEndpoint(context, VOLCENGINE_ENDPOINT_SETTING_KEY, VOLCENGINE_ENDPOINT_LABEL);
 }
 
-/** 取指定设置项的接口地址；未配置时在发请求前报参数错误。 */
+/** 取指定设置项的接口地址；未配置或不是 https 地址时在发请求前报参数错误。 */
 function readEndpoint(context: ProviderCallContext, settingKey: string, label: string): string {
-  const endpoint = context.settings[settingKey];
-  if (endpoint === undefined || endpoint === '') {
-    throw new ProviderError('invalid_request', `尚未配置${VOLCENGINE_PROVIDER_NAME}的${label}。`);
-  }
-  return endpoint.replace(/\/+$/, '');
+  return requireSecureEndpoint(context.settings[settingKey], `尚未配置${VOLCENGINE_PROVIDER_NAME}的${label}。`);
 }
 
 /** 把非 2xx 响应转换为带分类的错误：方舟的错误放在 error 对象里。 */

@@ -246,6 +246,39 @@ test('取消：通知服务商取消失败时本地取消仍然成功，失败�
   }
 });
 
+test('取消：提交期间被取消的版本，平台上刚创建的任务也要取消，不能无人跟踪继续计费', async () => {
+  const fixture = await createAssetGenerationFixture();
+  try {
+    const provider = fixture.image as typeof fixture.image & { cancel?: (ref: RemoteJobRef) => Promise<void> };
+    const canceled: RemoteJobRef[] = [];
+    provider.cancel = async (ref) => {
+      canceled.push(ref);
+    };
+    let entered = false;
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const originalSubmit = provider.submit.bind(provider);
+    provider.submit = async (request) => {
+      entered = true;
+      await gate;
+      return originalSubmit(request);
+    };
+    const versionId = await submitVersion(fixture, createCharacter(fixture));
+    const round = fixture.queue.pump();
+    while (!entered) await new Promise((resolve) => setImmediate(resolve));
+    // 提交还停在平台调用上时，用户取消了版本（此时还没有远端编号，只能取消本地记录）。
+    assert.deepEqual(await fixture.queue.cancel(versionId), { remoteCanceled: false });
+    release();
+    await round;
+    assert.equal(fixture.versions.findVersion(versionId)?.status, 'canceled');
+    assert.deepEqual(canceled, [{ modelCode: 'fake-image', remoteJobId: 'fake-image-1' }]);
+  } finally {
+    fixture.database.close();
+  }
+});
+
 test('平台报告成功但没有结果：记为失败并说明原因，不保持生成中', async () => {
   const fixture = await createAssetGenerationFixture();
   try {

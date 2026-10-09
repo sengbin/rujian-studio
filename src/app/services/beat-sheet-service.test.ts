@@ -185,7 +185,7 @@ test('没有生成记录时读取视图报不存在；删除作品前取消正�
   try {
     assert.throws(() => fixture.beatSheets.getView(fixture.work.id), NotFoundError);
     const run = await fixture.beatSheets.start(fixture.work.id, PARAMS);
-    fixture.stages.cancelRunningForWork(fixture.work.id);
+    await fixture.stages.cancelRunningForWork(fixture.work.id);
     release();
     await fixture.runner.whenIdle();
     assert.equal(fixture.beatSheets.getView(fixture.work.id).run.display, 'canceled');

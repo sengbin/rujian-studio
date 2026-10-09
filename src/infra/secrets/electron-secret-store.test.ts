@@ -76,3 +76,12 @@ test('无法解密或文件损坏时按未设置处理', async () => {
   writeFileSync(foreign, JSON.stringify({ x: Buffer.from('other:1').toString('base64') }), 'utf8');
   assert.equal(await new ElectronSecretStore(foreign, createCipher()).get('x'), undefined);
 });
+
+test('文件损坏时拒绝保存和删除，保留原文件，避免覆盖其他服务商的密钥', async () => {
+  const corrupted = newFile();
+  writeFileSync(corrupted, '{不是 JSON', 'utf8');
+  const store = new ElectronSecretStore(corrupted, createCipher());
+  await assert.rejects(() => store.set('x', '1'), /已损坏/);
+  await assert.rejects(() => store.delete('x'), /已损坏/);
+  assert.equal(readFileSync(corrupted, 'utf8'), '{不是 JSON');
+});

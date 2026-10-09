@@ -46,10 +46,13 @@ class ScriptedVideoProvider extends FakeVideoProvider {
   cancelError: Error | null = null;
   /** 设置后，提交要等它完成才返回，用来让一轮处理停在“提交中”。 */
   submitGate: Promise<void> | null = null;
+  /** 已进入提交调用的次数（含仍停在 submitGate 上的）。 */
+  submitEntered = 0;
   /** 不支持取消的服务商没有 cancel 方法；调用 enableCancel() 后才有。 */
   cancel?: (ref: RemoteJobRef, context: ProviderCallContext) => Promise<void>;
 
   override async submit(request: VideoGenerationRequest): Promise<RemoteJobRef> {
+    this.submitEntered += 1;
     if (this.submitGate !== null) await this.submitGate;
     const error = this.submitErrors.shift();
     if (error !== undefined) throw error;
@@ -301,6 +304,28 @@ test('取消：通知服务商取消失败时本地取消仍然成功，失败�
     callBehavior.error = new ProviderError('auth', '没有配置访问密钥。');
     assert.deepEqual(await queue.cancel(second.id), { remoteCanceled: false, remoteCancelError: '没有配置访问密钥。' }, '解析模型凭据失败同样带回原因');
     assert.equal(jobs.findJob(second.id)?.status, 'canceled');
+  } finally {
+    database.close();
+  }
+});
+
+test('取消：提交期间被取消的任务，平台上刚创建的任务也要取消，不能无人跟踪继续计费', async () => {
+  const { database, jobs, provider, queue, enqueue } = createFixture();
+  try {
+    provider.enableCancel();
+    let release: () => void = () => undefined;
+    provider.submitGate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const job = enqueue(0);
+    const round = queue.pump();
+    while (provider.submitEntered === 0) await new Promise((resolve) => setImmediate(resolve));
+    // 提交还停在平台调用上时，用户取消了任务（此时还没有远端编号，只能取消本地记录）。
+    assert.deepEqual(await queue.cancel(job.id), { remoteCanceled: false });
+    release();
+    await round;
+    assert.equal(jobs.findJob(job.id)?.status, 'canceled');
+    assert.deepEqual(provider.canceled, [{ modelCode: 'fake-video', remoteJobId: 'fake-1' }]);
   } finally {
     database.close();
   }

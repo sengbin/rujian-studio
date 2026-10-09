@@ -18,6 +18,7 @@ import { AssetCategoryService } from '../app/services/asset-category-service';
 import { BeatSheetService } from '../app/services/beat-sheet-service';
 import { BindingService } from '../app/services/binding-service';
 import { ChangeNotifier } from '../app/services/change-notifier';
+import { DeletionService } from '../app/services/deletion-service';
 import { GenerationProfileService } from '../app/services/generation-profile-service';
 import { GenerationService } from '../app/services/generation-service';
 import { ProjectService } from '../app/services/project-service';
@@ -252,6 +253,14 @@ export function createServiceContainer(input: ServiceContainerInput) {
     screenplays,
     models: providerRepository
   });
+  // 删除作品与项目前，先停掉它们名下的阶段生成与视频任务。
+  const deletionService = new DeletionService({
+    projects: projectService,
+    works: workService,
+    stages: stageService,
+    jobs: generationRepository,
+    scheduler: jobQueue
+  });
 
   // 分镜动画的台词试听：用说话人的音色（绑定的音色参考、作品的旁白音色或暂存的试听音色）和所选的音频模型合成对白；没有音色的说话人可按描述生成试听音色，满意后采用。
   const narratorVoiceRepository = new SqliteNarratorVoiceRepository(database);
@@ -279,6 +288,7 @@ export function createServiceContainer(input: ServiceContainerInput) {
   return {
     projectService,
     workService,
+    deletionService,
     beatSheetService,
     stageService,
     screenplayService,

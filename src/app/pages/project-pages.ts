@@ -12,6 +12,7 @@ import { registerFormHandlers } from '../forms/form-handlers';
 import { MessageRouter } from '../messaging/message-router';
 import { OpenedPanel, PanelManager } from '../panels/panel-manager';
 import { PROJECT_LIST_PAGE_RESOURCES } from '../panels/page-resources';
+import { DeletionService } from '../services/deletion-service';
 import { ProjectService } from '../services/project-service';
 import { PROJECT_LIST_EVENTS, ProjectListRequest, registerProjectListHandlers } from './project-list-handlers';
 
@@ -27,10 +28,12 @@ export class ProjectPages {
 
   /**
    * @param service 项目服务。
+   * @param deletion 删除编排服务。
    * @param panels 面板管理器。
    */
   constructor(
     private readonly service: ProjectService,
+    private readonly deletion: DeletionService,
     private readonly panels: PanelManager
   ) {}
 
@@ -58,7 +61,7 @@ export class ProjectPages {
 
     this.pendingRequest = request;
     const router = new MessageRouter();
-    registerProjectListHandlers(router, this.service, {
+    registerProjectListHandlers(router, this.service, this.deletion, {
       takePendingAction: () => {
         const taken = this.pendingRequest;
         this.pendingRequest = undefined;
