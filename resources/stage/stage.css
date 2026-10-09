@@ -23,7 +23,7 @@ body.theme-light .stage-view--workspace {
 }
 
 .stage-header .description {
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-xs);
 }
 
 /* 版本、状态与按钮在同一行，窄宽度时换行 */
@@ -31,8 +31,8 @@ body.theme-light .stage-view--workspace {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
-  margin: 10px 0 0;
+  gap: var(--space-md) var(--space-page);
+  margin: var(--space-page) 0 0;
 }
 
 .stage-bar__version {
@@ -43,38 +43,38 @@ body.theme-light .stage-view--workspace {
 .stage-bar__buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-sm);
   margin-left: auto;
 }
 
 .stage-message {
-  margin: 8px 0;
+  margin: var(--space-md) 0;
 }
 
 .stage-progress-area {
-  margin: 10px 0 0;
+  margin: var(--space-page) 0 0;
 }
 
 .stage-progress {
   display: block;
   width: 100%;
   height: 6px;
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-xs);
 }
 
 /* 左侧列表、右侧编辑区；窄宽度时上下排列 */
 .stage-body {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  margin: 16px 0 0;
+  gap: var(--space-page);
+  margin: var(--space-page) 0 0;
 }
 
 .stage-list {
   flex: 0 0 240px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-xs);
   min-width: 200px;
   max-height: 420px;
   overflow-y: auto;
@@ -84,8 +84,8 @@ body.theme-light .stage-view--workspace {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 2px 8px;
-  padding: 6px 8px;
+  gap: 2px var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   color: var(--text);
   font: inherit;
   text-align: left;
@@ -139,7 +139,7 @@ body.theme-light .stage-view--workspace {
 
 /* 列表中的分组标题 */
 .stage-list__heading {
-  margin: 8px 0 0;
+  margin: var(--space-md) 0 0;
   font-weight: 600;
 }
 
@@ -148,8 +148,8 @@ body.theme-light .stage-view--workspace {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin: 8px 0 0;
+  gap: var(--space-md);
+  margin: var(--space-md) 0 0;
 }
 
 .stage-list__head .stage-list__heading {
@@ -163,7 +163,7 @@ body.theme-light .stage-view--workspace {
 
 .stage-editor__title,
 .stage-editor__content {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-md);
 }
 
 .stage-editor .ui-textarea__field {
@@ -172,13 +172,13 @@ body.theme-light .stage-view--workspace {
 
 .stage-editor__actions {
   display: flex;
-  gap: 8px;
-  margin: 8px 0 0;
+  gap: var(--space-md);
+  margin: var(--space-md) 0 0;
 }
 
 /* 剧本阶段的结构性改编清单：每个取舍项一行勾选加一行说明 */
 .stage-adaptation__item {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-md);
 }
 
 .stage-adaptation__item .description {
@@ -197,16 +197,16 @@ body.theme-light .stage-view--workspace {
 .stage-segments {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin: 4px 0 8px;
+  gap: var(--space-xs);
+  margin: var(--space-xs) 0 var(--space-md);
 }
 
 .stage-segment {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 8px;
-  padding: 4px 8px;
+  gap: var(--space-xs) var(--space-md);
+  padding: var(--space-xs) var(--space-md);
   border: 1px solid var(--table-border);
   border-radius: 4px;
 }
@@ -245,7 +245,7 @@ body.theme-light .stage-view--workspace {
   container: stage-workspace / inline-size;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-page);
   height: 100%;
   min-width: 0;
 }
@@ -255,7 +255,7 @@ body.theme-light .stage-view--workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px 20px;
+  gap: var(--space-md) var(--space-page);
 }
 
 .stage-header__info {
@@ -265,7 +265,7 @@ body.theme-light .stage-view--workspace {
 .stage-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 3px 10px;
+  gap: 3px var(--space-page);
   color: var(--text-muted);
   font-size: 11px;
   line-height: 1.35;
@@ -329,7 +329,7 @@ body.theme-light .stage-view--workspace {
 }
 
 .stage-view--workspace .ui-textarea__field {
-  padding: 5px 8px;
+  padding: 5px var(--space-md);
   font-size: 11px;
 }
 

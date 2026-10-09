@@ -13,13 +13,13 @@
   color-scheme: light dark;
   --bg: var(--host-sidebar-background);
   --focus-border: var(--host-focus-border, rgb(0, 120, 212));
-  --page-padding: 8px 0 10px 16px;
-  --page-padding-end: 16px;
+  --page-padding: var(--space-page) 0 var(--space-page) var(--space-page);
+  --page-padding-end: var(--space-page);
   /* 分区标题与菜单项同字号，层级靠字重区分，避免标题看起来比菜单项小 */
   --menu-font-size: 12px;
   --menu-title-weight: 600;
-  --card-gap: 10px;
-  --card-padding: 8px;
+  --card-gap: var(--space-page);
+  --card-padding: var(--space-md);
   --card-radius: 6px;
   --card-background: color-mix(in srgb, var(--host-widget-background, var(--bg)) 90%, rgb(255, 255, 255));
   --card-shadow: none;
@@ -72,7 +72,7 @@ main {
 /* 底部状态条：贴在页面底部，内容较多时跟在最后一张卡片之后 */
 .status-bar {
   margin-top: auto;
-  padding: 10px var(--page-padding-end) 0 0;
+  padding: var(--space-page) var(--page-padding-end) 0 0;
   color: var(--host-description-foreground);
   font-size: 11px;
   line-height: 1.4;
@@ -81,7 +81,7 @@ main {
 .status-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px 12px;
+  gap: 2px var(--space-page);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -90,7 +90,7 @@ main {
 .status-item {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-xs);
   min-width: 0;
 }
 
@@ -139,9 +139,9 @@ main {
 h2 {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 0 0 4px;
-  padding: 0 0 4px;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-xs);
+  padding: 0 0 var(--space-xs);
   color: var(--host-foreground);
   font-size: var(--menu-font-size);
   font-weight: var(--menu-title-weight);
@@ -178,7 +178,7 @@ nav {
 /* 提示（如数据库无法打开）：文字说明为主，颜色只作强化；长路径允许在任意位置换行 */
 .notice {
   margin: 0;
-  padding: 2px 6px;
+  padding: 2px var(--space-sm);
   color: var(--host-error-foreground, rgb(244, 71, 71));
   font-size: 12px;
   line-height: 1.5;
@@ -216,10 +216,10 @@ button:focus-visible {
 .menu-main {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
   width: 100%;
   max-width: 100%;
-  padding: 3px 6px;
+  padding: 3px var(--space-sm);
   overflow: hidden;
   text-align: left;
   background: transparent;

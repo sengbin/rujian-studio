@@ -11,7 +11,7 @@
 
 /* ---------- 设计令牌 ---------- */
 :root {
-  --wb-gap: 14px;
+  --wb-gap: var(--space-page);
   --wb-radius: 8px;
   --wb-inner-radius: 6px;
   --wb-pane-height: 340px;
@@ -77,16 +77,16 @@ body {
 /* 操作结果可能有多行（逐个镜头的提醒与未提交原因） */
 .wb-message {
   flex: none;
-  margin: 4px 0;
+  margin: var(--space-xs) 0;
   white-space: pre-line;
 }
 
 .wb-state {
-  padding: 16px 0;
+  padding: var(--space-page) 0;
 }
 
 .wb-state .ui-button {
-  margin-top: 8px;
+  margin-top: var(--space-md);
 }
 
 .wb-notice {
@@ -94,8 +94,8 @@ body {
   flex: none;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin: 8px 0 0;
+  gap: var(--space-md);
+  margin: var(--space-md) 0 0;
 }
 
 /* ---------- 顶部上下文栏：项目、作品、分集和当前生成配置 ---------- */
@@ -103,8 +103,8 @@ body {
   display: grid;
   flex: none;
   grid-template-columns: minmax(150px, 1.1fr) minmax(150px, 1.1fr) minmax(110px, 0.7fr) minmax(180px, 1.3fr);
-  gap: 10px;
-  padding: 8px 12px;
+  gap: var(--space-page);
+  padding: var(--space-md) var(--space-page);
   border: 1px solid var(--wb-panel-border);
   border-radius: var(--wb-radius);
   background: var(--wb-panel-bg);
@@ -117,7 +117,7 @@ body {
 
 .wb-context__label {
   display: block;
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-xs);
   line-height: 1.1;
   overflow: hidden;
   color: var(--text-muted);
@@ -149,7 +149,7 @@ body {
   grid-template-columns: minmax(170px, 0.78fr) minmax(280px, 1.6fr) minmax(280px, 1fr);
   gap: var(--wb-gap);
   min-height: 160px;
-  margin-top: 8px;
+  margin-top: var(--space-md);
 }
 
 .wb-panel {
@@ -169,9 +169,9 @@ body {
   flex: none;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--space-page);
   min-height: 44px;
-  padding: 6px 12px;
+  padding: var(--space-sm) var(--space-page);
   border-bottom: 1px solid var(--divider);
 }
 
@@ -190,19 +190,19 @@ body {
 .wb-panel__body {
   flex: 1 1 auto;
   min-height: 0;
-  padding: 8px 10px;
+  padding: var(--space-md) var(--space-page);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
 .wb-panel__footer {
   flex: none;
-  padding: 6px 12px;
+  padding: var(--space-sm) var(--space-page);
   border-top: 1px solid var(--divider);
 }
 
 .wb-count {
-  padding: 6px 10px;
+  padding: var(--space-sm) var(--space-page);
   border: 1px solid var(--wb-panel-border);
   border-radius: 999px;
   background: var(--wb-panel-bg);
@@ -215,7 +215,7 @@ body {
 .wb-groups__list {
   display: grid;
   align-content: start;
-  gap: 4px;
+  gap: var(--space-xs);
   margin: 0;
   list-style: none;
 }
@@ -223,9 +223,9 @@ body {
 .wb-group-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 1px 8px;
+  gap: 1px var(--space-md);
   width: 100%;
-  padding: 6px 10px;
+  padding: var(--space-sm) var(--space-page);
   border: 1px solid transparent;
   border-radius: var(--wb-inner-radius);
   background: transparent;
@@ -282,8 +282,8 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  margin: 4px 0 0;
+  gap: var(--space-sm);
+  margin: var(--space-xs) 0 0;
   font-size: 11px;
 }
 
@@ -300,8 +300,8 @@ body {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin: 0 0 6px;
+  gap: var(--space-page);
+  margin: 0 0 var(--space-sm);
 }
 
 .wb-detail-title {
@@ -357,8 +357,8 @@ body {
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr) auto;
   align-items: start;
-  gap: 8px;
-  padding: 4px 10px;
+  gap: var(--space-md);
+  padding: var(--space-xs) var(--space-page);
 }
 
 .wb-shot + .wb-shot {
@@ -390,7 +390,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: var(--space-xs);
   white-space: nowrap;
 }
 
@@ -407,8 +407,8 @@ body {
 
 /* 生成状态：与上面的内容用分隔线隔开，标题行右侧是这一组的操作 */
 .wb-section {
-  margin: 8px 0 0;
-  padding: 8px 0 0;
+  margin: var(--space-md) 0 0;
+  padding: var(--space-md) 0 0;
   border-top: 1px solid var(--divider);
 }
 
@@ -417,8 +417,8 @@ body {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 6px 8px;
-  margin: 0 0 4px;
+  gap: var(--space-sm) var(--space-md);
+  margin: 0 0 var(--space-xs);
 }
 
 .wb-section__title {
@@ -430,7 +430,7 @@ body {
 .wb-section__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 
 .wb-section .description {
@@ -439,24 +439,24 @@ body {
 
 /* 后续组采用的视频基于上一组旧版本尾帧时的提示 */
 .wb-stale {
-  margin: 0 0 6px;
+  margin: 0 0 var(--space-sm);
 }
 
 .wb-job + .wb-job {
-  margin-top: 8px;
+  margin-top: var(--space-md);
 }
 
 .wb-job__head {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 2px 8px;
+  gap: 2px var(--space-md);
 }
 
 /* 失败原因：平台返回的原文完整显示并保留换行，方便复制和判断如何修改 */
 .wb-failure {
-  margin: 4px 0 0;
-  padding: 4px 0 4px 8px;
+  margin: var(--space-xs) 0 0;
+  padding: var(--space-xs) 0 var(--space-xs) var(--space-md);
   border-left: 3px solid var(--status-error);
 }
 
@@ -475,12 +475,12 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin: 4px 0 0;
+  gap: var(--space-md);
+  margin: var(--space-xs) 0 0;
 }
 
 .wb-history {
-  margin: 8px 0 0;
+  margin: var(--space-md) 0 0;
 }
 
 .wb-history > summary {
@@ -495,7 +495,7 @@ body {
 }
 
 .wb-history[open] > summary {
-  margin: 0 0 6px;
+  margin: 0 0 var(--space-sm);
 }
 
 /* 提交的提示词：保留换行，可选中复制 */
@@ -503,7 +503,7 @@ body {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   user-select: text;
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-xs);
 }
 
 /* ---------- 右栏：步骤页签与面板 ---------- */
@@ -521,7 +521,7 @@ body {
   justify-content: center;
   gap: 3px;
   min-width: 0;
-  padding: 5px 10px;
+  padding: 5px var(--space-page);
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
@@ -594,14 +594,14 @@ body {
 .wb-steps__panel {
   flex: 1 1 auto;
   min-height: 0;
-  padding: 8px 10px;
+  padding: var(--space-md) var(--space-page);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
 .wb-steps__context {
-  margin: 0 0 8px;
-  padding: 0 0 6px;
+  margin: 0 0 var(--space-md);
+  padding: 0 0 var(--space-sm);
   border-bottom: 1px solid var(--divider);
   color: var(--text-muted);
   font-size: 11px;
@@ -612,14 +612,14 @@ body {
   position: sticky;
   bottom: -12px;
   margin: 8px -10px -8px;
-  padding: 8px 10px;
+  padding: var(--space-md) var(--space-page);
   border-top: 1px solid var(--divider);
   background: var(--wb-panel-bg);
 }
 
 .wb-steps__actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-md);
 }
 
 .wb-steps__actions .ui-button--primary {
@@ -631,8 +631,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin: 0 0 4px;
+  gap: var(--space-page);
+  margin: 0 0 var(--space-xs);
 }
 
 .wb-bind__head strong {
@@ -641,7 +641,7 @@ body {
 
 .wb-progress {
   height: 5px;
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-xs);
   overflow: hidden;
   border-radius: 999px;
   background: color-mix(in srgb, var(--text) 10%, transparent);
@@ -661,7 +661,7 @@ body {
 }
 
 .wb-bind__actions {
-  margin: 8px 0 2px;
+  margin: var(--space-md) 0 2px;
 }
 
 .wb-bind__actions .ui-button {
@@ -669,8 +669,8 @@ body {
 }
 
 .wb-entity-heading {
-  margin: 8px 0 0;
-  padding: 0 0 4px;
+  margin: var(--space-md) 0 0;
+  padding: 0 0 var(--space-xs);
   border-bottom: 1px solid var(--divider);
   color: var(--text-muted);
   font-size: 11px;
@@ -681,7 +681,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--space-page);
   min-height: 30px;
   padding: 3px 0;
   border-bottom: 1px solid var(--divider);
@@ -701,7 +701,7 @@ body {
 .wb-entity-state {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
   color: var(--status-warning);
   font-size: 11px;
   white-space: nowrap;
@@ -716,8 +716,8 @@ body {
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr);
   align-items: start;
-  gap: 8px;
-  margin-top: 8px;
+  gap: var(--space-md);
+  margin-top: var(--space-md);
 }
 
 .wb-bind-field__label {
@@ -733,13 +733,13 @@ body {
 .wb-bind-items {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 
 .wb-bind-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-md);
   min-height: 36px;
 }
 
@@ -760,7 +760,7 @@ body {
 .wb-bind-item__meta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
   font-size: 12px;
 }
 
@@ -768,7 +768,7 @@ body {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 
 .wb-bind-empty {
@@ -780,8 +780,8 @@ body {
 .wb-bind-cell__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
 }
 
 .wb-bind-thumb {
@@ -831,18 +831,18 @@ body {
 }
 
 .wb-bind-picker__search {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-md);
 }
 
 /* 参数面板：各字段竖向排列，字段标签与说明用小号淡色字 */
 .wb-profile__fields {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-page);
 }
 
 .wb-profile > * + * {
-  margin-top: 8px;
+  margin-top: var(--space-md);
 }
 
 .wb-profile .description {
@@ -889,14 +889,14 @@ body {
 }
 
 .wb-profile__restore {
-  margin-top: 6px;
+  margin-top: var(--space-sm);
 }
 
 .wb-profile__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
 }
 
 /* 声音内容的开关列表：每个开关一行，行与行之间用分隔线 */
@@ -918,15 +918,15 @@ body {
 
 /* 提交面板：每个镜头组一行（勾选、状态），勾选后显示预览汇总、阻断问题与提醒，底部是确认与提交 */
 .wb-submit__notice {
-  margin: 0 0 6px;
+  margin: 0 0 var(--space-sm);
   font-size: 12px;
 }
 
 .wb-submit__quick {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin: 0 0 4px;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-xs);
 }
 
 .wb-submit__list {
@@ -950,7 +950,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-md);
 }
 
 .wb-submit__status {
@@ -964,7 +964,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin: 4px 0 0 24px;
+  margin: var(--space-xs) 0 0 24px;
   font-size: 11px;
   overflow-wrap: anywhere;
 }
@@ -977,7 +977,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 8px;
+  gap: var(--space-md);
 }
 
 .wb-submit__footer .description {
@@ -987,15 +987,15 @@ body {
 /* ---------- 底部：队列与结果 ---------- */
 .wb-queue {
   flex: none;
-  margin: 8px 0 0;
+  margin: var(--space-md) 0 0;
 }
 
 .wb-queue__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 6px 12px;
+  gap: var(--space-page);
+  padding: var(--space-sm) var(--space-page);
   border: 1px solid var(--wb-panel-border);
   border-radius: var(--wb-radius);
   background: var(--wb-panel-bg);
@@ -1010,7 +1010,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 10px;
+  gap: var(--space-xs) var(--space-page);
   min-width: 0;
 }
 
@@ -1038,7 +1038,7 @@ body {
 
 .wb-queue__body .ui-table th,
 .wb-queue__body .ui-table td {
-  padding: 4px 13px;
+  padding: var(--space-xs) 13px;
   font-size: 11px;
 }
 
@@ -1067,7 +1067,7 @@ body {
 
 .wb-queue__empty {
   margin: 0;
-  padding: 10px;
+  padding: var(--space-page);
   font-size: 12px;
   text-align: center;
 }
@@ -1081,14 +1081,14 @@ body {
 
 /* ---------- 弹出页：结果版本与对比 ---------- */
 .wb-versions > * + * {
-  margin-top: 8px;
+  margin-top: var(--space-md);
 }
 
 .wb-versions__bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 8px;
+  gap: var(--space-sm) var(--space-md);
 }
 
 .wb-versions__bar > .description {
@@ -1100,7 +1100,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 6px;
+  gap: var(--space-xs) var(--space-sm);
 }
 
 .wb-diff__value {
@@ -1146,13 +1146,13 @@ body {
 @media (max-width: 560px) {
   .wb-context {
     grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
-    padding: 10px 12px;
+    gap: var(--space-md);
+    padding: var(--space-page) var(--space-page);
   }
 
   .wb-workspace {
     grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
+    gap: var(--space-page);
   }
 
   .wb-steps {
@@ -1162,12 +1162,12 @@ body {
   .wb-shot {
     grid-template-columns: 40px minmax(0, 1fr) auto;
     gap: 7px;
-    padding: 10px 8px;
+    padding: var(--space-page) var(--space-md);
   }
 
   .wb-queue__header {
     align-items: flex-start;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-md);
   }
 }

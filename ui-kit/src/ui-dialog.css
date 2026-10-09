@@ -130,20 +130,20 @@
 .ui-dialog__body {
   flex: 1 1 auto;
   min-height: 0;
-  padding: 16px;
+  padding: var(--space-page);
   overflow: auto;
 }
 
 .ui-dialog--page .ui-dialog__body {
-  padding: 12px 16px;
+  padding: var(--space-page);
 }
 
 .ui-dialog__footer {
   display: flex;
   flex: none;
-  gap: 6px;
+  gap: var(--space-sm);
   justify-content: flex-end;
-  padding: 0 16px 16px;
+  padding: 0 var(--space-page) var(--space-page);
 }
 
 .ui-dialog__footer .ui-button {
@@ -191,7 +191,7 @@
 
 /* 消息内容 */
 .ui-message p {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-md);
 }
 
 .ui-message p:last-child {
@@ -199,14 +199,14 @@
 }
 
 .ui-message__details {
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-md);
   padding-left: 20px;
 }
 
 /* 删除确认提示：红色背景，醒目地要求输入名称 */
 .ui-danger-notice {
-  margin: 12px 0 8px;
-  padding: 8px 10px;
+  margin: var(--space-page) 0 var(--space-md);
+  padding: var(--space-md) var(--space-page);
   color: var(--danger-notice-text);
   background: var(--danger-notice-bg);
   border: 1px solid var(--danger-notice-border);

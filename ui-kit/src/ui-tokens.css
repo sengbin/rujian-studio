@@ -17,6 +17,13 @@
   --text: var(--host-foreground);
   --text-muted: var(--host-description-foreground);
   --focus-border: var(--host-focus-border, rgb(0, 120, 212));
+  /* 统一间距，页面、组件的边距与间隙都只引用这几级，不再写死像素；要整体调松或调紧，只改这里。
+     区块级：页面外边距、区块（卡片、分组、表格容器）之间的间距与区块内边距 */
+  --space-page: 10px;
+  /* 小间距级：相关元素之间的间隙，由大到小 */
+  --space-md: 8px;
+  --space-sm: 6px;
+  --space-xs: 4px;
   /* 悬停、按下时背景色与边框色的过渡时长；减少动态效果时为 0 */
   --hover-duration: 0.15s;
   --divider: color-mix(in srgb, var(--host-foreground) 8%, transparent);

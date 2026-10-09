@@ -21,7 +21,7 @@
 .storyboard-summary {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 18px;
+  gap: var(--space-md) var(--space-page);
   margin-top: 5px;
 }
 
@@ -41,14 +41,14 @@
   display: grid;
   flex: 1 1 0;
   grid-template-rows: minmax(0, 1fr) auto;
-  gap: 10px;
+  gap: var(--space-page);
   min-height: 0;
 }
 
 .storyboard-main {
   display: grid;
   grid-template-columns: var(--storyboard-nav-width) minmax(0, 1fr);
-  gap: 12px;
+  gap: var(--space-page);
   min-height: 0;
 }
 
@@ -68,14 +68,14 @@
 .storyboard-nav {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  padding: 8px;
+  padding: var(--space-md);
 }
 
 .storyboard-nav__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-md);
   min-height: 24px;
   margin-bottom: 5px;
   padding: 0 2px;
@@ -101,9 +101,9 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
   min-width: 0;
-  padding: 2px 6px;
+  padding: 2px var(--space-sm);
   color: var(--text);
   font: inherit;
   text-align: left;
@@ -193,16 +193,16 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 6px 14px;
+  gap: var(--space-sm) var(--space-page);
   min-height: 44px;
-  padding: 4px 12px;
+  padding: var(--space-xs) var(--space-page);
 }
 
 .storyboard-editor__heading,
 .storyboard-editor__tools {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-md);
   min-width: 0;
 }
 
@@ -223,7 +223,7 @@
   display: grid;
   flex: 1 1 100%;
   gap: 2px;
-  padding-bottom: 4px;
+  padding-bottom: var(--space-xs);
 }
 
 .storyboard-editor__notice {
@@ -302,7 +302,7 @@
 }
 
 .storyboard-tab__count {
-  margin-left: 4px;
+  margin-left: var(--space-xs);
   font-size: 11px;
   font-weight: 400;
 }
@@ -311,7 +311,7 @@
   container: storyboard-panel / inline-size;
   min-width: 0;
   min-height: 0;
-  padding: 12px;
+  padding: var(--space-page);
   overflow: auto;
 }
 
@@ -341,14 +341,14 @@
 .storyboard-shot-panel,
 .storyboard-content {
   display: grid;
-  gap: 12px;
+  gap: var(--space-page);
   align-content: start;
 }
 
 .storyboard-row {
   display: grid;
   align-items: start;
-  gap: 10px 14px;
+  gap: var(--space-page) var(--space-page);
 }
 
 .storyboard-row--basic {
@@ -363,7 +363,7 @@
 .storyboard-blocking {
   display: grid;
   grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
-  gap: 14px;
+  gap: var(--space-page);
   align-items: start;
 }
 
@@ -380,7 +380,7 @@
 /* 首帧来源与上面的镜头参数之间用分隔线区分，控件不拉到整行宽 */
 .storyboard-binding {
   max-width: 480px;
-  padding-top: 12px;
+  padding-top: var(--space-page);
   border-top: 1px solid var(--divider);
 }
 
@@ -408,15 +408,15 @@
 }
 
 .storyboard-empty {
-  margin: 10px 0;
+  margin: var(--space-page) 0;
   color: var(--text-muted);
   font-size: 11px;
 }
 
 .storyboard-entity-groups {
   display: grid;
-  gap: 10px;
-  margin-top: 6px;
+  gap: var(--space-page);
+  margin-top: var(--space-sm);
 }
 
 .storyboard-entity-group {
@@ -442,7 +442,7 @@
 .storyboard-entity-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 
 .storyboard-entity {
@@ -493,28 +493,28 @@
 /* 首帧图片、首帧资产字段与首帧来源之间留出间距 */
 .storyboard-binding .storyboard-first-frame-asset,
 .storyboard-binding .storyboard-first-frame-image {
-  margin-top: 8px;
+  margin-top: var(--space-md);
 }
 
 .storyboard-sound-section__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--space-page);
   min-height: 24px;
   margin-bottom: 7px;
 }
 
 .storyboard-sound-list {
   display: grid;
-  gap: 6px;
+  gap: var(--space-sm);
   padding-right: 2px;
 }
 
 .storyboard-sound {
   display: grid;
-  gap: 6px;
-  padding: 8px 9px;
+  gap: var(--space-sm);
+  padding: var(--space-md) 9px;
   background: color-mix(in srgb, var(--stage-surface) 94%, var(--text));
   border: 1px solid var(--stage-line);
   border-radius: 5px;
@@ -524,7 +524,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 10px;
+  gap: var(--space-sm) var(--space-page);
   min-width: 0;
 }
 
@@ -539,19 +539,19 @@
 .storyboard-sound__actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-md);
   margin-left: auto;
 }
 
 .storyboard-sound__fields {
   display: grid;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 
 .storyboard-sound__timing {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--space-md);
 }
 
 .storyboard-sound .ui-field__label {
@@ -574,14 +574,14 @@
 /* ---------- “站位与调度”区 ---------- */
 .storyboard-staging-list {
   display: grid;
-  gap: 6px;
+  gap: var(--space-sm);
   margin-top: 7px;
 }
 
 .storyboard-staging {
   display: grid;
-  gap: 6px;
-  padding: 8px 9px;
+  gap: var(--space-sm);
+  padding: var(--space-md) 9px;
   background: color-mix(in srgb, var(--stage-surface) 94%, var(--text));
   border: 1px solid var(--stage-line);
   border-radius: 5px;
@@ -605,7 +605,7 @@
 .storyboard-staging__fields {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 8px;
+  gap: var(--space-md);
 }
 
 .storyboard-staging .ui-field__label {
@@ -620,7 +620,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 12px;
+  gap: var(--space-md) var(--space-page);
   min-height: 35px;
   color: var(--text-muted);
   font-size: 11px;
@@ -629,7 +629,7 @@
 .storyboard-footer__actions {
   display: flex;
   flex: none;
-  gap: 6px;
+  gap: var(--space-sm);
   margin-left: auto;
 }
 
@@ -661,7 +661,7 @@
   }
 
   .storyboard-staging-section {
-    padding-top: 12px;
+    padding-top: var(--space-page);
     padding-left: 0;
     border-top: 1px solid var(--divider);
     border-left: 0;

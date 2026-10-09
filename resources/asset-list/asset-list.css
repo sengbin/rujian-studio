@@ -21,15 +21,15 @@
 }
 
 .assets-message {
-  margin: 8px 0;
+  margin: var(--space-md) 0;
 }
 
 .assets-state {
-  padding: 16px 0;
+  padding: var(--space-page) 0;
 }
 
 .assets-state .ui-button {
-  margin-top: 8px;
+  margin-top: var(--space-md);
 }
 
 /* 预览列：48px 的缩略图，没有图时显示占位文字 */
@@ -71,7 +71,7 @@
 .asset-audio {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-md);
 }
 
 .asset-audio__info {
@@ -86,7 +86,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 
 /* 状态列：提示词与图片状态的多行文字 */
@@ -101,14 +101,14 @@
 .asset-cat {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-page);
 }
 
 .asset-cat__bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 
 .asset-cat__message {
@@ -119,7 +119,7 @@
 .asset-gen {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-page);
 }
 
 .asset-gen__message {
@@ -130,14 +130,14 @@
 .asset-ver {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-page);
 }
 
 .asset-ver__bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-md);
 }
 
 .asset-ver__select {
@@ -148,7 +148,7 @@
 .asset-ver__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-sm);
   margin-left: auto;
 }
 
@@ -159,7 +159,7 @@
 .asset-ver__body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-page);
 }
 
 .asset-ver__body p {
@@ -169,14 +169,14 @@
 .asset-ver__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
+  gap: var(--space-page);
 }
 
 .asset-ver__item {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .asset-ver__thumb {
@@ -209,11 +209,11 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-md);
 }
 
 .asset-ver__prompt {
-  margin: 4px 0 0;
+  margin: var(--space-xs) 0 0;
   white-space: pre-wrap;
   word-break: break-word;
 }

@@ -24,7 +24,7 @@
   container: sbp / inline-size;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-md);
   height: 100%;
   min-width: 0;
   font-size: 12px;
@@ -36,7 +36,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 4px 12px;
+  gap: var(--space-xs) var(--space-page);
   min-height: 18px;
 }
 
@@ -50,7 +50,7 @@
 .sbp-status__badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-sm);
 }
 
 .sbp-badge {
@@ -70,7 +70,7 @@
 .sbp-error {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-md);
 }
 
 .sbp-error[hidden] {
@@ -82,7 +82,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 16px;
+  gap: var(--space-xs) var(--space-page);
 }
 
 .sbp-modes__hint {
@@ -100,7 +100,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 12px;
+  gap: var(--space-xs) var(--space-page);
 }
 
 .sbp-voice__label {
@@ -157,7 +157,7 @@
   display: grid;
   flex: 1 1 0;
   grid-template-columns: minmax(0, 1fr) var(--sbp-info-width);
-  gap: 10px;
+  gap: var(--space-page);
   min-height: 220px;
 }
 
@@ -246,7 +246,7 @@
 }
 
 .sbp-tab__count {
-  margin-left: 4px;
+  margin-left: var(--space-xs);
   font-size: 11px;
   font-weight: 400;
 }
@@ -262,7 +262,7 @@
 .sbp-info__body {
   flex: 1 1 auto;
   min-height: 0;
-  padding: 8px;
+  padding: var(--space-md);
   overflow-y: auto;
 }
 
@@ -271,7 +271,7 @@
 }
 
 .sbp-section__title {
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-xs);
   font-size: 12px;
   font-weight: 600;
 }
@@ -279,7 +279,7 @@
 .sbp-facts {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 2px 10px;
+  gap: 2px var(--space-page);
   margin: 0;
 }
 
@@ -311,7 +311,7 @@
 .sbp-list,
 .sbp-checks {
   display: grid;
-  gap: 4px;
+  gap: var(--space-xs);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -320,7 +320,7 @@
 .sbp-list__item {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: var(--space-sm);
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
@@ -344,7 +344,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 8px;
+  gap: var(--space-xs) var(--space-md);
   margin-top: 2px;
 }
 
@@ -378,7 +378,7 @@
 .sbp-check {
   display: flex;
   align-items: flex-start;
-  gap: 4px;
+  gap: var(--space-xs);
   border-radius: 4px;
 }
 
@@ -390,9 +390,9 @@
   display: flex;
   flex: 1 1 auto;
   align-items: flex-start;
-  gap: 6px;
+  gap: var(--space-sm);
   min-width: 0;
-  padding: 2px 4px;
+  padding: 2px var(--space-xs);
   color: var(--text);
   font: inherit;
   line-height: 1.45;
@@ -428,12 +428,12 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 12px;
+  gap: var(--space-sm) var(--space-page);
 }
 
 .sbp-controls__transport {
   display: flex;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .sbp-time {
@@ -449,7 +449,7 @@
 .sbp-controls__display {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 12px;
+  gap: var(--space-xs) var(--space-page);
   margin-left: auto;
 }
 
@@ -462,7 +462,7 @@
 .sbp-timeline {
   display: grid;
   grid-template-columns: var(--sbp-label-width) minmax(0, 1fr);
-  gap: 6px;
+  gap: var(--space-sm);
   user-select: none;
 }
 
@@ -615,14 +615,14 @@
 /* ---------- 生成音色对话框 ---------- */
 .sbp-draft {
   display: grid;
-  gap: 10px;
+  gap: var(--space-page);
 }
 
 .sbp-draft__actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-md);
 }
 
 .sbp-draft__player:empty {
@@ -642,8 +642,8 @@
 
 .sbp-draft__adopt {
   display: grid;
-  gap: 8px;
-  padding-top: 10px;
+  gap: var(--space-md);
+  padding-top: var(--space-page);
   border-top: 1px solid var(--divider);
 }
 

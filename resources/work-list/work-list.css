@@ -25,13 +25,13 @@
 }
 
 .works-message {
-  margin: 8px 0;
+  margin: var(--space-md) 0;
 }
 
 .works-state {
-  padding: 16px 0;
+  padding: var(--space-page) 0;
 }
 
 .works-state .ui-button {
-  margin-top: 8px;
+  margin-top: var(--space-md);
 }
