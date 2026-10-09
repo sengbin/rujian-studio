@@ -43,8 +43,8 @@
   overflow: hidden;
   color: var(--text);
   font-family: var(--font-family);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
   background: var(--dialog-bg);
   border: 1px solid var(--dialog-border);
   border-radius: 6px;
@@ -85,8 +85,8 @@
   min-width: 0;
   padding: 0 var(--space-page);
   overflow: hidden;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-strong);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -219,7 +219,7 @@
 
 .ui-danger-notice__name {
   padding: 0 var(--space-xs);
-  font-weight: 700;
+  font-weight: var(--font-weight-strong);
   background: color-mix(in srgb, var(--danger-notice-text) 18%, transparent);
   border-radius: 3px;
   user-select: all;

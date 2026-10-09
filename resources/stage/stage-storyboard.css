@@ -27,13 +27,13 @@
 
 .storyboard-summary__item {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-body);
   white-space: nowrap;
 }
 
 .storyboard-summary__item strong {
   color: var(--text);
-  font-weight: 600;
+  font-weight: var(--font-weight-strong);
 }
 
 /* ---------- 工作区：导航与编辑区并排，下方是操作栏 ---------- */
@@ -83,8 +83,8 @@
 
 .storyboard-nav__title {
   margin: 0;
-  font-size: 12px;
-  font-weight: 650;
+  font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-strong);
 }
 
 .storyboard-nav__list {
@@ -150,7 +150,7 @@
   height: 20px;
   color: var(--text-muted);
   font-family: var(--storyboard-number-font);
-  font-size: 12px;
+  font-size: var(--font-size-body);
   background: var(--table-row-hover);
   border-radius: 4px;
 }
@@ -162,7 +162,7 @@
 
 .storyboard-shot__copy {
   min-width: 0;
-  line-height: 1.25;
+  line-height: var(--line-height-tight);
 }
 
 .storyboard-shot__title,
@@ -174,12 +174,12 @@
 }
 
 .storyboard-shot__title {
-  font-size: 11px;
+  font-size: var(--font-size-caption);
 }
 
 .storyboard-shot__meta {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--font-size-micro);
 }
 
 /* ---------- 右侧编辑区 ---------- */
@@ -213,8 +213,8 @@
 .storyboard-editor__title {
   margin: 0;
   overflow: hidden;
-  font-size: 13px;
-  font-weight: 650;
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-strong);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -229,15 +229,15 @@
 .storyboard-editor__notice {
   margin: 0;
   color: var(--status-warning);
-  font-size: 11px;
-  line-height: 1.4;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-body);
 }
 
 .storyboard-tag {
   flex: none;
   padding: 2px 7px;
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: var(--font-size-micro);
   white-space: nowrap;
   border: 1px solid var(--divider);
   border-radius: 4px;
@@ -245,7 +245,7 @@
 
 .storyboard-editor__state {
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   white-space: nowrap;
 }
 
@@ -274,10 +274,10 @@
 /* 编辑区内的字段：标签与说明按样板的小字号（覆盖总控的字段令牌），字段间距由所在的格格负责 */
 .storyboard-editor {
   --field-label-gap: 5px;
-  --field-font-size: 11px;
-  --field-description-size: 10px;
+  --field-font-size: var(--font-size-caption);
+  --field-description-size: var(--font-size-micro);
   --field-description-gap: 5px;
-  --field-error-size: 11px;
+  --field-error-size: var(--font-size-caption);
 }
 
 .storyboard-editor .ui-field__label {
@@ -334,8 +334,8 @@
 .storyboard-binding .ui-field__label,
 .storyboard-section__title {
   color: var(--text);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-strong);
 }
 
 .storyboard-section__title {
@@ -346,8 +346,8 @@
 .storyboard-help {
   margin: 2px 0 0;
   color: var(--text-muted);
-  font-size: 10px;
-  line-height: 1.4;
+  font-size: var(--font-size-micro);
+  line-height: var(--line-height-body);
 }
 
 .storyboard-help {
@@ -357,7 +357,7 @@
 .storyboard-empty {
   margin: var(--space-page) 0;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
 }
 
 .storyboard-entity-groups {
@@ -376,14 +376,14 @@
   align-items: baseline;
   gap: 7px;
   margin: 0;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--font-size-subheading);
+  font-weight: var(--font-weight-strong);
 }
 
 .storyboard-entity-group__count {
   color: var(--text-muted);
-  font-size: 10px;
-  font-weight: 400;
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-regular);
 }
 
 .storyboard-entity-list {
@@ -392,36 +392,9 @@
   gap: var(--space-sm);
 }
 
-.storyboard-entity {
-  min-height: 24px;
-  padding: 0 var(--space-md);
-  color: var(--text);
-  font: inherit;
-  font-size: 11px;
-  background: transparent;
-  border: 1px solid var(--stage-line);
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color var(--hover-duration) ease, border-color var(--hover-duration) ease;
-}
-
-.storyboard-entity:hover:not(:disabled) {
-  background: var(--option-hover-bg);
-}
-
-.storyboard-entity:active:not(:disabled) {
-  background: var(--option-active-bg);
-}
-
-.storyboard-entity:focus-visible {
-  outline: 1px solid var(--focus-border);
-  outline-offset: 2px;
-}
-
-/* 已绑定：边框与底色 */
+/* 出场实体是可开关的按钮：尺寸与外观沿用组件库的 ui-button，这里只区分“已绑定”的底色 */
 .storyboard-entity[aria-pressed="true"] {
   background: var(--option-selected-bg);
-  border-color: color-mix(in srgb, var(--host-button-background) 60%, var(--stage-line));
 }
 
 .storyboard-entity[aria-pressed="true"]:hover:not(:disabled) {
@@ -430,11 +403,6 @@
 
 .storyboard-entity[aria-pressed="true"]:active:not(:disabled) {
   background: var(--option-selected-active-bg);
-}
-
-.storyboard-entity:disabled {
-  color: var(--disabled-text);
-  cursor: default;
 }
 
 /* 首帧图片、首帧资产字段与首帧来源之间留出间距 */
@@ -503,8 +471,8 @@
 
 .storyboard-sound {
   --field-label-gap: 3px;
-  --field-font-size: 10px;
-  --field-label-weight: 400;
+  --field-font-size: var(--font-size-micro);
+  --field-label-weight: var(--font-weight-regular);
   --switch-row-gap: 7px;
   --switch-row-padding: 0;
 }
@@ -539,14 +507,14 @@
   align-items: baseline;
   gap: 7px;
   margin: 0;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-strong);
 }
 
 .storyboard-staging__kind {
   color: var(--text-muted);
-  font-size: 10px;
-  font-weight: 400;
+  font-size: var(--font-size-micro);
+  font-weight: var(--font-weight-regular);
 }
 
 .storyboard-staging__fields {
@@ -557,8 +525,8 @@
 
 .storyboard-staging {
   --field-label-gap: 3px;
-  --field-font-size: 10px;
-  --field-label-weight: 400;
+  --field-font-size: var(--font-size-micro);
+  --field-label-weight: var(--font-weight-regular);
 }
 
 /* ---------- 底部操作栏 ---------- */
@@ -570,7 +538,7 @@
   gap: var(--space-md) var(--space-page);
   min-height: 35px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
 }
 
 .storyboard-footer__actions {

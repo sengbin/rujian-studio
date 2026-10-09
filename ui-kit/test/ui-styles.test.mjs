@@ -8,7 +8,7 @@
 // ------------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { sourceRoot } from './load-manifest.mjs';
@@ -159,4 +159,24 @@ test('焦点边框：轮廓向内偏移 1px 盖在边框上，边框加轮廓合
     assert.match(body, /outline:\s*1px solid/);
     assert.match(body, /outline-offset:\s*-1px/);
   }
+});
+/** 递归列出目录下的样式文件。 */
+function listStyleFiles(directory) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) return listStyleFiles(path);
+    return entry.name.endsWith('.css') ? [path] : [];
+  });
+}
+
+test('字体总控：除令牌文件外，样式不写死字号与字重，统一引用 ui-tokens.css 的字体角色令牌', () => {
+  const resourcesRoot = join(sourceRoot, '..', '..', 'resources');
+  const offenders = [];
+  for (const path of [...listStyleFiles(sourceRoot), ...listStyleFiles(resourcesRoot)]) {
+    if (path.endsWith('ui-tokens.css')) continue;
+    readFileSync(path, 'utf8').split(/\r?\n/).forEach((line, index) => {
+      if (/^\s*font-(size|weight):\s*\d/.test(line)) offenders.push(path + ':' + (index + 1) + ' ' + line.trim());
+    });
+  }
+  assert.deepEqual(offenders, [], '这些位置写死了字号或字重');
 });

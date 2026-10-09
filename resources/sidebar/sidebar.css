@@ -16,8 +16,8 @@
   --page-padding: var(--space-page) 0 var(--space-page) var(--space-page);
   --page-padding-end: var(--space-page);
   /* 分区标题与菜单项同字号，层级靠字重区分，避免标题看起来比菜单项小 */
-  --menu-font-size: 12px;
-  --menu-title-weight: 600;
+  --menu-font-size: var(--font-size-body);
+  --menu-title-weight: var(--font-weight-strong);
   --card-gap: var(--space-page);
   --card-padding: var(--space-md);
   --card-radius: 6px;
@@ -59,7 +59,7 @@ body {
   color: var(--host-foreground);
   background: var(--bg);
   font-size: var(--menu-font-size);
-  line-height: 1.4;
+  line-height: var(--line-height-body);
 }
 
 main {
@@ -74,8 +74,8 @@ main {
   margin-top: auto;
   padding: var(--space-page) var(--page-padding-end) 0 0;
   color: var(--host-description-foreground);
-  font-size: 11px;
-  line-height: 1.4;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-body);
 }
 
 .status-list {
@@ -143,7 +143,7 @@ h2 {
   margin: 0 0 var(--space-xs);
   padding: 0 0 var(--space-xs);
   color: var(--host-foreground);
-  font-size: var(--menu-font-size);
+  font-size: var(--font-size-heading);
   font-weight: var(--menu-title-weight);
   border-bottom: 1px solid var(--divider);
 }
@@ -180,8 +180,8 @@ nav {
   margin: 0;
   padding: 2px var(--space-sm);
   color: var(--host-error-foreground, rgb(244, 71, 71));
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
   overflow-wrap: anywhere;
 }
 
@@ -249,7 +249,7 @@ h2 > span,
   flex: none;
   padding: 0 var(--space-xs);
   color: color-mix(in srgb, var(--host-foreground) 70%, transparent);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   line-height: 16px;
   border: 1px solid color-mix(in srgb, var(--host-foreground) 24%, transparent);
   border-radius: 3px;

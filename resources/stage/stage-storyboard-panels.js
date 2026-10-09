@@ -58,7 +58,7 @@
     for (const { label, entities } of groups.values()) {
       const buttons = entities.map((entity) => {
         const button = aiUi.h('button', {
-          class: 'storyboard-entity',
+          class: 'ui-button storyboard-entity',
           text: entity.isActive ? entity.name : `${entity.name}（已停用）`,
           attrs: { type: 'button', 'aria-pressed': String(selected.has(entity.id)) }
         });

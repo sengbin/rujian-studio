@@ -9,23 +9,12 @@
  * ------------------------------------------------------------------------
  */
 
-/* 工作区布局令牌：分隔线、面板表面、面板阴影（亮主题才有）与控件高度；悬停与按下颜色不在这里定义，直接用 ui-tokens.css 的总控令牌 */
+/* 工作区布局令牌：分隔线、面板表面、面板阴影（亮主题才有）；控件尺寸与外观全站统一由 ui-tokens.css 的总控令牌决定，这里不覆盖；悬停与按下颜色也直接用总控令牌 */
 .stage-view--workspace {
   --stage-line: var(--host-widget-border, color-mix(in srgb, var(--text) 12%, transparent));
   --stage-surface: color-mix(in srgb, var(--host-widget-background, var(--bg)) 90%, var(--bg));
   --stage-shadow: none;
-  /* 工作区的控件尺寸：只覆盖总控令牌，不再逐属性覆盖组件样式；输入、下拉与按钮同高，字段之间的间距由内容布局负责 */
-  --btn-height: 26px;
-  --btn-font-size: 11px;
-  --btn-radius: 4px;
-  --btn-compact-height: 22px;
-  --btn-compact-min-width: 0;
-  --input-height: 26px;
-  --input-field-height: 24px;
-  --input-font-size: 11px;
-  --select-height: 26px;
-  --textarea-padding-y: 5px;
-  --textarea-font-size: 11px;
+  /* 字段之间的间距由内容布局负责 */
   --field-gap: 0;
 }
 
@@ -106,13 +95,14 @@ body.theme-light .stage-view--workspace {
 
 .stage-item__meta,
 .stage-item__hint {
-  font-size: 11px;
+  font-size: var(--font-size-caption);
 }
 
 /* 列表中的分组标题 */
 .stage-list__heading {
   margin: var(--space-md) 0 0;
-  font-weight: 600;
+  font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-strong);
 }
 
 /* 分组标题行：标题在左，“添加”按钮在右 */
@@ -136,10 +126,6 @@ body.theme-light .stage-view--workspace {
 .stage-editor__title,
 .stage-editor__content {
   margin: 0 0 var(--space-md);
-}
-
-.stage-editor {
-  --textarea-font-size: 12px;
 }
 
 .stage-editor__actions {
@@ -239,8 +225,8 @@ body.theme-light .stage-view--workspace {
   flex-wrap: wrap;
   gap: 3px var(--space-page);
   color: var(--text-muted);
-  font-size: 11px;
-  line-height: 1.35;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-tight);
 }
 
 .stage-meta span {

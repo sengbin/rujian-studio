@@ -22,8 +22,8 @@
 .settings-section h2 {
   margin: 0 0 var(--space-page);
   padding: 0 0 var(--space-sm);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-strong);
   border-bottom: 1px solid var(--divider);
 }
 
@@ -38,15 +38,15 @@
 /* 分组内的小标题：区分引擎设置与对所有文本模型通用的设置 */
 .settings-section h3.settings-subtitle {
   margin: var(--space-page) 0 var(--space-md);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-strong);
 }
 
 /* 保存状态文字紧跟字段，留出固定间距避免出现时整体跳动 */
 .settings-status {
   min-height: 16px;
   margin: 0 0 var(--space-page);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
 }
 
 /* 服务商标题行：名称在左，启用开关在右，分隔线在整行下方 */
@@ -82,7 +82,7 @@
 
 .provider-key-state {
   margin-left: var(--space-xs);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
 }
 
 /* 接口地址的标签行：测试连接的结果紧跟标签右侧，结果较长时换到下一行 */
@@ -99,13 +99,13 @@
 }
 
 .provider-setting-result {
-  font-size: 12px;
+  font-size: var(--font-size-body);
 }
 
 .provider-models-title {
   margin: var(--space-md) 0 var(--space-md);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-size-heading);
+  font-weight: var(--font-weight-strong);
 }
 
 /* 模型类型页签：样式见组件库的 ui-tabs，这里只管下方间距 */
@@ -118,7 +118,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 11px;
+  font-size: var(--font-size-caption);
 }
 
 .provider-chips {
@@ -130,8 +130,8 @@
 /* 模型表里的能力摘要：每项一行，弱化颜色 */
 .ui-table .provider-capability {
   color: var(--text-muted);
-  font-size: 11px;
-  line-height: 1.5;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-body);
 }
 
 /* 账户余额与用量表：结果每项一行，名称弱化；操作按钮可换行 */
@@ -139,7 +139,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 11px;
+  font-size: var(--font-size-caption);
 }
 
 .account-entry {
@@ -171,5 +171,5 @@
 
 .account-notes {
   margin-top: var(--space-md);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
 }

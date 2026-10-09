@@ -46,7 +46,7 @@
 
 .asset-thumb--empty {
   color: var(--host-description-foreground);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
 }
 
 /* 可点击的缩略图是按钮，去掉按钮默认外观 */
@@ -191,7 +191,7 @@
   border-radius: 4px;
   background: transparent;
   color: var(--host-description-foreground);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
   cursor: pointer;
 }
 

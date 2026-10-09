@@ -22,7 +22,7 @@
   color: var(--button-secondary-text);
   font: inherit;
   font-size: var(--btn-font-size);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   white-space: nowrap;
   background: var(--button-secondary-bg);
   border: 0;
@@ -101,12 +101,9 @@
   padding: 0 var(--btn-delete-padding-x);
 }
 
-/* 紧凑按钮，用于表格行内操作 */
+/* 紧凑按钮（表格行内操作）：高度、字号、圆角与普通按钮一致，只有最小宽度不同 */
 .ui-button--compact {
-  height: var(--btn-compact-height);
   min-width: var(--btn-compact-min-width);
-  font-size: var(--btn-compact-font-size);
-  border-radius: var(--btn-compact-radius);
 }
 
 /* 内联 SVG 图标：线条与颜色由 SVG 属性和当前文字颜色决定，这里只定尺寸 */
@@ -120,21 +117,12 @@
   height: var(--btn-icon-size);
 }
 
-.ui-button--compact .ui-button__icon {
-  width: var(--btn-compact-icon-size);
-  height: var(--btn-compact-icon-size);
-}
-
 /* 纯图标按钮：方形，文字只作为可访问名称 */
 .ui-button--icon-only,
 .ui-button--compact.ui-button--icon-only {
   width: var(--btn-height);
   min-width: 0;
   padding: 0;
-}
-
-.ui-button--compact.ui-button--icon-only {
-  width: var(--btn-compact-height);
 }
 
 /* 禁用态：各样式统一为灰色，去掉悬停与按下反馈 */
@@ -214,7 +202,7 @@
   min-height: var(--textarea-min-height);
   padding: var(--textarea-padding-y) var(--textarea-padding-x);
   font-size: var(--textarea-font-size);
-  line-height: 1.45;
+  line-height: var(--line-height-body);
   resize: none;
 }
 
@@ -672,7 +660,7 @@
   margin: 0 0 var(--field-description-gap);
   color: var(--text-muted);
   font-size: var(--field-description-size);
-  line-height: 1.45;
+  line-height: var(--line-height-body);
 }
 
 .ui-field__description--after {
@@ -720,7 +708,7 @@
 
 .ui-tab[aria-selected="true"] {
   color: var(--text);
-  font-weight: 600;
+  font-weight: var(--font-weight-strong);
 }
 
 .ui-tab[aria-selected="true"]::after {
@@ -737,7 +725,7 @@
 .ui-tab__count {
   margin-left: var(--space-xs);
   font-size: var(--tab-count-font-size);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 
 .ui-tab__count:empty {

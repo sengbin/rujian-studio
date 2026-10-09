@@ -57,8 +57,8 @@
   gap: var(--space-sm);
   margin: 0 0 var(--space-sm);
   color: var(--text-muted);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
 }
 
 .form-actions-note:last-child {

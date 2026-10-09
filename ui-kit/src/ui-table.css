@@ -21,7 +21,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: var(--table-font-size);
-  line-height: 1.4;
+  line-height: var(--line-height-body);
   text-align: left;
 }
 
@@ -36,8 +36,8 @@
   padding-top: var(--table-head-padding-y);
   padding-bottom: var(--table-head-padding-y);
   color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-strong);
   white-space: nowrap;
   background: var(--table-header-bg);
   border-bottom: 1px solid var(--table-border);
@@ -119,8 +119,8 @@
 }
 
 .ui-table__title {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-strong);
 }
 
 /* 说明在主文本下方，单行截断 */

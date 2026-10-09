@@ -28,8 +28,8 @@ body {
   padding: var(--page-padding);
   color: var(--text);
   background: var(--bg);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
 }
 
 /* 页面顶部标题栏：第一行是页面名称加描述（都用小字体，在一行），第二行是页面自己放进 #page-toolbar 的搜索、筛选等控件，左对齐；由宿主渲染 */
@@ -46,14 +46,14 @@ body {
 
 .page-header__title {
   margin: 0;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-strong);
 }
 
 .page-header__description {
   margin: 0;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--font-size-caption);
 }
 
 .page-header__toolbar {
@@ -70,12 +70,12 @@ body {
   display: none;
 }
 
-/* 说明文字 */
+/* 说明文字：所有页面统一用说明字号，页面里不再单独调整 */
 .description {
   margin: 0;
   color: var(--text-muted);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: var(--font-size-caption);
+  line-height: var(--line-height-body);
 }
 
 /* 状态文字：颜色之外必须带文字内容 */

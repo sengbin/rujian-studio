@@ -52,15 +52,15 @@ body.backup-page {
 .backup-card__title {
   margin: 0 0 var(--space-xs);
   color: var(--text);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-strong);
 }
 
 .backup-card__description {
   margin: 0 0 var(--space-page);
   color: var(--text-muted);
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-body);
 }
 
 /* 数据库信息：标签列固定宽度，值可换行；窄屏时标签与值上下排列 */
@@ -73,13 +73,13 @@ body.backup-page {
 
 .backup-facts dt {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--font-size-body);
 }
 
 .backup-facts dd {
   min-width: 0;
   margin: 0;
-  font-size: 12px;
+  font-size: var(--font-size-body);
   overflow-wrap: anywhere;
 }
 
@@ -105,18 +105,6 @@ body.backup-page {
 .backup-status {
   min-width: 0;
   margin: 0;
-  font-size: 12px;
+  font-size: var(--font-size-body);
   overflow-wrap: anywhere;
-}
-
-/* 设置对话框变体：按钮尺寸只覆盖总控令牌（高 28px、圆角 5px、字体 12px、水平内边距），字重 500 */
-.backup-page {
-  --btn-height: 28px;
-  --btn-radius: 5px;
-  --btn-font-size: 12px;
-  --btn-padding-x: var(--space-page);
-}
-
-.backup-page .ui-button {
-  font-weight: 500;
 }
