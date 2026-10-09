@@ -17,7 +17,7 @@ import { ElectronSecretStore } from './infra/secrets/electron-secret-store';
 import { Application, createApplication } from './desktop/application';
 import { createAppWindow, getCurrentTheme } from './desktop/app-window';
 import { handleAppProtocol, registerAppProtocolScheme } from './desktop/app-protocol';
-import { createBackupHost, createDesktopNotifier, createWorkbenchHost, exportManualSkill, focusWindow } from './desktop/desktop-hosts';
+import { createBackupHost, createDesktopNotifier, createWorkbenchHost, focusWindow } from './desktop/desktop-hosts';
 import { registerShellIpc } from './desktop/shell-ipc';
 
 /** 数据目录在 userData 下的子目录名。 */
@@ -89,8 +89,7 @@ function run(): void {
       backupHost: createBackupHost(getWindow),
       notify,
       focusWindow: () => focusWindow(mainWindow),
-      reportError: (message) => dialog.showErrorBox(ERROR_TITLE, message),
-      exportManual: () => exportManualSkill(resourceRoot, getWindow, notify)
+      reportError: (message) => dialog.showErrorBox(ERROR_TITLE, message)
     });
     bridge.registerFrame(SIDEBAR_FRAME_ID, { router: application.sidebar.router, html: application.sidebar.html });
 

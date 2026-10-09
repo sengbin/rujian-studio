@@ -98,8 +98,7 @@ export const SIDEBAR_SECTIONS: readonly SidebarMenuSection[] = [
     surface: 'flat',
     items: [
       { id: 'model-settings', title: '模型', icon: 'brain' },
-      { id: 'data-backup', title: '数据备份', icon: 'database-export' },
-      { id: 'manual-export', title: '导出手册 Skill', icon: 'download' }
+      { id: 'data-backup', title: '数据备份', icon: 'database-export' }
     ]
   }
 ];

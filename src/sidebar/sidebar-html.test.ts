@@ -48,9 +48,8 @@ test('html 与 body 带主题类，缺省为深色', () => {
   assert.match(light, /<body class="vscode-light">/);
 });
 
-test('设置分区包含“导出手册 Skill”入口，没有首次使用提示条', () => {
+test('没有首次使用提示条', () => {
   const html = createSidebarHtml({ ...BASE_OPTIONS, sections: SIDEBAR_SECTIONS });
-  assert.ok(html.includes('data-item-id="manual-export"'));
   assert.ok(!html.includes('welcome-tip'));
 });
 

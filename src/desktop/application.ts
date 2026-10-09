@@ -75,8 +75,6 @@ export interface ApplicationEnvironment {
   readonly focusWindow: () => void;
   /** 向用户显示错误。 */
   readonly reportError: (message: string) => void;
-  /** 导出用户手册 Skill。 */
-  readonly exportManual: () => Promise<void>;
 }
 
 /** 装配结果。 */
@@ -175,7 +173,6 @@ export function createApplication(environment: ApplicationEnvironment): Applicat
     .register('project-list', 'action', () => projectPages.showCreateForm())
     .register('model-settings', 'main', () => settingsPages.show())
     .register('data-backup', 'main', () => backupPages.show())
-    .register('manual-export', 'main', () => exportManualReportingErrors(environment))
     .register('video-workbench', 'main', () => workbenchPages.show());
   for (const [itemId, sourceType] of CREATION_ENTRIES) {
     // 主入口：打开该素材来源的作品列表页；尾部操作：打开列表页并弹出新建作品表单。
@@ -231,13 +228,6 @@ function createSidebarPage(environment: ApplicationEnvironment, registry: Sideba
   registerSidebarHandlers(router, registry, readStatus);
   const html = createSidebarPageHtml({ content, version: environment.version, status: readStatus(), theme: environment.getTheme() });
   return { router, html };
-}
-
-/** 导出手册 Skill，失败时向用户显示原因。 */
-function exportManualReportingErrors(environment: ApplicationEnvironment): void {
-  environment.exportManual().catch((error: unknown) => {
-    environment.reportError(`导出用户手册 Skill 失败：${error instanceof Error ? error.message : String(error)}`);
-  });
 }
 
 /**

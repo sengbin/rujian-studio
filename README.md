@@ -85,14 +85,6 @@
 
 <div align="center">
 
-## 使用手册
-
-在左侧菜单“设置”中点击“导出手册 Skill”，把 ZIP 保存到本地，交给支持 Skill 的 AI 助手使用，然后描述你遇到的问题。
-
-</div>
-
-<div align="center">
-
 ## 从源码运行
 
 需要 Node.js 22.12 或更高版本。

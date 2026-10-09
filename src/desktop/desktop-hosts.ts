@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：desktop-hosts.ts
-// 说明：桌面版的宿主能力：系统通知、工作台使用的打开与导出文件、数据备份使用的选择文件与重启应用、手册 Skill 导出。
+// 说明：桌面版的宿主能力：系统通知、工作台使用的打开与导出文件、数据备份使用的选择文件与重启应用。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
@@ -8,7 +8,7 @@
 // ------------------------------------------------------------------------
 
 import { BrowserWindow, Notification, app, dialog, shell } from 'electron';
-import { copyFile, readFile, stat } from 'node:fs/promises';
+import { copyFile, readFile } from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { WorkbenchHost } from '../app/pages/workbench-handlers';
@@ -16,12 +16,6 @@ import { BackupHost } from '../app/services/backup-service';
 
 /** 通知标题。 */
 const NOTIFICATION_TITLE = '如见 Studio';
-
-/** 随应用打包的用户手册 Skill 压缩包文件名（位于资源目录的 resources 下）。 */
-const MANUAL_SKILL_ARCHIVE_NAME = 'rujian-user-manual.zip';
-
-/** 压缩包缺失时的提示。 */
-const MANUAL_SKILL_ARCHIVE_MISSING_MESSAGE = '当前版本未包含用户使用手册 Skill 压缩包，请使用正式打包的应用。';
 
 /** 一条系统通知。 */
 export interface DesktopNotice {
@@ -133,32 +127,4 @@ export function createBackupHost(getWindow: WindowGetter): BackupHost {
       app.quit();
     }
   };
-}
-
-/**
- * 把随应用打包的用户手册 Skill 压缩包复制到用户指定的位置；压缩包缺失时提示（仅开发运行时不会生成，需正式打包）。
- * @param resourceRoot 应用资源根目录。
- * @param getWindow 读取应用窗口，作为对话框的父窗口。
- * @param notify 系统通知。
- */
-export async function exportManualSkill(resourceRoot: string, getWindow: WindowGetter, notify: DesktopNotifier): Promise<void> {
-  const archivePath = path.join(resourceRoot, 'resources', MANUAL_SKILL_ARCHIVE_NAME);
-  try {
-    await stat(archivePath);
-  } catch {
-    dialog.showErrorBox(NOTIFICATION_TITLE, MANUAL_SKILL_ARCHIVE_MISSING_MESSAGE);
-    return;
-  }
-  const options = {
-    defaultPath: path.join(os.homedir(), MANUAL_SKILL_ARCHIVE_NAME),
-    filters: [{ name: 'ZIP 压缩包', extensions: ['zip'] }],
-    buttonLabel: '导出'
-  };
-  const window = getWindow();
-  const result = window === undefined ? await dialog.showSaveDialog(options) : await dialog.showSaveDialog(window, options);
-  if (result.canceled || result.filePath === undefined) {
-    return;
-  }
-  await copyFile(archivePath, result.filePath);
-  notify({ body: '用户使用手册 Skill 已导出。' });
 }
