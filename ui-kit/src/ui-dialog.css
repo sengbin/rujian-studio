@@ -83,7 +83,7 @@
   flex: 1;
   align-items: center;
   min-width: 0;
-  padding: 0 12px;
+  padding: 0 var(--space-page);
   overflow: hidden;
   font-size: 12px;
   font-weight: 600;
@@ -218,7 +218,7 @@
 }
 
 .ui-danger-notice__name {
-  padding: 0 4px;
+  padding: 0 var(--space-xs);
   font-weight: 700;
   background: color-mix(in srgb, var(--danger-notice-text) 18%, transparent);
   border-radius: 3px;

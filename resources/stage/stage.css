@@ -14,8 +14,19 @@
   --stage-line: var(--host-widget-border, color-mix(in srgb, var(--text) 12%, transparent));
   --stage-surface: color-mix(in srgb, var(--host-widget-background, var(--bg)) 90%, var(--bg));
   --stage-shadow: none;
-  --stage-control-height: 26px;
-  --stage-compact-height: 22px;
+  /* 工作区的控件尺寸：只覆盖总控令牌，不再逐属性覆盖组件样式；输入、下拉与按钮同高，字段之间的间距由内容布局负责 */
+  --btn-height: 26px;
+  --btn-font-size: 11px;
+  --btn-radius: 4px;
+  --btn-compact-height: 22px;
+  --btn-compact-min-width: 0;
+  --input-height: 26px;
+  --input-field-height: 24px;
+  --input-font-size: 11px;
+  --select-height: 26px;
+  --textarea-padding-y: 5px;
+  --textarea-font-size: 11px;
+  --field-gap: 0;
 }
 
 body.theme-light .stage-view--workspace {
@@ -70,11 +81,9 @@ body.theme-light .stage-view--workspace {
   margin: var(--space-page) 0 0;
 }
 
+/* 列表与列表项的通用样式见组件库的 ui-list，这里只管本页的尺寸与项内排版 */
 .stage-list {
   flex: 0 0 240px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
   min-width: 200px;
   max-height: 420px;
   overflow-y: auto;
@@ -85,43 +94,6 @@ body.theme-light .stage-view--workspace {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 2px var(--space-md);
-  padding: var(--space-sm) var(--space-md);
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  background: transparent;
-  border: 1px solid var(--table-border);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color var(--hover-duration) ease, border-color var(--hover-duration) ease;
-}
-
-.stage-item:hover {
-  background: var(--option-hover-bg);
-}
-
-.stage-item:active {
-  background: var(--option-active-bg);
-}
-
-.stage-item:focus-visible {
-  outline: 1px solid var(--focus-border);
-  outline-offset: 1px;
-}
-
-.stage-item.is-selected {
-  background: var(--option-selected-bg);
-  border-color: var(--focus-border);
-  /* 3px 内侧左标记：选中状态不只靠颜色区分 */
-  box-shadow: inset 3px 0 0 var(--host-button-background);
-}
-
-.stage-item.is-selected:hover {
-  background: var(--option-selected-hover-bg);
-}
-
-.stage-item.is-selected:active {
-  background: var(--option-selected-active-bg);
 }
 
 .stage-item__title {
@@ -166,8 +138,8 @@ body.theme-light .stage-view--workspace {
   margin: 0 0 var(--space-md);
 }
 
-.stage-editor .ui-textarea__field {
-  font-size: 12px;
+.stage-editor {
+  --textarea-font-size: 12px;
 }
 
 .stage-editor__actions {
@@ -305,46 +277,7 @@ body.theme-light .stage-view--workspace {
   margin: 0;
 }
 
-/* 控件按工作区的尺寸统一：输入、下拉与按钮同高，字段之间的间距由内容布局负责 */
-.stage-view--workspace .ui-field {
-  margin: 0;
-}
-
-.stage-view--workspace .ui-input {
-  height: var(--stage-control-height);
-}
-
-.stage-view--workspace .ui-input__field {
-  height: calc(var(--stage-control-height) - 2px);
-  font-size: 11px;
-}
-
-.stage-view--workspace .ui-select__trigger {
-  height: var(--stage-control-height);
-  font-size: 11px;
-}
-
-.stage-view--workspace .ui-select__value {
-  line-height: calc(var(--stage-control-height) - 2px);
-}
-
-.stage-view--workspace .ui-textarea__field {
-  padding: 5px var(--space-md);
-  font-size: 11px;
-}
-
-.stage-view--workspace .ui-button {
-  height: var(--stage-control-height);
-  padding: 0 8px;
-  font-size: 11px;
-  border-radius: 4px;
-}
-
-.stage-view--workspace .ui-button--compact {
-  height: var(--stage-compact-height);
-  min-width: 0;
-  font-size: 11px;
-}
+/* 控件尺寸见文件开头对总控令牌的覆盖 */
 
 /* 弹出页面较窄时头部上下排列，版本、状态与按钮允许换行 */
 @container stage-workspace (max-width: 760px) {

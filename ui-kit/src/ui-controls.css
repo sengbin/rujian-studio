@@ -14,19 +14,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: var(--btn-gap);
   min-width: 0;
   min-height: 0;
-  height: 22px;
-  padding: 0 8px;
+  height: var(--btn-height);
+  padding: 0 var(--btn-padding-x);
   color: var(--button-secondary-text);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--btn-font-size);
   font-weight: 400;
   white-space: nowrap;
   background: var(--button-secondary-bg);
   border: 0;
-  border-radius: 3px;
+  border-radius: var(--btn-radius);
   cursor: pointer;
   transition: background-color var(--hover-duration) ease, color var(--hover-duration) ease;
 }
@@ -85,12 +85,28 @@
   background: var(--button-accent-active-bg);
 }
 
+/* 按功能分类：添加、修改、删除各自的内边距与最小宽度由总控里的 --btn-add-*、--btn-edit-*、--btn-delete-* 控制；必须写在紧凑按钮和纯图标按钮之前，让后者覆盖 */
+.ui-button--add {
+  min-width: var(--btn-add-min-width);
+  padding: 0 var(--btn-add-padding-x);
+}
+
+.ui-button--edit {
+  min-width: var(--btn-edit-min-width);
+  padding: 0 var(--btn-edit-padding-x);
+}
+
+.ui-button--delete {
+  min-width: var(--btn-delete-min-width);
+  padding: 0 var(--btn-delete-padding-x);
+}
+
 /* 紧凑按钮，用于表格行内操作 */
 .ui-button--compact {
-  height: 20px;
-  min-width: 60px;
-  font-size: 11px;
-  border-radius: 4px;
+  height: var(--btn-compact-height);
+  min-width: var(--btn-compact-min-width);
+  font-size: var(--btn-compact-font-size);
+  border-radius: var(--btn-compact-radius);
 }
 
 /* 内联 SVG 图标：线条与颜色由 SVG 属性和当前文字颜色决定，这里只定尺寸 */
@@ -100,25 +116,25 @@
 }
 
 .ui-button__icon {
-  width: 14px;
-  height: 14px;
+  width: var(--btn-icon-size);
+  height: var(--btn-icon-size);
 }
 
 .ui-button--compact .ui-button__icon {
-  width: 12px;
-  height: 12px;
+  width: var(--btn-compact-icon-size);
+  height: var(--btn-compact-icon-size);
 }
 
 /* 纯图标按钮：方形，文字只作为可访问名称 */
 .ui-button--icon-only,
 .ui-button--compact.ui-button--icon-only {
-  width: 22px;
+  width: var(--btn-height);
   min-width: 0;
   padding: 0;
 }
 
 .ui-button--compact.ui-button--icon-only {
-  width: 20px;
+  width: var(--btn-compact-height);
 }
 
 /* 禁用态：各样式统一为灰色，去掉悬停与按下反馈 */
@@ -162,12 +178,12 @@
   width: 100%;
   background: var(--input-bg);
   border: 1px solid var(--input-border);
-  border-radius: 4px;
+  border-radius: var(--input-radius);
   transition: border-color var(--hover-duration) ease;
 }
 
 .ui-input {
-  height: 24px;
+  height: var(--input-height);
 }
 
 .ui-input__field,
@@ -184,8 +200,9 @@
 }
 
 .ui-input__field {
-  height: 22px;
-  padding: 0 8px;
+  height: var(--input-field-height);
+  padding: 0 var(--input-padding-x);
+  font-size: var(--input-font-size);
 }
 
 .ui-input__field::placeholder,
@@ -194,9 +211,9 @@
 }
 
 .ui-textarea__field {
-  min-height: 78px;
-  padding: 6px 8px;
-  font-size: 11px;
+  min-height: var(--textarea-min-height);
+  padding: var(--textarea-padding-y) var(--textarea-padding-x);
+  font-size: var(--textarea-font-size);
   line-height: 1.45;
   resize: none;
 }
@@ -289,17 +306,17 @@
   display: block;
   box-sizing: border-box;
   width: 100%;
-  min-width: 88px;
+  min-width: var(--select-min-width);
   min-height: 0;
-  height: 24px;
-  padding: 0 24px 0 6px;
+  height: var(--select-height);
+  padding: 0 var(--select-padding-right) 0 var(--select-padding-left);
   color: var(--host-input-foreground);
   font: inherit;
-  font-size: 11px;
+  font-size: var(--select-font-size);
   text-align: left;
   background: var(--input-bg);
   border: 1px solid var(--input-border);
-  border-radius: 4px;
+  border-radius: var(--input-radius);
   cursor: pointer;
   transition: border-color var(--hover-duration) ease;
 }
@@ -356,7 +373,7 @@
 .ui-select__value {
   display: block;
   overflow: hidden;
-  line-height: 22px;
+  line-height: var(--input-field-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -366,25 +383,25 @@
 }
 
 .ui-select__custom {
-  margin-top: 6px;
+  margin-top: var(--space-sm);
 }
 
 .ui-select__popup {
   position: fixed;
   z-index: 10000;
-  padding: 2px;
+  padding: var(--select-popup-padding);
   overflow-y: auto;
   overscroll-behavior: contain;
-  font-size: 11px;
+  font-size: var(--select-font-size);
   background: var(--dialog-bg);
   border: 1px solid var(--dialog-border);
-  border-radius: 4px;
+  border-radius: var(--input-radius);
   box-shadow: var(--dialog-shadow);
   pointer-events: auto;
 }
 
 .ui-select__option {
-  padding: 4px 8px;
+  padding: var(--select-option-padding-y) var(--select-option-padding-x);
   overflow: hidden;
   border-radius: 3px;
   cursor: pointer;
@@ -424,19 +441,19 @@
 .ui-choice-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--choice-group-gap);
 }
 
 .ui-choice-group--horizontal {
   flex-flow: row wrap;
-  gap: 6px 16px;
+  gap: var(--choice-group-gap) var(--space-page);
 }
 
 .ui-choice {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 24px;
+  gap: var(--choice-gap);
+  min-height: var(--choice-min-height);
   cursor: pointer;
   user-select: none;
   /* 开启状态的强调色，悬停与按下时逐级加深 */
@@ -460,8 +477,8 @@
 .ui-choice__mark {
   position: relative;
   flex: none;
-  width: 14px;
-  height: 14px;
+  width: var(--choice-mark-size);
+  height: var(--choice-mark-size);
   background: var(--input-bg);
   border: 1px solid var(--choice-mark-border);
   transition: background-color var(--hover-duration) ease, border-color var(--hover-duration) ease;
@@ -544,8 +561,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 10px 8px 6px;
+  gap: var(--switch-row-gap);
+  min-height: var(--switch-row-min-height);
+  padding: var(--switch-row-padding);
 }
 
 .ui-switch-row__label {
@@ -555,14 +573,14 @@
 .ui-switch {
   position: relative;
   flex: none;
-  width: 36px;
-  min-width: 36px;
+  width: var(--switch-width);
+  min-width: var(--switch-width);
   min-height: 0;
-  height: 20px;
+  height: var(--switch-height);
   padding: 0;
   background: var(--switch-off-bg);
   border: 0;
-  border-radius: 10px;
+  border-radius: calc(var(--switch-height) / 2);
   cursor: pointer;
   transition: background 0.18s ease;
 }
@@ -617,10 +635,10 @@
 
 .ui-switch__thumb {
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 14px;
-  height: 14px;
+  top: calc((var(--switch-height) - var(--switch-thumb-size)) / 2);
+  left: calc((var(--switch-height) - var(--switch-thumb-size)) / 2);
+  width: var(--switch-thumb-size);
+  height: var(--switch-thumb-size);
   background: rgb(255, 255, 255);
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
@@ -628,7 +646,7 @@
 }
 
 .ui-switch[aria-checked="true"] .ui-switch__thumb {
-  transform: translateX(16px);
+  transform: translateX(calc(var(--switch-width) - var(--switch-thumb-size) - (var(--switch-height) - var(--switch-thumb-size))));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -640,29 +658,146 @@
 
 /* ---------- 字段包装 ---------- */
 .ui-field {
-  margin: 0 0 12px;
+  margin: 0 0 var(--field-gap);
 }
 
 .ui-field__label {
   display: block;
-  margin: 0 0 2px;
-  font-size: 12px;
-  font-weight: 600;
+  margin: 0 0 var(--field-label-gap);
+  font-size: var(--field-font-size);
+  font-weight: var(--field-label-weight);
 }
 
 .ui-field__description {
-  margin: 0 0 6px;
+  margin: 0 0 var(--field-description-gap);
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: var(--field-description-size);
   line-height: 1.45;
 }
 
 .ui-field__description--after {
-  margin: 4px 0 0;
+  margin: var(--space-xs) 0 0;
 }
 
 .ui-field__error {
-  margin: 4px 0 0;
+  margin: var(--space-xs) 0 0;
   color: var(--status-error);
-  font-size: 12px;
+  font-size: var(--field-error-size);
+}
+
+/* ---------- 页签 ---------- */
+/* 下划线标出选中项，后面可跟数量；设置页、分镜编辑、分镜预览共用，页面只负责放置位置（外边距、滚动） */
+.ui-tabs {
+  display: flex;
+  flex: none;
+  align-items: center;
+  border-bottom: 1px solid var(--divider);
+}
+
+.ui-tab {
+  position: relative;
+  flex: none;
+  min-height: var(--tab-height);
+  padding: 0 var(--tab-padding-x);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--tab-font-size);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: background-color var(--hover-duration) ease;
+}
+
+.ui-tab:hover {
+  background: var(--option-hover-bg);
+  border-radius: 4px 4px 0 0;
+}
+
+.ui-tab:focus-visible {
+  outline: 1px solid var(--focus-border);
+  outline-offset: -2px;
+}
+
+.ui-tab[aria-selected="true"] {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.ui-tab[aria-selected="true"]::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--host-button-background);
+  border-radius: 2px 2px 0 0;
+  content: '';
+}
+
+.ui-tab__count {
+  margin-left: var(--space-xs);
+  font-size: var(--tab-count-font-size);
+  font-weight: 400;
+}
+
+.ui-tab__count:empty {
+  display: none;
+}
+
+.ui-tab--warning .ui-tab__count {
+  color: var(--status-warning);
+}
+
+/* ---------- 可选择的列表 ---------- */
+/* 列表容器与列表项：阶段列表、工作台镜头组等共用；项内部的排版由页面自己决定，选中、悬停、按下、焦点反馈在这里统一 */
+.ui-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--list-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-list__item {
+  padding: var(--list-item-padding-y) var(--list-item-padding-x);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--table-border);
+  border-radius: var(--list-item-radius);
+  cursor: pointer;
+  transition: background-color var(--hover-duration) ease, border-color var(--hover-duration) ease;
+}
+
+.ui-list__item:hover {
+  background: var(--option-hover-bg);
+}
+
+.ui-list__item:active {
+  background: var(--option-active-bg);
+}
+
+.ui-list__item:focus-visible {
+  outline: 1px solid var(--focus-border);
+  outline-offset: 1px;
+}
+
+/* 选中项：选中底色加 3px 的内侧左标记，选中状态不只靠颜色区分 */
+.ui-list__item.is-selected,
+.ui-list__item[aria-current="true"] {
+  background: var(--option-selected-bg);
+  border-color: var(--focus-border);
+  box-shadow: inset 3px 0 0 var(--host-button-background);
+}
+
+.ui-list__item.is-selected:hover,
+.ui-list__item[aria-current="true"]:hover {
+  background: var(--option-selected-hover-bg);
+}
+
+.ui-list__item.is-selected:active,
+.ui-list__item[aria-current="true"]:active {
+  background: var(--option-selected-active-bg);
 }

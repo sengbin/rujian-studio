@@ -150,14 +150,14 @@
     for (const tab of INFO_TABS) {
       const tabId = aiUi.uid('sbp-tab');
       const panelId = aiUi.uid('sbp-panel');
-      infoCounts[tab.id] = aiUi.h('span', { class: 'sbp-tab__count' });
-      infoTabButtons[tab.id] = aiUi.h('button', { class: 'sbp-tab', attrs: { type: 'button', role: 'tab', id: tabId, 'aria-controls': panelId } }, tab.label, infoCounts[tab.id]);
+      infoCounts[tab.id] = aiUi.h('span', { class: 'ui-tab__count sbp-tab__count' });
+      infoTabButtons[tab.id] = aiUi.h('button', { class: 'ui-tab sbp-tab', attrs: { type: 'button', role: 'tab', id: tabId, 'aria-controls': panelId } }, tab.label, infoCounts[tab.id]);
       infoPanels[tab.id] = aiUi.h('div', { class: 'sbp-panel', attrs: { role: 'tabpanel', id: panelId, 'aria-labelledby': tabId } });
     }
     const checkInfo = infoPanels.checks;
     checkInfo.classList.add('sbp-info__checks');
     const infoBody = aiUi.h('div', { class: 'sbp-info__body' }, INFO_TABS.map((tab) => infoPanels[tab.id]));
-    const infoTabs = aiUi.h('div', { class: 'sbp-tabs', attrs: { role: 'tablist', 'aria-label': '镜头信息类别' } }, INFO_TABS.map((tab) => infoTabButtons[tab.id]));
+    const infoTabs = aiUi.h('div', { class: 'ui-tabs sbp-tabs', attrs: { role: 'tablist', 'aria-label': '镜头信息类别' } }, INFO_TABS.map((tab) => infoTabButtons[tab.id]));
     const infoPanel = aiUi.h('aside', { class: 'sbp-info', attrs: { 'aria-label': '镜头信息与检查' } }, infoTabs, infoBody);
     /** 选中信息页签：只显示它的面板，只有选中的页签在键盘 Tab 顺序里。 */
     function selectInfoTab(id) {
@@ -936,7 +936,7 @@
     function renderChecks() {
       checkInfo.textContent = '';
       setTabCount('checks', state.checks.length);
-      infoTabButtons.checks.classList.toggle('sbp-tab--warning', state.checks.some((entry) => entry.level === checksApi.LEVEL_WARNING));
+      infoTabButtons.checks.classList.toggle('ui-tab--warning', state.checks.some((entry) => entry.level === checksApi.LEVEL_WARNING));
       if (state.timeline.shots.length === 0) return;
       const { warnings, infos } = checksApi.summarize(state.checks);
       const summary = state.checks.length === 0 ? '没有发现问题' : `警告 ${warnings} 项，提示 ${infos} 项`;

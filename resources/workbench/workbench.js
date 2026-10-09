@@ -687,7 +687,7 @@
         aiUi.h(
           'button',
           {
-            class: `wb-group-item${isSelected ? ' wb-group-item--selected' : ''}`,
+            class: `ui-list__item wb-group-item${isSelected ? ' wb-group-item--selected' : ''}`,
             attrs: { type: 'button', 'aria-current': isSelected ? 'true' : undefined },
             on: { click: () => selectGroup(group) }
           },
@@ -937,7 +937,7 @@
       aiUi.h(
         'div',
         { class: 'wb-queue__body', hidden: !queueOpen, attrs: { id: panelId } },
-        rows.length === 0 ? aiUi.h('p', { class: 'description wb-queue__empty', text: '还没有提交过生成任务。' }) : aiUi.table({ columns, rows, ariaLabel: '生成任务' }).element
+        rows.length === 0 ? aiUi.h('p', { class: 'description wb-queue__empty', text: '还没有提交过生成任务。' }) : aiUi.table({ columns, rows, ariaLabel: '生成任务', compact: true }).element
       )
     );
   }

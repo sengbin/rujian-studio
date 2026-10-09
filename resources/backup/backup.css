@@ -109,11 +109,14 @@ body.backup-page {
   overflow-wrap: anywhere;
 }
 
-/* 设置对话框变体：按钮高 28px、圆角 5px、字体 12px、字重 500、水平内边距 12px */
+/* 设置对话框变体：按钮尺寸只覆盖总控令牌（高 28px、圆角 5px、字体 12px、水平内边距），字重 500 */
+.backup-page {
+  --btn-height: 28px;
+  --btn-radius: 5px;
+  --btn-font-size: 12px;
+  --btn-padding-x: var(--space-page);
+}
+
 .backup-page .ui-button {
-  height: 28px;
-  padding: 0 12px;
-  font-size: 12px;
   font-weight: 500;
-  border-radius: 5px;
 }

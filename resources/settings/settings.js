@@ -448,9 +448,9 @@
       const models = provider.models.filter((model) => model.kindLabel === label);
       const button = aiUi.h(
         'button',
-        { class: 'provider-tab', attrs: { type: 'button', role: 'tab' } },
+        { class: 'ui-tab provider-tab', attrs: { type: 'button', role: 'tab' } },
         label,
-        aiUi.h('span', { class: 'provider-tab__count', text: `${models.filter((model) => model.isEnabled).length}/${models.length}` })
+        aiUi.h('span', { class: 'ui-tab__count provider-tab__count', text: `${models.filter((model) => model.isEnabled).length}/${models.length}` })
       );
       const panel = aiUi.h('div', { class: 'provider-tabpanel', attrs: { role: 'tabpanel' } }, renderModelTable({ ...provider, models }, status));
       return { label, button, panel };
@@ -484,7 +484,7 @@
     return aiUi.h(
       'div',
       { class: 'provider-models' },
-      aiUi.h('div', { class: 'provider-tabs', attrs: { role: 'tablist', 'aria-label': `${provider.displayName}的模型类型` } }, tabs.map((tab) => tab.button)),
+      aiUi.h('div', { class: 'ui-tabs provider-tabs', attrs: { role: 'tablist', 'aria-label': `${provider.displayName}的模型类型` } }, tabs.map((tab) => tab.button)),
       tabs.map((tab) => tab.panel)
     );
   }

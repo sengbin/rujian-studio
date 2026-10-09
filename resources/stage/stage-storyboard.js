@@ -105,7 +105,7 @@
         id: item.id,
         button: aiUi.h(
           'button',
-          { class: 'storyboard-tab', attrs: { type: 'button', role: 'tab', id: tabId, 'aria-controls': panelId } },
+          { class: 'ui-tab storyboard-tab', attrs: { type: 'button', role: 'tab', id: tabId, 'aria-controls': panelId } },
           item.label,
           item.count
         ),
@@ -140,7 +140,7 @@
     });
     activate(activeId);
     return {
-      tablist: aiUi.h('div', { class: 'storyboard-tabs', attrs: { role: 'tablist', 'aria-label': '镜头信息类别' } }, tabs.map((tab) => tab.button)),
+      tablist: aiUi.h('div', { class: 'ui-tabs storyboard-tabs', attrs: { role: 'tablist', 'aria-label': '镜头信息类别' } }, tabs.map((tab) => tab.button)),
       panels: tabs.map((tab) => tab.panel)
     };
   }
@@ -411,8 +411,8 @@
         setDirty(true);
       };
 
-      const blockingCountElement = aiUi.h('span', { class: 'storyboard-tab__count' });
-      const contentCountElement = aiUi.h('span', { class: 'storyboard-tab__count' });
+      const blockingCountElement = aiUi.h('span', { class: 'ui-tab__count storyboard-tab__count' });
+      const contentCountElement = aiUi.h('span', { class: 'ui-tab__count storyboard-tab__count' });
       /** 页签文字后的实体、站位、声音数量。 */
       const refreshCount = () => {
         blockingCountElement.textContent = `（${blocking.describe()}）`;

@@ -27,8 +27,8 @@
   border-bottom: 1px solid var(--divider);
 }
 
-.settings-section .ui-field {
-  margin: 0 0 var(--space-xs);
+.settings-section {
+  --field-gap: var(--space-xs);
 }
 
 .settings-note {
@@ -37,7 +37,7 @@
 
 /* 分组内的小标题：区分引擎设置与对所有文本模型通用的设置 */
 .settings-section h3.settings-subtitle {
-  margin: var(--space-page) 0 8px;
+  margin: var(--space-page) 0 var(--space-md);
   font-size: 12px;
   font-weight: 600;
 }
@@ -51,6 +51,7 @@
 
 /* 服务商标题行：名称在左，启用开关在右，分隔线在整行下方 */
 .provider-header {
+  --switch-row-padding: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -64,10 +65,6 @@
   margin: 0;
   padding: 0;
   border-bottom: 0;
-}
-
-.provider-header .ui-switch-row {
-  padding: 0;
 }
 
 /* 访问密钥：输入框下方一行操作按钮与配置状态 */
@@ -111,57 +108,9 @@
   font-weight: 600;
 }
 
-/* 模型类型标签：下划线标出选中项，后面跟启用数量 */
+/* 模型类型页签：样式见组件库的 ui-tabs，这里只管下方间距 */
 .provider-tabs {
-  display: flex;
-  align-items: center;
   margin: 0 0 var(--space-md);
-  border-bottom: 1px solid var(--divider);
-}
-
-.provider-tab {
-  position: relative;
-  min-height: 32px;
-  padding: 0 12px;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 12px;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  transition: background-color var(--hover-duration) ease;
-}
-
-.provider-tab:hover {
-  background: var(--option-hover-bg);
-  border-radius: 4px 4px 0 0;
-}
-
-.provider-tab:focus-visible {
-  outline: 1px solid var(--focus-border);
-  outline-offset: -2px;
-}
-
-.provider-tab[aria-selected="true"] {
-  color: var(--text);
-  font-weight: 600;
-}
-
-.provider-tab[aria-selected="true"]::after {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 2px;
-  background: var(--host-button-background);
-  border-radius: 2px 2px 0 0;
-  content: '';
-}
-
-.provider-tab__count {
-  margin-left: var(--space-xs);
-  font-size: 11px;
-  font-weight: 400;
 }
 
 /* 服务商列表：状态文字分行显示，模型类型标签换行排列 */

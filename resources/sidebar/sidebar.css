@@ -247,7 +247,7 @@ h2 > span,
 .menu-badge {
   display: inline-block;
   flex: none;
-  padding: 0 4px;
+  padding: 0 var(--space-xs);
   color: color-mix(in srgb, var(--host-foreground) 70%, transparent);
   font-size: 11px;
   line-height: 16px;

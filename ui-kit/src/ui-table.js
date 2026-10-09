@@ -55,13 +55,13 @@
 
   /**
    * 创建数据表格。
-   * @param {{ columns: Array<object>, rows?: Array<object>, ariaLabel?: string }} options
+   * @param {{ columns: Array<object>, rows?: Array<object>, ariaLabel?: string, compact?: boolean }} options
    *   columns 列描述，每列：
    *   title 表头文字；key 取值的字段名；render(row, index) 自定义内容（返回节点、文本、数组，或空值）；
    *   type 列类型 text（默认）、number、actions；width、minWidth 列宽（数字为像素，字符串如 "34%"）；
    *   nowrap 内容不换行；muted 淡色显示（布尔值或 (row) => 布尔值）；emptyText 内容为空时显示的淡色文字；
    *   tooltip(row) 单元格的悬停提示；
-   *   rows 行数据；ariaLabel 表格的可访问名称。
+   *   rows 行数据；ariaLabel 表格的可访问名称；compact 紧凑用途（行高、单元格内边距和字号取总控里的 --table-compact-*）。
    * @returns {{ element: HTMLElement, setRows: (rows: Array<object>) => void, getRows: () => Array<object> }}
    */
   aiUi.table = function (options) {
@@ -76,7 +76,7 @@
     const element = aiUi.h(
       'div',
       { class: 'ui-table-container' },
-      aiUi.h('table', { class: 'ui-table', attrs: { 'aria-label': settings.ariaLabel } }, head, body)
+      aiUi.h('table', { class: settings.compact ? 'ui-table ui-table--compact' : 'ui-table', attrs: { 'aria-label': settings.ariaLabel } }, head, body)
     );
 
     /** 用新的行数据整体重绘表体。 */

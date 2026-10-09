@@ -12,7 +12,7 @@
 .ui-file-picker {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-sm);
   align-items: flex-start;
 }
 
@@ -32,16 +32,16 @@
 }
 
 .ui-file-picker__empty {
-  padding: 4px 8px;
+  padding: var(--space-xs) var(--space-md);
   color: var(--text-muted);
 }
 
 .ui-file-picker__item {
   display: flex;
-  gap: 8px;
+  gap: var(--space-md);
   align-items: center;
   min-height: 26px;
-  padding: 2px 8px;
+  padding: 2px var(--space-md);
 }
 
 .ui-file-picker__item + .ui-file-picker__item {
@@ -65,7 +65,7 @@
 .ui-file-picker__actions {
   display: inline-flex;
   flex: none;
-  gap: 4px;
+  gap: var(--space-xs);
 }
 
 .ui-file-picker__actions .ui-button {
@@ -76,8 +76,8 @@
 .ui-file-picker__grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px;
+  gap: var(--space-md);
+  padding: var(--space-md);
 }
 
 .ui-file-picker__grid .ui-file-picker__empty {
@@ -87,7 +87,7 @@
 .ui-file-picker__card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-xs);
   align-items: flex-start;
   width: 120px;
 }

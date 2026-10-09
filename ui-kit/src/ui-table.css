@@ -14,27 +14,27 @@
   overflow-x: auto;
   background: var(--table-surface);
   border: 1px solid var(--table-border);
-  border-radius: 8px;
+  border-radius: var(--table-radius);
 }
 
 .ui-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: var(--table-font-size);
   line-height: 1.4;
   text-align: left;
 }
 
 .ui-table th,
 .ui-table td {
-  padding: 6px var(--space-page);
+  padding: var(--table-cell-padding-y) var(--table-cell-padding-x);
   vertical-align: middle;
 }
 
 /* 表头：色带加小号淡色文字，与内容行区分 */
 .ui-table thead th {
-  padding-top: var(--space-sm);
-  padding-bottom: var(--space-sm);
+  padding-top: var(--table-head-padding-y);
+  padding-bottom: var(--table-head-padding-y);
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 600;
@@ -44,7 +44,7 @@
 }
 
 .ui-table tbody tr {
-  height: 48px;
+  height: var(--table-row-height);
   transition: background-color var(--hover-duration) ease;
 }
 
@@ -56,6 +56,20 @@
   background: var(--table-row-hover);
 }
 
+
+/* 紧凑用途（如队列里的任务表）：行高、单元格内边距、字号单独由总控里的紧凑表格令牌控制 */
+.ui-table--compact {
+  font-size: var(--table-compact-font-size);
+}
+
+.ui-table--compact th,
+.ui-table--compact td {
+  padding: var(--table-compact-cell-padding-y) var(--table-compact-cell-padding-x);
+}
+
+.ui-table--compact tbody tr {
+  height: var(--table-compact-row-height);
+}
 
 .ui-table__cell--nowrap {
   white-space: nowrap;
@@ -123,9 +137,9 @@
 .ui-chip {
   display: inline-block;
   max-width: 100%;
-  padding: 1px var(--space-md);
+  padding: var(--chip-padding-y) var(--chip-padding-x);
   overflow: hidden;
-  font-size: 11px;
+  font-size: var(--chip-font-size);
   text-overflow: ellipsis;
   vertical-align: middle;
   white-space: nowrap;

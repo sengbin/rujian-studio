@@ -133,7 +133,7 @@
         return aiUi.h(
           'button',
           {
-            class: isSelected ? 'stage-item is-selected' : 'stage-item',
+            class: isSelected ? 'ui-list__item stage-item is-selected' : 'ui-list__item stage-item',
             attrs: { type: 'button', 'aria-current': isSelected ? 'true' : undefined },
             on: { click: () => void selectChapter(chapter.seq) }
           },
@@ -144,7 +144,7 @@
       });
       return aiUi.h(
         'aside',
-        { class: 'stage-list' },
+        { class: 'ui-list stage-list' },
         aiUi.h('p', { class: 'description', text: `共 ${chapters.length} 章，共 ${totalWords} 字` }),
         chapters.length === 0 ? aiUi.h('p', { class: 'description', text: '章节生成后会陆续显示在这里。' }) : null,
         items

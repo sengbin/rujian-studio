@@ -128,7 +128,7 @@
       return aiUi.h(
         'button',
         {
-          class: isSelected ? 'stage-item is-selected' : 'stage-item',
+          class: isSelected ? 'ui-list__item stage-item is-selected' : 'ui-list__item stage-item',
           attrs: { type: 'button', 'aria-current': isSelected ? 'true' : undefined },
           on: { click: () => void select(next) }
         },
@@ -156,7 +156,7 @@
       const canAddEpisode = canEdit && view.work.multiEpisode;
       return aiUi.h(
         'aside',
-        { class: 'stage-list' },
+        { class: 'ui-list stage-list' },
         renderItem({ type: TYPE_TEXT, ref: null }, '剧本包正文', view.screenplay ? `${view.screenplay.fullText.length} 字` : ''),
         hasStructure ? null : aiUi.h('p', { class: 'description', text: '集和实体抽取完成后会显示在这里。' }),
         hasStructure

@@ -253,58 +253,9 @@
   color: var(--status-warning);
 }
 
-/* ---------- 页签 ---------- */
+/* ---------- 页签：样式见组件库的 ui-tabs，这里只管内边距 ---------- */
 .storyboard-tabs {
-  display: flex;
-  align-items: center;
-  min-height: 39px;
-  padding: 0 10px;
-  border-bottom: 1px solid var(--divider);
-}
-
-.storyboard-tab {
-  position: relative;
-  min-height: 38px;
-  padding: 0 10px;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 12px;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  transition: background-color var(--hover-duration) ease;
-}
-
-.storyboard-tab:hover {
-  background: var(--option-hover-bg);
-  border-radius: 4px 4px 0 0;
-}
-
-.storyboard-tab:focus-visible {
-  outline: 1px solid var(--focus-border);
-  outline-offset: -2px;
-}
-
-.storyboard-tab[aria-selected="true"] {
-  color: var(--text);
-  font-weight: 600;
-}
-
-.storyboard-tab[aria-selected="true"]::after {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 2px;
-  background: var(--host-button-background);
-  border-radius: 2px 2px 0 0;
-  content: '';
-}
-
-.storyboard-tab__count {
-  margin-left: var(--space-xs);
-  font-size: 11px;
-  font-weight: 400;
+  padding: 0 var(--space-page);
 }
 
 .storyboard-panel {
@@ -320,21 +271,17 @@
   outline-offset: -1px;
 }
 
-/* 编辑区内的字段：标签与说明按样板的小字号，字段间距由所在的栅格负责 */
+/* 编辑区内的字段：标签与说明按样板的小字号（覆盖总控的字段令牌），字段间距由所在的格格负责 */
+.storyboard-editor {
+  --field-label-gap: 5px;
+  --field-font-size: 11px;
+  --field-description-size: 10px;
+  --field-description-gap: 5px;
+  --field-error-size: 11px;
+}
+
 .storyboard-editor .ui-field__label {
-  margin: 0 0 5px;
   color: var(--text-muted);
-  font-size: 11px;
-}
-
-.storyboard-editor .ui-field__description {
-  margin: -2px 0 5px;
-  font-size: 10px;
-  line-height: 1.4;
-}
-
-.storyboard-editor .ui-field__error {
-  font-size: 11px;
 }
 
 /* ---------- “镜头”“画面与声音”页签 ---------- */
@@ -447,7 +394,7 @@
 
 .storyboard-entity {
   min-height: 24px;
-  padding: 0 8px;
+  padding: 0 var(--space-md);
   color: var(--text);
   font: inherit;
   font-size: 11px;
@@ -554,15 +501,15 @@
   gap: var(--space-md);
 }
 
-.storyboard-sound .ui-field__label {
-  margin-bottom: 3px;
-  font-size: 10px;
-  font-weight: 400;
+.storyboard-sound {
+  --field-label-gap: 3px;
+  --field-font-size: 10px;
+  --field-label-weight: 400;
+  --switch-row-gap: 7px;
+  --switch-row-padding: 0;
 }
 
 .storyboard-sound .ui-switch-row {
-  gap: 7px;
-  padding: 0;
   color: var(--text-muted);
 }
 
@@ -608,10 +555,10 @@
   gap: var(--space-md);
 }
 
-.storyboard-staging .ui-field__label {
-  margin-bottom: 3px;
-  font-size: 10px;
-  font-weight: 400;
+.storyboard-staging {
+  --field-label-gap: 3px;
+  --field-font-size: 10px;
+  --field-label-weight: 400;
 }
 
 /* ---------- 底部操作栏 ---------- */

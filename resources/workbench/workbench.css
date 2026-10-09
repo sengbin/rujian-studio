@@ -131,7 +131,7 @@ body {
   display: flex;
   align-items: center;
   height: 24px;
-  padding: 0 8px;
+  padding: 0 var(--space-md);
   overflow: hidden;
   border: 1px dashed var(--input-border);
   border-radius: 4px;
@@ -225,37 +225,6 @@ body {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1px var(--space-md);
   width: 100%;
-  padding: var(--space-sm) var(--space-page);
-  border: 1px solid transparent;
-  border-radius: var(--wb-inner-radius);
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color var(--hover-duration) ease, border-color var(--hover-duration) ease;
-}
-
-.wb-group-item:hover {
-  background: var(--option-hover-bg);
-}
-
-.wb-group-item:active {
-  background: var(--option-active-bg);
-}
-
-/* 选中项：灰色底加 3px 的内侧左标记，同时有 aria-current */
-.wb-group-item--selected,
-.wb-group-item--selected:hover,
-.wb-group-item--selected:active {
-  border-color: var(--wb-line-strong);
-  background: var(--wb-selected-bg);
-  box-shadow: inset 3px 0 0 var(--wb-accent);
-}
-
-.wb-group-item:focus-visible {
-  outline: 1px solid var(--focus-border);
-  outline-offset: 2px;
 }
 
 .wb-group-item__name {
@@ -901,15 +870,12 @@ body {
 
 /* 声音内容的开关列表：每个开关一行，行与行之间用分隔线 */
 .wb-switch-list {
+  --switch-row-min-height: 38px;
+  --switch-row-padding: 0 var(--space-page);
   overflow: hidden;
   border: 1px solid var(--wb-line-strong);
   border-radius: var(--wb-inner-radius);
   background: var(--wb-inset-bg);
-}
-
-.wb-switch-list .ui-switch-row {
-  min-height: 38px;
-  padding: 0 12px;
 }
 
 .wb-switch-list .ui-switch-row + .ui-switch-row {
@@ -1036,12 +1002,6 @@ body {
   background: transparent;
 }
 
-.wb-queue__body .ui-table th,
-.wb-queue__body .ui-table td {
-  padding: var(--space-xs) 13px;
-  font-size: 11px;
-}
-
 .wb-queue__body .ui-table thead th {
   position: sticky;
   top: 0;
@@ -1049,10 +1009,6 @@ body {
   background: var(--wb-panel-bg);
   border-bottom: 1px solid var(--divider);
   font-weight: 600;
-}
-
-.wb-queue__body .ui-table tbody tr {
-  height: 32px;
 }
 
 .wb-queue__body .ui-table tbody .ui-table__cell--actions {

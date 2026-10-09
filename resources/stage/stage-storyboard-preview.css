@@ -54,7 +54,7 @@
 }
 
 .sbp-badge {
-  padding: 0 6px;
+  padding: 0 var(--space-sm);
   color: var(--text-muted);
   font-size: 11px;
   line-height: 18px;
@@ -195,68 +195,11 @@
   border-radius: 6px;
 }
 
-/* ---------- 信息栏页签 ---------- */
+/* ---------- 信息栏页签：样式见组件库的 ui-tabs，这里只管内边距、横向滚动与分隔线颜色 ---------- */
 .sbp-tabs {
-  display: flex;
-  flex: none;
-  align-items: center;
-  padding: 0 4px;
+  padding: 0 var(--space-xs);
   overflow-x: auto;
-  border-bottom: 1px solid var(--sbp-line);
-}
-
-.sbp-tab {
-  position: relative;
-  flex: none;
-  min-height: 30px;
-  padding: 0 10px;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 12px;
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-  transition: background-color var(--hover-duration) ease;
-}
-
-.sbp-tab:hover {
-  background: var(--option-hover-bg);
-  border-radius: 4px 4px 0 0;
-}
-
-.sbp-tab:focus-visible {
-  outline: 1px solid var(--focus-border);
-  outline-offset: -2px;
-}
-
-.sbp-tab[aria-selected="true"] {
-  color: var(--text);
-  font-weight: 600;
-}
-
-.sbp-tab[aria-selected="true"]::after {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 2px;
-  background: var(--host-button-background);
-  border-radius: 2px 2px 0 0;
-  content: '';
-}
-
-.sbp-tab__count {
-  margin-left: var(--space-xs);
-  font-size: 11px;
-  font-weight: 400;
-}
-
-.sbp-tab__count:empty {
-  display: none;
-}
-
-.sbp-tab--warning .sbp-tab__count {
-  color: var(--status-warning);
+  border-bottom-color: var(--sbp-line);
 }
 
 .sbp-info__body {
