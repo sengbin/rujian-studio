@@ -8,7 +8,7 @@
 // ------------------------------------------------------------------------
 
 import { createWriteStream } from 'node:fs';
-import { mkdir, rename, rm } from 'node:fs/promises';
+import { mkdir, readdir, rename, rm } from 'node:fs/promises';
 import * as path from 'node:path';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -72,5 +72,36 @@ export class LocalResultStore implements ResultStore {
    */
   resolvePath(filePath: string): string {
     return resolveInsideRoot(this.rootDirectory, filePath);
+  }
+
+  async listFiles(): Promise<string[]> {
+    const files: string[] = [];
+    await collectFiles(this.resolvePath(RESULT_VIDEO_DIRECTORY_NAME), RESULT_VIDEO_DIRECTORY_NAME, files);
+    return files;
+  }
+
+  async remove(filePath: string): Promise<void> {
+    await rm(this.resolvePath(filePath), { force: true });
+  }
+}
+
+/** 递归收集目录下的文件（相对存储根目录的路径），跳过下载中的临时文件；目录不存在时什么都不收集。 */
+async function collectFiles(directory: string, relativeDirectory: string, files: string[]): Promise<void> {
+  let entries;
+  try {
+    entries = await readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return;
+    }
+    throw error;
+  }
+  for (const entry of entries) {
+    const relativePath = `${relativeDirectory}/${entry.name}`;
+    if (entry.isDirectory()) {
+      await collectFiles(path.join(directory, entry.name), relativePath, files);
+    } else if (!entry.name.endsWith(PARTIAL_SUFFIX)) {
+      files.push(relativePath);
+    }
   }
 }

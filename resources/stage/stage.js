@@ -113,8 +113,13 @@
       }
     }
 
+    /** 加载请求的序号，只采纳最后一次请求的响应：保存、切换版本、事件刷新会并发，旧响应不能覆盖新状态。 */
+    let loadSerial = 0;
+
     /** 加载视图；showLoading 为 false 时保留现有内容（后台刷新）。 */
     async function loadView(showLoading) {
+      loadSerial += 1;
+      const serial = loadSerial;
       if (showLoading) {
         isLoading = true;
         render();
@@ -122,6 +127,7 @@
       loadError = '';
       try {
         const next = await call(REQUEST_LOAD, pinnedRunId === null ? {} : { id: pinnedRunId });
+        if (serial !== loadSerial) return undefined;
         // 出现了新的最新版本（如重新生成）：不再固定旧版本，直接显示新版本。
         const newLatestId = next.versions[0].id;
         if (latestRunId !== null && newLatestId !== latestRunId && pinnedRunId !== null) {
@@ -134,7 +140,11 @@
         if (view && (next.run.id !== view.run.id || next.run.display !== view.run.display)) showMessage('', false);
         view = next;
       } catch (error) {
-        loadError = (error && error.message) || `${provider.label}产出加载失败。`;
+        if (serial !== loadSerial) return undefined;
+        const text = (error && error.message) || `${provider.label}产出加载失败。`;
+        // 后台刷新失败时保留已有内容，只提示；没有可显示的内容（或用户主动重试）时才整页报错。
+        if (view && !showLoading) showMessage(text, true);
+        else loadError = text;
       }
       isLoading = false;
       render();

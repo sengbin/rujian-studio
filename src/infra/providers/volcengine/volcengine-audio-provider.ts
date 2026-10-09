@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-05
-// 备注：语音合成接口是同步的且直接返回音频内容（没有下载地址）：submit 内完成合成，音频以 data 地址编码进 remoteJobId，query 解码后直接返回成功；豆包语音是独立于方舟的服务商，有自己的接口地址与访问密钥；它没有免费的探测接口，因此测试连接用一段极短文字真实合成一次（会产生极少量计费）。
+// 备注：语音合成接口是同步的且直接返回音频内容（没有下载地址）：submit 内完成合成，音频以 data 地址暂存在适配器内存里，以短编号作为 remoteJobId，query 凭编号取回并直接返回成功（应用重启后编号失效，需要重新生成）；豆包语音是独立于方舟的服务商，有自己的接口地址与访问密钥；它没有免费的探测接口，因此测试连接用一段极短文字真实合成一次（会产生极少量计费）。
 // ------------------------------------------------------------------------
 
 import { ProviderError } from '../../../domain/errors';
@@ -19,7 +19,8 @@ import {
   RemoteJobState
 } from '../../../domain/ports/provider-adapters';
 import { buildDeliveryInstruction, readDeliveryRates } from '../../../domain/rules/voice-delivery-rules';
-import { readObject, validateExtraParams } from '../shared/provider-payload';
+import { validateExtraParams } from '../shared/provider-payload';
+import { SyncResultStore } from '../shared/sync-result-store';
 import { FetchFunction } from './volcengine-api-client';
 import {
   VOLCENGINE_AUDIO_MODELS,
@@ -35,11 +36,15 @@ import { VolcengineSpeechClient } from './volcengine-speech-client';
 /** 测试连接时合成的文字：尽量短，把计费降到最低。 */
 const CONNECTION_PROBE_TEXT = '你好';
 
+/** 比生成队列的并发上限留有余量，暂存的结果不会在被查询前就被丢弃。 */
+const PENDING_RESULT_CAPACITY = 16;
+
 /** 豆包语音的音频适配器。 */
 export class VolcengineAudioProvider implements AudioModelProvider {
   readonly kind = 'audio';
   readonly provider: ProviderDescriptor = VOLCENGINE_SPEECH_PROVIDER;
   private readonly client: VolcengineSpeechClient;
+  private readonly results = new SyncResultStore<AudioJobResult>(PENDING_RESULT_CAPACITY);
 
   /**
    * @param fetchFunction 发起网络请求的函数，测试时可注入假实现。
@@ -71,7 +76,7 @@ export class VolcengineAudioProvider implements AudioModelProvider {
     }
     const audio = await this.client.synthesize(context, VOLCENGINE_SPEECH_RESOURCE_ID, buildRequestBody(request.prompt, request.voice, request.delivery ?? ''));
     const result: AudioJobResult = { audioUrl: `data:${VOLCENGINE_SPEECH_MIME_TYPE};base64,${audio.toString('base64')}`, durationSeconds: null };
-    return { modelCode: request.modelCode, remoteJobId: JSON.stringify(result) };
+    return { modelCode: request.modelCode, remoteJobId: this.results.put(result) };
   }
 
   async checkConnection(context: ProviderCallContext): Promise<void> {
@@ -79,12 +84,11 @@ export class VolcengineAudioProvider implements AudioModelProvider {
   }
 
   async query(ref: RemoteJobRef): Promise<RemoteJobState<AudioJobResult>> {
-    const audio = readObject(parseJson(ref.remoteJobId));
-    if (typeof audio.audioUrl !== 'string' || audio.audioUrl === '') {
-      throw new ProviderError('invalid_request', '音频任务引用已损坏，无法取得音频内容。');
+    const result = this.results.find(ref.remoteJobId);
+    if (result === undefined) {
+      throw new ProviderError('invalid_request', '合成结果已不在内存中（应用重启过），请重新生成。');
     }
-    const durationSeconds = typeof audio.durationSeconds === 'number' ? audio.durationSeconds : null;
-    return { status: 'succeeded', result: { audioUrl: audio.audioUrl, durationSeconds }, errorCategory: null, errorCode: null, errorMessage: null };
+    return { status: 'succeeded', result, errorCategory: null, errorCode: null, errorMessage: null };
   }
 }
 
@@ -138,13 +142,4 @@ function buildRequestBody(text: string, voiceLabel: string | null, delivery: str
       ...(instruction === null ? {} : { additions: JSON.stringify({ context_texts: [instruction] }) })
     }
   };
-}
-
-/** 解析 JSON；不合法时返回 undefined，由调用方按任务引用损坏处理。 */
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return undefined;
-  }
 }

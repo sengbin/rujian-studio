@@ -7,16 +7,13 @@
 // 备注：生成在后台异步执行，start 与 resume 在记录创建后立即返回；同一目标同时只有一个运行中的记录；先登记到活动列表再开始执行，结束时先移除登记再放行 whenIdle 的等待者。
 // ------------------------------------------------------------------------
 
-import { NotFoundError, TextGenerationError, ValidationError, FORM_LEVEL_ERROR_KEY } from '../../domain/errors';
+import { INTERRUPTED_MESSAGE, NotFoundError, TextGenerationError, ValidationError, FORM_LEVEL_ERROR_KEY } from '../../domain/errors';
 import { StageRun, StageTarget } from '../../domain/models/stage-run';
 import { StageRunRepository } from '../../domain/ports/stage-run-repository';
 import { TextGenerationPort, TextGenerationSource, TextModelInfo } from '../../domain/ports/text-generation-port';
 import { UPSTREAM_STAGE, assertCanStart, canRetry } from '../../domain/rules/stage-review-rules';
 import { InvalidOutputError } from './structured-generation';
 import { StageWorkflow } from './stage-workflow';
-
-/** 应用重启后遗留的运行中记录被置为失败时写入的原因。 */
-export const INTERRUPTED_MESSAGE = '应用重启，已中断。';
 
 /** 启动阶段生成的请求。 */
 export interface StartStageRequest {

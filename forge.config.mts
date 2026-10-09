@@ -1,3 +1,12 @@
+// ------------------------------------------------------------------------
+// 名称：forge.config.mts
+// 说明：Electron Forge 打包配置：应用图标、资源目录复制、安装包格式、Vite 构建入口和 Electron 安全开关（Fuses）。
+// 作者：Lion
+// 邮箱：chengbin@3578.cn
+// 日期：2026-10-10
+// 备注：resources 与 ui-kit 不经打包工具，原样作为额外资源复制到应用的 resources 目录。
+// ------------------------------------------------------------------------
+
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { MakerZIP } from '@electron-forge/maker-zip';

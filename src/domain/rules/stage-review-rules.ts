@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
-// 备注：纯函数，不访问存储；规则来源 docs/ARCHITECTURE.md 6.3 与 docs/database-design.md 第 7 节。
+// 备注：纯函数，不访问存储；规则来源 private-docs/rujian-studio/开发文档-vscode/ARCHITECTURE.md 6.3 与 private-docs/rujian-studio/开发文档-vscode/database-design.md 第 7 节。
 // ------------------------------------------------------------------------
 
 import { FORM_LEVEL_ERROR_KEY, ValidationError } from '../errors';

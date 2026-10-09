@@ -363,8 +363,20 @@
       };
     }
 
-    /** 保存当前条目（新增中的条目则添加）；已确认的版本被编辑时先提示会回到待确认。 */
+    /** 保存当前条目（新增中的条目则添加）；保存中再次触发（双击、快捷键）直接忽略，避免重复添加。 */
+    let isSaving = false;
     async function save() {
+      if (isSaving) return;
+      isSaving = true;
+      try {
+        await performSave();
+      } finally {
+        isSaving = false;
+      }
+    }
+
+    /** 保存当前条目（新增中的条目则添加）；已确认的版本被编辑时先提示会回到待确认。 */
+    async function performSave() {
       const view = context.getView();
       const isNew = selection.ref === NEW_REF;
       if (view.actions.editNeedsConfirm) {

@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：规则见 docs/database-design.md 4.9；修改表单或提示词只改修订号，不创建空版本；能否生成的判断用“生效提示词”（已保存的，没有时按模板拼）；纯函数，不依赖数据库。
+// 备注：规则见 private-docs/rujian-studio/开发文档-vscode/database-design.md 4.9；修改表单或提示词只改修订号，不创建空版本；能否生成的判断用“生效提示词”（已保存的，没有时按模板拼）；纯函数，不依赖数据库。
 // ------------------------------------------------------------------------
 
 import { AssetContent, AssetGenerationSummary, AssetKind, AssetRecord, AssetUsageSummary } from '../models/asset';

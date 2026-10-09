@@ -78,20 +78,30 @@
     }
   }
 
+  /** 加载请求的序号，只采纳最后一次请求的响应。 */
+  let loadSerial = 0;
+
   /** 加载资产并刷新界面；showLoading 为 false 时保留现有内容（后台刷新）。 */
   async function loadAssets(showLoading) {
+    loadSerial += 1;
+    const serial = loadSerial;
     if (showLoading) {
       isLoading = true;
       renderContent();
     }
-    loadError = '';
+    let data = null;
+    let failure = '';
     try {
-      const data = await window.hostBridge.request(REQUEST_LOAD);
+      data = await window.hostBridge.request(REQUEST_LOAD);
+    } catch (error) {
+      failure = (error && error.message) || '资产加载失败。';
+    }
+    if (serial !== loadSerial) return;
+    loadError = failure;
+    if (data !== null) {
       kind = data.kind;
       assets = data.assets;
       categories = data.categories;
-    } catch (error) {
-      loadError = (error && error.message) || '资产加载失败。';
     }
     isLoading = false;
     // 当前筛选的分类已被删除时回到“全部”。

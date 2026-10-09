@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：设计见 docs/production-profile-design.md 第 7.1、7.2、7.4 节；勾选变化只做本地重算，不调用模型；模型估算的节省字数只是参考，预计总时长以这里的重算为准。
+// 备注：设计见 private-docs/rujian-studio/开发文档-vscode/production-profile-design.md 第 7.1、7.2、7.4 节；勾选变化只做本地重算，不调用模型；模型估算的节省字数只是参考，预计总时长以这里的重算为准。
 // ------------------------------------------------------------------------
 
 import { GeneratedOutputError } from '../errors';

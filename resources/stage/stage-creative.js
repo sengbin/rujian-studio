@@ -96,8 +96,20 @@
       renderBody(context.getView(), bodyContainer);
     }
 
-    /** 保存当前章节；已确认的版本被编辑时先提示会回到待确认。 */
+    /** 保存当前章节；保存中再次触发（双击、快捷键）直接忽略，避免重复提交。 */
+    let isSaving = false;
     async function saveChapter() {
+      if (isSaving) return;
+      isSaving = true;
+      try {
+        await performSaveChapter();
+      } finally {
+        isSaving = false;
+      }
+    }
+
+    /** 保存当前章节；已确认的版本被编辑时先提示会回到待确认。 */
+    async function performSaveChapter() {
       const view = context.getView();
       const { title, content } = editorControls;
       if (view.actions.editNeedsConfirm) {

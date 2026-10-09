@@ -87,15 +87,24 @@ test('删除作品：作品名下进行中的视频任务都要取消，已结�
     const running = insert(1);
     jobs.markSubmitted(running.id, 'remote-1', 't');
     const ended = insert(2);
-    jobs.markFailed(ended.id, { category: 'server', code: null, message: '失败' }, 't');
+    jobs.markSubmitted(ended.id, 'remote-2', 't');
+    jobs.markSucceeded(
+      ended.id,
+      { filePath: 'videos/kept.mp4', remoteUrl: null, durationSeconds: 4, width: null, height: null, sizeBytes: 1, hasAudio: false },
+      't'
+    );
 
     const canceled: number[] = [];
     const deleted: number[] = [];
+    // 存储里有一个已有记录引用的视频和一个没有引用的视频。
+    const stored = ['videos/kept.mp4', 'videos/orphan.mp4'];
+    const removedFiles: string[] = [];
     const deletion = new DeletionService({
       projects: { getProject: () => assert.fail('不应读取项目'), deleteProject: () => assert.fail('不应删除项目') },
       works: { getWork: () => ({}) as never, listWorks: () => [], deleteWork: (id) => deleted.push(id) },
       stages: { cancelRunningForWork: async () => undefined },
       jobs,
+      results: { listFiles: async () => stored, remove: async (filePath) => void removedFiles.push(filePath) },
       scheduler: {
         cancel: async (jobId) => {
           canceled.push(jobId);
@@ -107,6 +116,7 @@ test('删除作品：作品名下进行中的视频任务都要取消，已结�
     await deletion.deleteWork(seed.workId);
     assert.deepEqual(canceled, [queued.id, running.id]);
     assert.deepEqual(deleted, [seed.workId], '取消之后才删除作品');
+    assert.deepEqual(removedFiles, ['videos/orphan.mp4'], '删除后清扫没有记录引用的视频文件');
   } finally {
     database.close();
   }

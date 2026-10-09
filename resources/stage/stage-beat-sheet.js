@@ -57,8 +57,20 @@
       renderBody(context.getView(), bodyContainer);
     }
 
-    /** 保存当前节拍；已确认的版本被编辑时先提示会回到待确认。 */
+    /** 保存当前节拍；保存中再次触发（双击、快捷键）直接忽略，避免重复提交。 */
+    let isSaving = false;
     async function saveBeat() {
+      if (isSaving) return;
+      isSaving = true;
+      try {
+        await performSaveBeat();
+      } finally {
+        isSaving = false;
+      }
+    }
+
+    /** 保存当前节拍；已确认的版本被编辑时先提示会回到待确认。 */
+    async function performSaveBeat() {
       const view = context.getView();
       if (view.actions.editNeedsConfirm) {
         const confirmed = await aiUi.confirm({

@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
-// 备注：依赖 ui-core.js、ui-icons.js、ui-button.js；关闭按钮与底部按钮的图标由这两者提供；删除确认还依赖 ui-input-controls.js；用法见 docs/ui-components.md。
+// 备注：依赖 ui-core.js、ui-icons.js、ui-button.js；关闭按钮与底部按钮的图标由这两者提供；删除确认还依赖 ui-input-controls.js；用法见 private-docs/rujian-studio/开发文档-vscode/ui-components.md。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -26,8 +26,11 @@
   const CASCADE_LIMIT = 5;
   const BASE_Z_INDEX = 10;
   const RESIZE_DIRECTIONS = ['e', 's', 'se'];
-  const FOCUSABLE_SELECTOR =
-    'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"]):not([aria-disabled="true"])';
+  // 排除 tabindex="-1" 的元素（如未选中的页签）：它们不在 Tab 顺序里，不能当作首尾元素，否则焦点循环会失效。
+  const FOCUSABLE_SELECTOR = ['button', 'input', 'select', 'textarea']
+    .map((tag) => `${tag}:not(:disabled):not([tabindex="-1"])`)
+    .concat('[tabindex]:not([tabindex="-1"]):not([aria-disabled="true"])')
+    .join(', ');
 
   const CLOSE_LABEL = '关闭';
   const DEFAULT_CONFIRM_TITLE = '确认';
@@ -118,7 +121,7 @@
       void owner.handle.requestClose('escape');
     } else if (event.key === 'Tab' && owner.config.modal) {
       trapFocus(owner, event);
-    } else if (event.key === 'Enter' && !event.defaultPrevented && owner.defaultButton) {
+    } else if (event.key === 'Enter' && !event.defaultPrevented && !event.isComposing && owner.defaultButton) {
       const isTextField = event.target.tagName === 'INPUT' || event.target === owner.dialog;
       if (isTextField) {
         event.preventDefault();
@@ -302,6 +305,10 @@
       let keepOpen = false;
       try {
         if (spec.onClick) keepOpen = (await spec.onClick(handle)) === false;
+      } catch (error) {
+        // 按钮处理抛错时保持打开，让用户可以修正后重试；不让异常变成无人处理的拒绝。
+        keepOpen = true;
+        console.error('对话框按钮处理失败：', error);
       } finally {
         isBusy = false;
         applyButtonStates();
@@ -346,15 +353,23 @@
         removeListenersIfIdle();
         if (previousFocus && previousFocus.isConnected && typeof previousFocus.focus === 'function') previousFocus.focus();
         const result = { reason: reason || 'api', buttonId };
-        if (config.onClose) config.onClose(result);
-        resolveClosed(result);
+        // onClose 抛错也要让 closed 完成，alert、confirm 才不会永远挂起。
+        try {
+          if (config.onClose) config.onClose(result);
+        } finally {
+          resolveClosed(result);
+        }
       },
       async requestClose(reason, buttonId) {
-        if (isClosed || isAskingToClose) return;
+        // 按钮异步处理中（如正在保存）不允许用 Esc、关闭按钮中途关闭。
+        if (isClosed || isAskingToClose || isBusy) return;
         if (config.beforeClose) {
           isAskingToClose = true;
           try {
             if ((await config.beforeClose({ reason })) === false) return;
+          } catch (error) {
+            console.error('对话框关闭前的确认失败：', error);
+            return;
           } finally {
             isAskingToClose = false;
           }

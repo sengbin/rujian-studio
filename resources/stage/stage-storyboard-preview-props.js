@@ -19,6 +19,8 @@
 
   /** 以脚下中点 (x, y) 为原点、向上为正的作图工具：位置与尺寸都以 u 为单位。 */
   function pen(ctx, x, y, u) {
+    // 进入时的透明度：alpha() 在它的基础上叠乘，调用方的叠化、淡出不会被覆盖。
+    const base = ctx.globalAlpha;
     return {
       rect(left, bottom, width, height, fill) {
         ctx.fillStyle = fill;
@@ -63,7 +65,7 @@
         ctx.stroke();
       },
       alpha(value) {
-        ctx.globalAlpha = value;
+        ctx.globalAlpha = base * value;
       }
     };
   }
@@ -661,7 +663,7 @@
       const fade = t < 0.6 ? 1 : 1 - (t - 0.6) / 0.4;
       const cy = y - r;
       ctx.save();
-      ctx.globalAlpha = Math.max(0, fade);
+      ctx.globalAlpha *= Math.max(0, fade);
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
       ctx.lineWidth = Math.max(1, r * 0.08 * (1 - grow * 0.5));
       ctx.beginPath();
@@ -688,6 +690,7 @@
     fireworks(ctx, x, y, r, color, cycle, reduced) {
       const colors = ['#FF5C7A', '#FFD60A', '#6FD3FF', '#9BE564', '#C084FC'];
       ctx.save();
+      const base = ctx.globalAlpha;
       ctx.lineCap = 'round';
       for (let burst = 0; burst < 2; burst += 1) {
         const t = loop(cycle + burst * 0.8, 1.6, reduced, 0.55);
@@ -703,7 +706,7 @@
           continue;
         }
         const grow = Math.min(1, (t - 0.25) / 0.45);
-        ctx.globalAlpha = Math.max(0, 1 - Math.max(0, (t - 0.6) / 0.4));
+        ctx.globalAlpha = base * Math.max(0, 1 - Math.max(0, (t - 0.6) / 0.4));
         ctx.lineWidth = Math.max(1.5, r * 0.06);
         for (let ray = 0; ray < 14; ray += 1) {
           const angle = (ray * TAU) / 14;
@@ -714,7 +717,7 @@
           ctx.stroke();
           circle(ctx, bx + Math.cos(angle) * r * (0.75 + 0.9 * grow), by + Math.sin(angle) * r * (0.75 + 0.9 * grow) + r * 0.25 * grow * grow, Math.max(1.5, r * 0.05), colors[(ray + burst) % colors.length]);
         }
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = base;
       }
       ctx.restore();
     },
@@ -790,14 +793,13 @@
       ctx.lineTo(x - r * 1.1, y);
       ctx.closePath();
       ctx.fill();
-      ctx.globalAlpha = 0.5 + (reduced ? 0 : 0.08 * Math.sin(cycle * 5));
+      ctx.globalAlpha *= 0.5 + (reduced ? 0 : 0.08 * Math.sin(cycle * 5));
       ctx.fillStyle = '#FFF3B0';
       ctx.beginPath();
       ctx.ellipse(x, y, r * 1.1, r * 0.3, 0, 0, TAU);
       ctx.fill();
-      ctx.globalAlpha = 1;
-      circle(ctx, x, top, r * 0.22, '#FFFFFF');
       ctx.restore();
+      circle(ctx, x, top, r * 0.22, '#FFFFFF');
     },
     laser(ctx, x, y, r, color, cycle, reduced, options) {
       const pulse = reduced ? 1 : 0.8 + 0.2 * Math.sin(cycle * 30);
@@ -843,7 +845,7 @@
       const t = loop(cycle, 0.9, reduced, 0.5);
       const spread = 0.35 + 0.65 * Math.min(1, t / 0.6);
       ctx.save();
-      ctx.globalAlpha = Math.max(0, t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3);
+      ctx.globalAlpha *= Math.max(0, t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3);
       rotated(ctx, x, y - r, options.angle === undefined ? -0.5 : options.angle, () => {
         ctx.fillStyle = '#EAF6FF';
         ctx.beginPath();
@@ -960,9 +962,10 @@
       roundedRect(ctx, width * 0.53, horizon - height * 0.13, width * 0.1, height * 0.04, height * 0.02);
       ctx.fill();
       fillRect(ctx, width * 0.4 - 1, horizon - height * 0.13, 2, height * 0.13, '#6B4A3A');
-      ctx.globalAlpha = 0.28;
+      ctx.save();
+      ctx.globalAlpha *= 0.28;
       circle(ctx, width * 0.4, horizon - height * 0.15, height * 0.07, '#FFE9A8');
-      ctx.globalAlpha = 1;
+      ctx.restore();
       circle(ctx, width * 0.4, horizon - height * 0.15, height * 0.02, '#FFF3B0');
     },
     hospital(ctx, scene, width, height) {
@@ -1008,9 +1011,10 @@
       fillRect(ctx, width * 0.62, horizon - height * 0.18, width * 0.32, height * 0.02, '#C9A06B');
       for (const dx of [0.2, 0.5, 0.78]) {
         fillRect(ctx, width * dx, 0, 1, height * 0.04, '#555555');
-        ctx.globalAlpha = 0.25;
+        ctx.save();
+        ctx.globalAlpha *= 0.25;
         circle(ctx, width * dx, height * 0.06, height * 0.05, '#FFE9A8');
-        ctx.globalAlpha = 1;
+        ctx.restore();
         circle(ctx, width * dx, height * 0.05, height * 0.015, '#FFF3B0');
       }
     }

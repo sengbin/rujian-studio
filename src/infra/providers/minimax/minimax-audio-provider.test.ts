@@ -150,9 +150,14 @@ test('提交失败：校验不过不发请求；密钥无效、限流、非法�
   assert.equal(illegalError.code, '1042');
 });
 
-test('查询：任务引用损坏时报参数错误', async () => {
-  const { provider } = createProvider();
-  const error = await rejectedWith(provider.query({ modelCode: MODEL, remoteJobId: '{}' }));
+test('任务引用：编号很短，不含音频内容；未知编号（如应用重启后）查询时报参数错误，提示重新生成', async () => {
+  const { provider } = createProvider([success('010203')]);
+  const ref = await provider.submit(request(), CONTEXT);
+  assert.ok(ref.remoteJobId.length < 64);
+  assert.ok(!ref.remoteJobId.includes('base64'));
+
+  const restarted = createProvider().provider;
+  const error = await rejectedWith(restarted.query(ref));
   assert.equal(error.category, 'invalid_request');
-  assert.match(error.message, /任务引用已损坏/);
+  assert.match(error.message, /重新生成/);
 });

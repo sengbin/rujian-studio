@@ -92,7 +92,12 @@
         const file = await window.hostBridge.request(REQUEST_FILE_DATA, { fileId: entry.id });
         const made = await makeThumbnail(file);
         items.push({ sortOrder, width: made.width, height: made.height, thumbnail: made.thumbnail });
-      } catch {
+      } catch (error) {
+        // 缺缩略图时不能采用此版本，必须告诉用户原因；并允许下次刷新时重试，而不是永久失败。
+        if (session) {
+          session.thumbnailTried.delete(version.id);
+          showMessage(`缩略图生成失败，暂时不能采用此版本：${(error && error.message) || '未知原因'}。重新打开版本窗口可重试。`, true);
+        }
         return;
       }
     }

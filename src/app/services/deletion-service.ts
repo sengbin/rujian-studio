@@ -11,6 +11,7 @@ import { NotFoundError } from '../../domain/errors';
 import { GenerationRepository } from '../../domain/ports/generation-repository';
 import { ProjectService } from './project-service';
 import { JobScheduler } from './generation-service';
+import { ResultFileCleanupDependencies, sweepUnreferencedResults } from './result-file-cleanup';
 import { StageService } from './stage-service';
 import { WorkService } from './work-service';
 
@@ -19,7 +20,8 @@ export interface DeletionServiceDependencies {
   readonly projects: Pick<ProjectService, 'getProject' | 'deleteProject'>;
   readonly works: Pick<WorkService, 'getWork' | 'listWorks' | 'deleteWork'>;
   readonly stages: Pick<StageService, 'cancelRunningForWork'>;
-  readonly jobs: Pick<GenerationRepository, 'listJobsByStatus' | 'getGroupLocation'>;
+  readonly jobs: Pick<GenerationRepository, 'listJobsByStatus' | 'getGroupLocation'> & ResultFileCleanupDependencies['jobs'];
+  readonly results: ResultFileCleanupDependencies['results'];
   readonly scheduler: Pick<JobScheduler, 'cancel'>;
 }
 
@@ -36,6 +38,7 @@ export class DeletionService {
     works.getWork(workId);
     await this.stopWorkTasks(workId);
     works.deleteWork(workId);
+    await this.removeOrphanVideos();
   }
 
   /**
@@ -49,6 +52,16 @@ export class DeletionService {
       await this.stopWorkTasks(work.id);
     }
     projects.deleteProject(projectId);
+    await this.removeOrphanVideos();
+  }
+
+  /** 删除记录之后清扫已无记录引用的视频文件；清扫失败不影响已完成的删除，下次启动会再清扫。 */
+  private async removeOrphanVideos(): Promise<void> {
+    try {
+      await sweepUnreferencedResults(this.dependencies);
+    } catch (error) {
+      console.error('删除后清理视频文件失败：', error);
+    }
   }
 
   /** 停掉作品的阶段生成与视频任务；视频任务通知平台取消失败时只记录，不阻止删除。 */

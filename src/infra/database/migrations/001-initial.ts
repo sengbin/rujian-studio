@@ -101,6 +101,7 @@ CREATE UNIQUE INDEX stage_runs_current_unique_idx
 CREATE UNIQUE INDEX stage_runs_running_unique_idx
   ON stage_runs (work_id, stage, ifnull(episode_id, 0)) WHERE status = 'running';
 CREATE INDEX stage_runs_source_idx ON stage_runs (source_run_id);
+CREATE INDEX stage_runs_episode_idx ON stage_runs (episode_id);
 
 -- 节拍表阶段产出的节拍表：参数快照（体量、模板、目标时长、语速、校准容差），节拍见 beat_items。
 CREATE TABLE beat_sheets (
@@ -267,6 +268,8 @@ CREATE TABLE assets (
   UNIQUE (kind, name)
 );
 CREATE INDEX assets_category_idx ON assets (category_id);
+CREATE INDEX assets_source_entity_idx ON assets (source_entity_id);
+CREATE INDEX assets_adopted_version_idx ON assets (adopted_version_id);
 
 -- 资产文件：内容保存在磁盘，表里只记录相对路径。
 CREATE TABLE asset_files (
@@ -350,6 +353,8 @@ CREATE TABLE entity_bindings (
 );
 CREATE UNIQUE INDEX entity_bindings_primary_unique_idx
   ON entity_bindings (episode_id, entity_id, purpose) WHERE is_primary = 1;
+CREATE INDEX entity_bindings_entity_idx ON entity_bindings (entity_id);
+CREATE INDEX entity_bindings_asset_idx ON entity_bindings (asset_id);
 
 -- 作品的旁白音色：旁白不属于任何角色实体，作品里所有集共用同一个音色参考。
 CREATE TABLE work_narrator_voices (
@@ -397,6 +402,7 @@ CREATE TABLE shots (
   UNIQUE (storyboard_script_id, seq)
 );
 CREATE INDEX shots_group_idx ON shots (group_id);
+CREATE INDEX shots_first_frame_asset_idx ON shots (first_frame_asset_id);
 
 -- 镜头指定的首帧图片（首帧来源为 image）：一个镜头最多一张，内容保存在磁盘，表里只记录相对路径；镜头被删除时一并删除。
 CREATE TABLE shot_first_frames (
@@ -441,6 +447,7 @@ CREATE TABLE shot_sounds (
   UNIQUE (shot_id, seq)
 );
 CREATE INDEX shot_sounds_speaker_idx ON shot_sounds (speaker_entity_id);
+CREATE INDEX shot_sounds_audio_asset_idx ON shot_sounds (audio_asset_id);
 
 -- 生成参数：按作品、集、镜头组三级覆盖，空值表示沿用上一级；负向清单的空串表示明确不要负向清单，提示词改写 0 关闭、1 开启。
 CREATE TABLE generation_profiles (
@@ -497,6 +504,7 @@ CREATE TABLE video_jobs (
 CREATE INDEX video_jobs_group_created_idx ON video_jobs (group_id, created_at DESC);
 CREATE INDEX video_jobs_status_idx ON video_jobs (status);
 CREATE INDEX video_jobs_prev_job_idx ON video_jobs (prev_job_id);
+CREATE INDEX video_jobs_first_frame_idx ON video_jobs (first_frame_id);
 CREATE UNIQUE INDEX video_jobs_active_group_unique_idx
   ON video_jobs (group_id) WHERE status IN ('waiting', 'queued', 'running');
 
@@ -516,6 +524,7 @@ CREATE TABLE video_results (
   created_at TEXT NOT NULL
 );
 CREATE INDEX video_results_job_idx ON video_results (job_id);
+CREATE INDEX video_results_group_idx ON video_results (group_id);
 CREATE UNIQUE INDEX video_results_selected_unique_idx ON video_results (group_id) WHERE is_selected = 1;
 
 -- 结果视频的尾帧图片，供下一组作首帧：内容保存在磁盘，表里只记录相对路径。

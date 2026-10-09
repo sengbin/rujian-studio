@@ -100,7 +100,7 @@ async function createFixture(storyboardParams: Record<string, unknown> = {}, cap
     assets: assetRepository,
     jobs,
     media: jobs,
-    results: { save: async () => ({ filePath: 'x', sizeBytes: 1 }), resolvePath: (filePath) => `/store/${filePath}` },
+    results: { save: async () => ({ filePath: 'x', sizeBytes: 1 }), resolvePath: (filePath) => `/store/${filePath}`, listFiles: async () => [], remove: async () => undefined },
     models: providerRepository,
     providers,
     profiles: new SqliteGenerationProfileRepository(database),

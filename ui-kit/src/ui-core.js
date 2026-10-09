@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
-// 备注：必须最先于其他 ui-*.js 加载；用法见 docs/ui-components.md。
+// 备注：必须最先于其他 ui-*.js 加载；用法见 private-docs/rujian-studio/开发文档-vscode/ui-components.md。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -149,7 +149,8 @@
         control.focusTarget.focus();
       },
       setInvalid(isInvalid) {
-        (parts.invalidTarget || parts.element).classList.toggle('ui-is-invalid', isInvalid);
+        // 用 Boolean 强转：toggle 的第二参数为 undefined 时会变成“切换”，与 aria 属性不同步。
+        (parts.invalidTarget || parts.element).classList.toggle('ui-is-invalid', Boolean(isInvalid));
         if (isInvalid) control.ariaTarget.setAttribute('aria-invalid', 'true');
         else control.ariaTarget.removeAttribute('aria-invalid');
       },

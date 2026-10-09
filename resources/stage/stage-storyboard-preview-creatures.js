@@ -441,9 +441,10 @@
     const bob = Math.sin(spec.phase * 2) * 0.5 * u;
     const fy = y - lift - bob;
     ellipse(ctx, x, y, 6 * u, 1.4 * u, SHADOW);
-    ctx.globalAlpha = 0.25;
+    const base = ctx.globalAlpha;
+    ctx.globalAlpha = base * 0.25;
     circle(ctx, x, fy - 15 * u, 15 * u, '#FFE9A0');
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = base;
     const info = figure(ctx, { ...spec, y: fy }, { hair: '#EDEAF2', noShadow: true });
     polygon(ctx, [[x - 4.2 * u, fy - 17 * u], [x + 4.2 * u, fy - 17 * u], [x + 7 * u, fy - 1.2 * u], [x - 7 * u, fy - 1.2 * u]], shade(color, 1.3));
     line(ctx, x - 4.2 * u, fy - 11 * u, x + 4.2 * u, fy - 11 * u, '#F0C84A', 0.9 * u);
@@ -468,12 +469,13 @@
     if (!spec.image) {
       for (const side of [-1, 1]) polygon(ctx, [[x + side * info.headR * 0.95, info.headY - info.headR * 0.1], [x + side * info.headR * 1.75, info.headY - info.headR * 0.65], [x + side * info.headR * 0.95, info.headY + info.headR * 0.35]], '#F6D8BE');
     }
+    const base = ctx.globalAlpha;
     for (let index = 0; index < 3; index += 1) {
       const alpha = 0.5 + 0.5 * Math.sin(spec.phase * 4 + index * 2);
-      ctx.globalAlpha = Math.max(0, alpha);
+      ctx.globalAlpha = base * Math.max(0, alpha);
       circle(ctx, x + (index - 1) * 8 * u * k, info.headY - 6 * u * k + index * 3 * u * k, 0.8 * u * k, shade(color, 1.6));
     }
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = base;
     return { ...info, height: info.height * k };
   }
 
@@ -548,7 +550,8 @@
     const bottom = y - 4 * u - bob;
     const top = bottom - 21 * u;
     ellipse(ctx, x, y, 5 * u * (1 - bob / (u * 12)), 1.2 * u, SHADOW);
-    ctx.globalAlpha = 0.82;
+    const base = ctx.globalAlpha;
+    ctx.globalAlpha = base * 0.82;
     ctx.fillStyle = shade(color, 1.75);
     ctx.beginPath();
     ctx.moveTo(gx - 6.5 * u, bottom);
@@ -561,7 +564,7 @@
     }
     ctx.closePath();
     ctx.fill();
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = base;
     const headY = top + 6.5 * u;
     for (const side of [-1, 1]) ellipse(ctx, gx + side * 6.8 * u, headY + 6 * u, 1.4 * u, 2.6 * u, shade(color, 1.75), side * 0.3);
     if (spec.image) {
@@ -668,9 +671,10 @@
     const hop = spec.walking ? Math.abs(Math.sin(spec.phase * WALK_SPEED)) * 1.6 * u : 0;
     const cy = y - 4.6 * u - hop;
     ellipse(ctx, x, y, 8 * u * (1 - hop / (u * 12)), 1.5 * u, SHADOW);
-    ctx.globalAlpha = 0.92;
+    const base = ctx.globalAlpha;
+    ctx.globalAlpha = base * 0.92;
     ellipse(ctx, x, cy, 9 * u * (1 + squash), 7.6 * u * (1 - squash), color);
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = base;
     ellipse(ctx, x, cy + 2.4 * u, 8 * u, 4 * u, shade(color, 0.8));
     ellipse(ctx, x - 3.2 * u, cy - 3.6 * u, 2.4 * u, 1.3 * u, 'rgba(255, 255, 255, 0.45)', -0.5);
     const fy = cy - 0.4 * u;

@@ -8,7 +8,7 @@
 // ------------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { test } from 'node:test';
@@ -131,5 +131,22 @@ test('大小上限：超过 RESULT_VIDEO_MAX_BYTES 时中止下载并清理临�
     assert.equal(saved.sizeBytes, RESULT_VIDEO_MAX_BYTES);
   } finally {
     await exact.cleanup();
+  }
+});
+
+test('列举与删除：列出已保存的全部视频（不含下载中的临时文件），删除后不再出现，删除不存在的文件不报错', async () => {
+  const { root, store, cleanup } = await createStore((async () => new Response('x')) as typeof fetch);
+  try {
+    assert.deepEqual(await store.listFiles(), [], '目录还不存在时为空');
+    await store.save(LOCATION, 1, 1, 'https://oss.test/a.mp4');
+    await store.save({ projectId: 1, workId: 5, episodeId: 6 }, 2, 3, 'https://oss.test/b.mp4');
+    await writeFile(path.join(root, 'videos', '1', '2', '3', '9-9.mp4.part'), 'partial');
+    assert.deepEqual((await store.listFiles()).sort(), ['videos/1/2/3/1-1.mp4', 'videos/1/5/6/2-3.mp4']);
+
+    await store.remove('videos/1/2/3/1-1.mp4');
+    await store.remove('videos/1/2/3/1-1.mp4');
+    assert.deepEqual(await store.listFiles(), ['videos/1/5/6/2-3.mp4']);
+  } finally {
+    await cleanup();
   }
 });

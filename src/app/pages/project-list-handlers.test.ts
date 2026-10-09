@@ -26,7 +26,8 @@ function createFixture() {
     projects: service,
     works: { getWork: () => assert.fail('不应读取作品'), listWorks: () => [], deleteWork: () => assert.fail('不应删除作品') },
     stages: { cancelRunningForWork: async () => undefined },
-    jobs: { listJobsByStatus: () => [], getGroupLocation: () => undefined },
+    jobs: { listJobsByStatus: () => [], getGroupLocation: () => undefined, listResultFilePaths: () => [] },
+    results: { listFiles: async () => [], remove: async () => undefined },
     scheduler: { cancel: async () => assert.fail('不应取消任务') }
   });
   const state: { pendingAction: ProjectListRequest | undefined } = { pendingAction: undefined };

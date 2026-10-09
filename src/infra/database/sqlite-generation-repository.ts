@@ -304,6 +304,10 @@ export class SqliteGenerationRepository implements GenerationRepository, JobMedi
     return row === undefined ? undefined : { projectId: row.project_id, workId: row.work_id, episodeId: row.episode_id };
   }
 
+  listResultFilePaths(): string[] {
+    return (this.database.prepare('SELECT file_path FROM video_results').all() as unknown as Array<{ file_path: string }>).map((row) => row.file_path);
+  }
+
   readAssetFile(id: number): MediaInput | undefined {
     const row = this.database.prepare('SELECT mime, file_path FROM asset_files WHERE id = ?').get(id) as unknown as
       | { mime: string; file_path: string }

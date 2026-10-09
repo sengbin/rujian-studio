@@ -74,8 +74,12 @@
       const stamp = now();
       const step = lastStamp === null ? 0 : Math.min(MAX_STEP_SECONDS, Math.max(0, (stamp - lastStamp) / 1000));
       lastStamp = stamp;
-      advance(step * rate);
-      if (playing) schedule();
+      // 回调抛错也要继续下一帧，否则 playing 仍为真而帧循环已停，播放器僵死。
+      try {
+        advance(step * rate);
+      } finally {
+        if (playing) schedule();
+      }
     }
 
     /** 推进 seconds 秒：循环当前镜头时在镜头内回绕，否则播到末尾停止。 */

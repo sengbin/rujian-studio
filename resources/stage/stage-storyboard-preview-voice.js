@@ -44,6 +44,8 @@
   const listeners = new Set();
   /** 已合成的结果：“模型:声音标识” → { mime, data, text, delivery }，播放时同步配音只读取这里。 */
   const ready = new Map();
+  /** 已合成结果的代数：每次作废加 1；在途请求返回时代数已变，说明音色变了，结果不再适用，不能再写回。 */
+  let readyEpoch = 0;
   let refreshTimer = 0;
   let requestToken = 0;
 
@@ -138,6 +140,7 @@
   async function load(context, sound, regenerate) {
     const modelId = state.selectedId;
     if (modelId === null) throw new Error('还没有可用的声音模型。');
+    const epoch = readyEpoch;
     const result = await window.hostBridge.request(REQUEST_SYNTHESIZE, {
       workId: context.workId,
       episodeId: context.episodeId,
@@ -147,7 +150,7 @@
       ...(regenerate === true ? { regenerate: true } : {})
     });
     const prepared = await prepareClip(result);
-    store(modelId, sound, prepared);
+    if (epoch === readyEpoch) store(modelId, sound, prepared);
     return result;
   }
 
@@ -173,6 +176,7 @@
   async function restore(context, sounds) {
     const modelId = state.selectedId;
     if (modelId === null || sounds.length === 0) return 0;
+    const epoch = readyEpoch;
     let result;
     try {
       result = await window.hostBridge.request(REQUEST_RESTORE, {
@@ -189,7 +193,10 @@
     for (const clip of (result && result.clips) || []) {
       const sound = byId.get(clip.soundId);
       if (!sound) continue;
-      store(modelId, sound, await prepareClip(clip));
+      const prepared = await prepareClip(clip);
+      // 在途期间音色变了（已作废），旧配音不能再写回。
+      if (epoch !== readyEpoch) return restored;
+      store(modelId, sound, prepared);
       restored += 1;
     }
     return restored;
@@ -309,6 +316,7 @@
 
   /** 已合成的结果全部作废：说话人的音色变了，旧的配音不再适用。 */
   function clearReady() {
+    readyEpoch += 1;
     ready.clear();
   }
 

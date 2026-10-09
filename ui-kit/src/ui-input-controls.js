@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
-// 备注：依赖 ui-core.js；返回统一的控件对象，用法见 docs/ui-components.md。
+// 备注：依赖 ui-core.js；返回统一的控件对象，用法见 private-docs/rujian-studio/开发文档-vscode/ui-components.md。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -55,7 +55,8 @@
     input.addEventListener('input', () => control.notifyChange());
     if (settings.onEnter) {
       input.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') settings.onEnter();
+        // 输入法组合中按回车是确认候选词，不是提交。
+        if (event.key === 'Enter' && !event.isComposing) settings.onEnter();
       });
     }
     return control;

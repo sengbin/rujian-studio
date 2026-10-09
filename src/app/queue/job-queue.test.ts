@@ -89,7 +89,9 @@ function createFixture(options: { maxConcurrent?: number; maxSubmitAttempts?: nu
       saved.push(url);
       return { filePath: `videos/${shotId}-${jobId}.mp4`, sizeBytes: 1234 };
     },
-    resolvePath: (filePath) => `/store/${filePath}`
+    resolvePath: (filePath) => `/store/${filePath}`,
+    listFiles: async () => [],
+    remove: async () => undefined
   };
   const callBehavior: { error: Error | null } = { error: null };
   const queue = new JobQueue({

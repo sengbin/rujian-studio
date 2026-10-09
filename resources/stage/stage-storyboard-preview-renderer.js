@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
-// 备注：只接收画布上下文与采样结果，不读取视图、不依赖页面；尺寸都按画面高度的比例计算；舞台颜色固定，不随主题变化；插画在 stage-storyboard-preview-art.js，有资产缩略图时由页面通过 options.images 传入；通过 window.aiStoryboardRenderer 暴露，规则见 docs/storyboard-animation-design.md 第 7 节。
+// 备注：只接收画布上下文与采样结果，不读取视图、不依赖页面；尺寸都按画面高度的比例计算；舞台颜色固定，不随主题变化；插画在 stage-storyboard-preview-art.js，有资产缩略图时由页面通过 options.images 传入；通过 window.aiStoryboardRenderer 暴露，规则见 private-docs/rujian-studio/开发文档-vscode/storyboard-animation-design.md 第 7 节。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -542,7 +542,7 @@
    */
   function draw(ctx, frame, options) {
     const { width, height } = options;
-    const display = { ...DEFAULT_DISPLAY, ...(options.display || {}) };
+    const display = { ...DEFAULT_DISPLAY, ...options.display };
     const env = {
       width,
       height,

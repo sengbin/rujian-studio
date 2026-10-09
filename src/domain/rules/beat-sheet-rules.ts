@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：设计见 docs/production-profile-design.md 第 5.3、11 节；预算由程序计算（不调用模型），模型只分配每个节拍的剧情内容；节拍数量与顺序必须与模板一致。
+// 备注：设计见 private-docs/rujian-studio/开发文档-vscode/production-profile-design.md 第 5.3、11 节；预算由程序计算（不调用模型），模型只分配每个节拍的剧情内容；节拍数量与顺序必须与模板一致。
 // ------------------------------------------------------------------------
 
 import { GeneratedOutputError } from '../errors';

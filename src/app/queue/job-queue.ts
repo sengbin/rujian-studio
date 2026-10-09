@@ -7,7 +7,7 @@
 // 备注：一轮处理由 pump() 完成，定时器由 start() 启动（返回的停止函数会等正在进行的一轮处理结束，停止后不再开始新的一轮），测试直接调用 pump()。限流、服务端、网络类的提交失败自动重试，其余失败直接记为失败。等待前序的任务（上一组尾帧作首帧）在前序成功且尾帧入库后转为排队，前序失败或被取消时一并失败。
 // ------------------------------------------------------------------------
 
-import { NotFoundError, ProviderError } from '../../domain/errors';
+import { INTERRUPTED_MESSAGE, NotFoundError, ProviderError } from '../../domain/errors';
 import { JobFailure, VideoJobRecord } from '../../domain/models/generation';
 import { GenerationRepository, JobMediaReader, ResultStore } from '../../domain/ports/generation-repository';
 import { ResolvedVideoCall, VideoGenerationRequest } from '../../domain/ports/provider-adapters';
@@ -24,9 +24,6 @@ const DEFAULT_SUBMIT_RETRY_DELAY_MS = 15_000;
 const DEFAULT_MAX_TRANSIENT_FAILURES = 5;
 /** 生成中的任务最长等待时间。 */
 const DEFAULT_MAX_RUNNING_MS = 60 * 60 * 1000;
-
-/** 启动恢复时无法继续的任务的失败原因。 */
-const INTERRUPTED_MESSAGE = '应用重启，已中断。';
 
 /** 任务变化通知。 */
 export interface JobChange {

@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：字段含义与 docs/database-design.md 4.6 一致；入库的 JSON 使用 snake_case 键，转换见 rules/model-capability-rules.ts。
+// 备注：字段含义与 private-docs/rujian-studio/开发文档-vscode/database-design.md 4.6 一致；入库的 JSON 使用 snake_case 键，转换见 rules/model-capability-rules.ts。
 // ------------------------------------------------------------------------
 
 /** 模型类型：文本、图像、音频、视频。 */

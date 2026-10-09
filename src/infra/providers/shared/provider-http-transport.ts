@@ -56,11 +56,16 @@ const REDACTED_ADDRESS = '[地址]';
 /** 摘要为空时的说明。 */
 const UNKNOWN_ERROR_TEXT = '未知错误';
 
-/** 脱敏规则，按顺序应用：把可能含密钥、地址的片段替换为占位文字。 */
-const REDACTIONS: ReadonlyArray<readonly [pattern: RegExp, replacement: string]> = [
+/** 仅隐藏密钥类内容的规则：平台返回的错误说明要原文展示，但可能回显传入的密钥片段（如“Incorrect API key provided: sk-xxxx”），地址等内容保留。 */
+const SECRET_REDACTIONS: ReadonlyArray<readonly [pattern: RegExp, replacement: string]> = [
   [/\bBearer\s+\S+/gi, REDACTED_SECRET],
   [/\b(?:api[_-]?key|access[_-]?key|token|secret|password|authorization)\s*[:=]\s*\S+/gi, REDACTED_SECRET],
-  [/\bsk-[A-Za-z0-9_-]{6,}/g, REDACTED_SECRET],
+  [/\bsk-[A-Za-z0-9_*-]{6,}/g, REDACTED_SECRET]
+];
+
+/** 脱敏规则，按顺序应用：把可能含密钥、地址的片段替换为占位文字。 */
+const REDACTIONS: ReadonlyArray<readonly [pattern: RegExp, replacement: string]> = [
+  ...SECRET_REDACTIONS,
   [/https?:\/\/\S*/gi, REDACTED_ADDRESS],
   [/\b\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?\b/g, REDACTED_ADDRESS],
   [/\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?::\d+)?(?:\/\S*)?/gi, REDACTED_ADDRESS],
@@ -95,7 +100,7 @@ export class ProviderHttpTransport {
       const response = await this.fetchFunction(url, { method: request.method, headers: { ...request.headers }, body: request.body, signal });
       const payload = await readJsonObject(response);
       if (!response.ok) {
-        throw this.options.buildHttpError(response.status, payload);
+        throw this.toHttpError(response.status, payload);
       }
       return payload;
     } catch (error) {
@@ -118,7 +123,7 @@ export class ProviderHttpTransport {
       idle.arm();
       const response = await this.fetchFunction(url, { method: request.method, headers: { ...request.headers }, body: request.body, signal: idle.signal });
       if (!response.ok) {
-        throw this.options.buildHttpError(response.status, await readJsonObject(response));
+        throw this.toHttpError(response.status, await readJsonObject(response));
       }
       idle.clear();
       if (response.body === null) {
@@ -197,6 +202,13 @@ export class ProviderHttpTransport {
       return error;
     }
     return new ProviderError('network', `${failure.action}：${summarizeNetworkError(error)}`);
+  }
+
+  /** 把非 2xx 响应转换为错误，并隐藏说明里可能回显的密钥片段。 */
+  private toHttpError(status: number, payload: Record<string, unknown>): ProviderError {
+    const error = this.options.buildHttpError(status, payload);
+    const message = SECRET_REDACTIONS.reduce((text, [pattern, replacement]) => text.replace(pattern, replacement), error.message);
+    return message === error.message ? error : new ProviderError(error.category, message, { cause: error.cause, code: error.code });
   }
 }
 

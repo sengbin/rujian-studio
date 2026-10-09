@@ -120,11 +120,6 @@ export class TextSettingsService {
     this.changeNotifier.notify();
   }
 
-  /** 列出当前全部可选的文本模型。 */
-  async listChoices(): Promise<readonly TextModelChoice[]> {
-    return this.buildChoices();
-  }
-
   /**
    * 读取作品表单需要的文本模型选择状态。
    * @param workId 作品标识；新建作品或不属于作品（资产）时为 null，没有单独选择。

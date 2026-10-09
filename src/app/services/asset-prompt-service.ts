@@ -7,7 +7,7 @@
 // 备注：一个资产同时只有一个任务；生成依据开始时已保存的内容，完成后提示词记录的是开始时的表单修订号，期间改了表单会显示“需更新”，且不再执行后续动作；后续动作失败记在提示词状态上、提示词保留；不自动重试。
 // ------------------------------------------------------------------------
 
-import { NotFoundError, TextGenerationError, ValidationError, FORM_LEVEL_ERROR_KEY } from '../../domain/errors';
+import { INTERRUPTED_MESSAGE, NotFoundError, TextGenerationError, ValidationError, FORM_LEVEL_ERROR_KEY } from '../../domain/errors';
 import { AssetRecord } from '../../domain/models/asset';
 import { AssetRepository } from '../../domain/ports/asset-repository';
 import { PromptTemplates } from '../../domain/ports/prompt-templates';
@@ -37,7 +37,6 @@ export const ASSET_PROMPT_VARIABLES: Readonly<Record<string, readonly string[]>>
 /** 信息不足、无法生成提示词时的提示。 */
 export const NO_PROMPT_DETAIL_MESSAGE = '请先填写名称，并至少填写一项描述（图像类也可以添加一张参考图），再生成提示词。';
 
-const INTERRUPTED_MESSAGE = '应用重启，已中断。';
 const ALREADY_RUNNING_MESSAGE = '提示词正在生成中。';
 const FOLLOW_UP_FAILED_PREFIX = '提示词已生成，但自动出图失败：';
 

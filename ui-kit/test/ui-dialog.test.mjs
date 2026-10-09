@@ -261,6 +261,69 @@ test('按钮的 onClick 返回 false 时对话框保持打开；处理期间按�
   assert.ok(doc.body.contains(handle.element), '返回 false 不关闭');
 });
 
+test('按钮处理期间（如正在保存）Esc 与关闭按钮不能中途关闭对话框', async () => {
+  const { ui, doc } = setup();
+  let release = () => undefined;
+  const handle = ui.openDialog({
+    title: '保存中',
+    buttons: [{ id: 'save', text: '保存', onClick: () => new Promise((resolve) => (release = resolve)) }]
+  });
+  findButton(handle.element, '保存').click();
+  await flush();
+  pressKey(env, handle.element, 'Escape');
+  handle.element.querySelector('.ui-dialog__close').click();
+  await flush();
+  assert.ok(doc.body.contains(handle.element), '处理期间不关闭');
+
+  release(false);
+  await flush();
+  pressKey(env, handle.element, 'Escape');
+  assert.equal((await handle.closed).reason, 'escape', '处理结束后可以关闭');
+});
+
+test('按钮处理抛错时对话框保持打开并恢复按钮，异常不变成未处理的拒绝', async () => {
+  const { ui, doc } = setup();
+  const errors = [];
+  const original = env.window.console.error;
+  env.window.console.error = (...args) => errors.push(args);
+  const handle = ui.openDialog({ title: '出错', buttons: [{ id: 'save', text: '保存', onClick: () => Promise.reject(new Error('保存失败')) }] });
+  const save = findButton(handle.element, '保存');
+  save.click();
+  await flush();
+  env.window.console.error = original;
+  assert.ok(doc.body.contains(handle.element));
+  assert.equal(save.disabled, false);
+  assert.equal(errors.length, 1);
+});
+
+test('onClose 抛错时 closed 仍然完成，confirm 不会永远挂起', async () => {
+  const { ui } = setup();
+  const handle = ui.openDialog({
+    title: '关闭回调出错',
+    onClose: () => {
+      throw new Error('回调失败');
+    }
+  });
+  assert.throws(() => handle.close('api'), /回调失败/);
+  assert.equal((await handle.closed).reason, 'api');
+});
+
+test('焦点陷阱：不在 Tab 顺序里的页签（tabindex=-1）不算首尾元素，Tab 在最后一个可聚焦元素处回到第一个', () => {
+  const { ui, doc } = setup();
+  const content = doc.createElement('div');
+  content.innerHTML = '<button id="first" type="button">甲</button><button id="last" type="button">乙</button><button id="tab" type="button" tabindex="-1">页签</button>';
+  const handle = ui.openDialog({ title: '焦点', content, closable: false });
+  const last = content.querySelector('#last');
+  last.focus();
+  pressKey(env, last, 'Tab');
+  assert.equal(doc.activeElement, content.querySelector('#first'), 'Tab 从最后一个回到第一个');
+  const first = content.querySelector('#first');
+  first.focus();
+  pressKey(env, first, 'Tab', { shiftKey: true });
+  assert.equal(doc.activeElement, last, 'Shift+Tab 从第一个回到最后一个，跳过 tabindex=-1 的页签');
+  handle.close();
+});
+
 test('拖动标题行可以移动对话框', () => {
   const { ui } = setup();
   const handle = ui.openDialog({ title: '可移动', content: '内容' });

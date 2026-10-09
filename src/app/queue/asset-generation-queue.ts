@@ -7,7 +7,7 @@
 // 备注：一轮处理由 pump() 完成，定时器由 start() 启动（返回的停止函数会等正在进行的一轮处理结束，停止后不再开始新的一轮），测试直接调用 pump()。写法与视频队列一致：限流、服务端、网络类的提交失败自动重试，其余失败直接记为失败；千问音频接口是同步的，提交后第一次轮询即成功。
 // ------------------------------------------------------------------------
 
-import { NotFoundError, ProviderError } from '../../domain/errors';
+import { INTERRUPTED_MESSAGE, NotFoundError, ProviderError } from '../../domain/errors';
 import { AssetRecord } from '../../domain/models/asset';
 import { AssetVersionFailure, AssetVersionRecord, NewAssetVersionFile } from '../../domain/models/asset-version';
 import { AssetRepository } from '../../domain/ports/asset-repository';
@@ -36,8 +36,6 @@ const DEFAULT_MAX_TRANSIENT_FAILURES = 5;
 const DEFAULT_MAX_RUNNING_MS = 30 * 60 * 1000;
 /** 单张结果图片的大小上限。 */
 const IMAGE_RESULT_MAX_BYTES = 30 * 1024 * 1024;
-
-const INTERRUPTED_MESSAGE = '应用重启，已中断。';
 
 /** 版本变化通知。 */
 export interface AssetVersionChange {

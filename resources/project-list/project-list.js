@@ -58,16 +58,28 @@
     }
   }
 
-  /** 加载项目列表并刷新界面。 */
-  async function loadProjects() {
-    isLoading = true;
-    loadError = '';
-    renderContent();
-    try {
-      projects = await window.hostBridge.request(REQUEST_LIST);
-    } catch (error) {
-      loadError = (error && error.message) || '项目列表加载失败。';
+  /** 加载请求的序号，只采纳最后一次请求的响应。 */
+  let loadSerial = 0;
+
+  /** 加载项目列表并刷新界面；showLoading 为 false 时保留现有内容（后台刷新，表格不被销毁，滚动位置不丢）。 */
+  async function loadProjects(showLoading = true) {
+    loadSerial += 1;
+    const serial = loadSerial;
+    if (showLoading) {
+      isLoading = true;
+      loadError = '';
+      renderContent();
     }
+    let loaded = null;
+    let failure = '';
+    try {
+      loaded = await window.hostBridge.request(REQUEST_LIST);
+    } catch (error) {
+      failure = (error && error.message) || '项目列表加载失败。';
+    }
+    if (serial !== loadSerial) return;
+    if (loaded !== null) projects = loaded;
+    loadError = failure;
     isLoading = false;
     renderContent();
   }
@@ -208,7 +220,7 @@
   }
 
   renderPage();
-  window.hostBridge.onEvent(EVENT_CHANGED, () => void loadProjects());
+  window.hostBridge.onEvent(EVENT_CHANGED, () => void loadProjects(false));
   window.hostBridge.onEvent(EVENT_ACTION, handleRequest);
   // 页面打开前已登记的请求（如侧栏点“创建项目”），加载完成后主动取走。
   window.hostBridge

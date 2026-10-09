@@ -181,10 +181,15 @@ test('提交：HTTP 错误按状态分类；校验不通过不发请求；接口
   assert.match((await rejectedWith(missingEndpoint.provider.submit(request(), { ...CONTEXT, settings: {} }))).message, /尚未配置豆包语音的接口地址/);
 });
 
-test('任务引用：损坏的引用报参数错误', async () => {
-  const { provider } = createProvider();
-  await assert.rejects(provider.query({ modelCode: MODEL, remoteJobId: 'not json' }), /任务引用已损坏/);
-  await assert.rejects(provider.query({ modelCode: MODEL, remoteJobId: '{}' }), /任务引用已损坏/);
+test('任务引用：编号很短，不含音频内容；未知编号（如应用重启后）查询时报参数错误，提示重新生成', async () => {
+  const { provider } = createProvider([lines(chunk([1, 2, 3]), FINISHED)]);
+  const ref = await provider.submit(request(), CONTEXT);
+  assert.ok(ref.remoteJobId.length < 64);
+  assert.ok(!ref.remoteJobId.includes('base64'));
+
+  const restarted = createProvider().provider;
+  await assert.rejects(restarted.query(ref), /重新生成/);
+  await assert.rejects(restarted.query({ modelCode: MODEL, remoteJobId: 'not-a-job' }), /重新生成/);
 });
 
 test('提交：说话方式换成语音指令与语速、音量数值写进请求体；没有说话方式时不带这些字段', async () => {

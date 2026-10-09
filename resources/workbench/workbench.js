@@ -69,6 +69,8 @@
   let loadError = '';
   let isLoading = true;
   let refreshTimer = 0;
+  /** 当前集加载请求的序号，只采纳最后一次请求的响应。 */
+  let episodeLoadSerial = 0;
   /** 正在提交的镜头组标识，避免重复点击。 */
   const submitting = new Set();
   /** 重新分组时填写的单组最长时长；用户没改过时跟随当前模型与分镜脚本设定。 */
@@ -1015,6 +1017,7 @@
   /** 加载当前集的视图。 */
   async function loadEpisode(showLoading) {
     if (!catalog || episodeKey === '') {
+      episodeLoadSerial += 1;
       view = null;
       profile = null;
       updateResolved();
@@ -1030,12 +1033,20 @@
       render();
     }
     loadError = '';
+    // 只采纳最后一次请求的响应：快速切换集时旧集的响应不能覆盖新集的视图与参数。
+    episodeLoadSerial += 1;
+    const serial = episodeLoadSerial;
+    let loaded = null;
     try {
       const target = parseEpisodeKey(episodeKey);
-      [view, profile] = await Promise.all([window.hostBridge.request(REQUEST_EPISODE, target), window.hostBridge.request(REQUEST_PROFILE, target)]);
-      updateResolved();
+      loaded = await Promise.all([window.hostBridge.request(REQUEST_EPISODE, target), window.hostBridge.request(REQUEST_PROFILE, target)]);
     } catch (error) {
-      loadError = errorText(error);
+      if (serial === episodeLoadSerial) loadError = errorText(error);
+    }
+    if (serial !== episodeLoadSerial) return;
+    if (loaded !== null) {
+      [view, profile] = loaded;
+      updateResolved();
     }
     isLoading = false;
     renderContext();

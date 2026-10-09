@@ -130,22 +130,32 @@
     statusSlot.hidden = false;
   }
 
+  /** 加载请求的序号，只采纳最后一次请求的响应。 */
+  let loadSerial = 0;
+
   /** 加载作品并刷新界面；showLoading 为 false 时保留现有内容（后台刷新）。 */
   async function loadWorks(showLoading) {
+    loadSerial += 1;
+    const serial = loadSerial;
     if (showLoading) {
       isLoading = true;
       renderContent();
     }
-    loadError = '';
+    let data = null;
+    let failure = '';
     try {
-      const data = await window.hostBridge.request(REQUEST_LOAD);
+      data = await window.hostBridge.request(REQUEST_LOAD);
+    } catch (error) {
+      failure = (error && error.message) || '作品加载失败。';
+    }
+    if (serial !== loadSerial) return;
+    loadError = failure;
+    if (data !== null) {
       view = data.view;
       projects = data.projects;
       works = data.works;
       // 作品被删除（或随所属项目一起删除）后，它的产出层没有意义，自动关闭。
       aiStage.closeMissing(works.map((work) => work.id));
-    } catch (error) {
-      loadError = (error && error.message) || '作品加载失败。';
     }
     isLoading = false;
     renderProjectFilter();

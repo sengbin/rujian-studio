@@ -24,6 +24,7 @@ import { GenerationService } from '../app/services/generation-service';
 import { ProjectService } from '../app/services/project-service';
 import { ProviderService } from '../app/services/provider-service';
 import { ProviderAccountService } from '../app/services/provider-account-service';
+import { sweepUnreferencedResults } from '../app/services/result-file-cleanup';
 import { ScreenplayService } from '../app/services/screenplay-service';
 import { StageChange, StageService } from '../app/services/stage-service';
 import { StoryboardService } from '../app/services/storyboard-service';
@@ -259,8 +260,11 @@ export function createServiceContainer(input: ServiceContainerInput) {
     works: workService,
     stages: stageService,
     jobs: generationRepository,
+    results: resultStore,
     scheduler: jobQueue
   });
+  // 上次运行中被级联删除、或重写分镜脚本带走的记录留下的视频文件，启动时清扫一次。
+  sweepUnreferencedResults({ jobs: generationRepository, results: resultStore }).catch((error: unknown) => console.error('启动时清理视频文件失败：', error));
 
   // 分镜动画的台词试听：用说话人的音色（绑定的音色参考、作品的旁白音色或暂存的试听音色）和所选的音频模型合成对白；没有音色的说话人可按描述生成试听音色，满意后采用。
   const narratorVoiceRepository = new SqliteNarratorVoiceRepository(database);

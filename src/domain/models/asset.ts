@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：对应 assets、asset_files 表；描述字段在库里以 snake_case 键保存（见 docs/database-design.md 4.5），表单使用 camelCase 键。
+// 备注：对应 assets、asset_files 表；描述字段在库里以 snake_case 键保存（见 private-docs/rujian-studio/开发文档-vscode/database-design.md 4.5），表单使用 camelCase 键。
 // ------------------------------------------------------------------------
 
 /** 资产类型：角色、场景、道具、特效、音频。 */

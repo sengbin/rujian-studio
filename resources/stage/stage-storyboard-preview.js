@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
-// 备注：通过 aiStoryboardPreview.open({ workId, episodeId, runId?, shotId? }) 打开，同一（作品、集）只有一个预览层；数据沿用 stage.load 请求（带 withImages 以取得实体的资产缩略图）与 stage.changed 事件（名称与 src/app/pages/stage-handlers.ts 一致）；依赖 stage-storyboard-preview-timeline/checks/art/renderer/modes/player/voice/voice-draft.js 与 stage.js（aiStage.open 用于“在分镜里编辑”）；没有音色的角色与旁白在声音列表里提供“生成音色”入口（对话框在 stage-storyboard-preview-voice-draft.js），生成的临时音色可直接用于配音试听，采用后绑定并重新读取分镜；样式在 stage-storyboard-preview.css；设计见 docs/storyboard-animation-design.md。
+// 备注：通过 aiStoryboardPreview.open({ workId, episodeId, runId?, shotId? }) 打开，同一（作品、集）只有一个预览层；数据沿用 stage.load 请求（带 withImages 以取得实体的资产缩略图）与 stage.changed 事件（名称与 src/app/pages/stage-handlers.ts 一致）；依赖 stage-storyboard-preview-timeline/checks/art/renderer/modes/player/voice/voice-draft.js 与 stage.js（aiStage.open 用于“在分镜里编辑”）；没有音色的角色与旁白在声音列表里提供“生成音色”入口（对话框在 stage-storyboard-preview-voice-draft.js），生成的临时音色可直接用于配音试听，采用后绑定并重新读取分镜；样式在 stage-storyboard-preview.css；设计见 private-docs/rujian-studio/开发文档-vscode/storyboard-animation-design.md。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -119,6 +119,8 @@
       canvasSize: { width: 0, height: 0 }
     };
     let refreshTimer = 0;
+    // 加载请求的序号，只采纳最后一次请求的响应。
+    let loadSerial = 0;
     let handle = null;
     let context2d = null;
     let canvasLabel = '';
@@ -1007,18 +1009,25 @@
     }
 
     async function load(showLoading) {
+      // 只采纳最后一次请求的响应：变化事件、重试、采用音色后的重载会并发，乱序返回时旧数据不能覆盖新数据。
+      loadSerial += 1;
+      const serial = loadSerial;
       if (showLoading) {
         state.loading = true;
         state.error = '';
         renderAll();
       }
+      let failure = '';
+      let payloadView = null;
       try {
         const payload = { workId, stage: STAGE, episodeId, withImages: true, ...(pinnedRunId === null ? {} : { id: pinnedRunId }) };
-        applyView(await window.hostBridge.request(REQUEST_LOAD, payload));
-        state.error = '';
+        payloadView = await window.hostBridge.request(REQUEST_LOAD, payload);
       } catch (error) {
-        state.error = (error && error.message) || GENERIC_ERROR_TEXT;
+        failure = (error && error.message) || GENERIC_ERROR_TEXT;
       }
+      if (disposed || serial !== loadSerial) return;
+      if (payloadView !== null) applyView(payloadView);
+      state.error = failure;
       state.loading = false;
       renderAll();
       void restoreVoices();

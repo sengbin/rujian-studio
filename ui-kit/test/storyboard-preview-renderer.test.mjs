@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { IDS, loadRenderStack, makeShot, makeSound, makeStaging, makeView } from './storyboard-preview-fixtures.mjs';
 
-const { timeline, renderer, modes } = loadRenderStack();
+const { timeline, renderer, modes, art, creatures } = loadRenderStack();
 
 const SIZE = { width: 800, height: 450 };
 
@@ -348,5 +348,47 @@ test('托底：全部场景类型、全部道具与物品图形、全部特效�
       renderer.draw(ctx, { ...frame, actors: [{ ...effect, glyph }] }, { ...SIZE, reducedMotion });
       assert.ok(ctx.calls.length > 20, `特效 ${glyph}`);
     }
+  }
+});
+
+/** 带透明度记录的假上下文：初始透明度为 initial；save 与 restore 按栈保存、恢复透明度；记录赋过的最大透明度。 */
+function createAlphaContext(initial) {
+  const state = { globalAlpha: initial, maxAlpha: initial, stack: [], measureText: (text) => ({ width: [...String(text)].length * 10 }) };
+  return new Proxy(state, {
+    get: (object, name) => {
+      if (name === 'save') return () => object.stack.push(object.globalAlpha);
+      if (name === 'restore') return () => { object.globalAlpha = object.stack.pop(); };
+      return name in object ? object[name] : () => 0;
+    },
+    set: (object, name, value) => {
+      object[name] = value;
+      if (name === 'globalAlpha') object.maxAlpha = Math.max(object.maxAlpha, value);
+      return true;
+    }
+  });
+}
+
+test('透明度：背景、道具、特效、角色在调用方设置的透明度基础上绘制并恢复，不会把透明度置回 1（否则叠化与淡出失效）', () => {
+  const INITIAL = 0.5;
+  const check = (label, draw) => {
+    const ctx = createAlphaContext(INITIAL);
+    draw(ctx);
+    assert.ok(Math.abs(ctx.globalAlpha - INITIAL) < 1e-9, `${label}：结束后透明度应恢复为 ${INITIAL}，实际 ${ctx.globalAlpha}`);
+    assert.ok(ctx.maxAlpha <= INITIAL + 1e-9, `${label}：绘制中透明度不应超过 ${INITIAL}，实际最大 ${ctx.maxAlpha}`);
+  };
+  const { scene } = timeline.sampleFrame(timeline.compile(makeView([sceneShot()])), 1);
+  for (const setting of ['indoor', 'street', 'forest', 'cave', 'sea', 'field', 'space', 'underwater', 'sky', 'desert', 'snow', 'mountain', 'ruins', 'village', 'kitchen', 'bathroom', 'bedroom', 'hospital', 'classroom', 'shop', 'generic']) {
+    for (const time of ['day', 'night', 'dusk']) {
+      check(`背景 ${setting}/${time}`, (ctx) => art.drawBackdrop(ctx, { ...scene, setting, time }, 800, 450));
+    }
+  }
+  for (const glyph of Object.keys(art.PROP_HEIGHT)) check(`道具 ${glyph}`, (ctx) => art.drawProp(ctx, glyph, 400, 300, 4, '#CC8844', false));
+  for (const glyph of ['fire', 'smoke', 'rain', 'snow', 'light', 'lightning', 'magic', 'heart', 'notes', 'wind', 'bubbles', 'leaves', 'dark', 'shockwave', 'explosion', 'fireworks', 'projectile', 'beam', 'laser', 'shadow', 'splash', 'slash', 'unknown']) {
+    check(`特效 ${glyph}`, (ctx) => art.drawEffect(ctx, glyph, 400, 300, 40, '#CC8844', 0.35, false, { angle: 0.3 }));
+  }
+  for (const species of creatures.SPECIES) {
+    check(`角色 ${species}`, (ctx) =>
+      creatures.drawCharacter(ctx, { x: 400, y: 300, unit: 4, color: '#CC8844', facing: 'right', walking: false, speaking: false, placed: true, phase: 1.2, image: null, species, gender: null, seed: 1 })
+    );
   }
 });

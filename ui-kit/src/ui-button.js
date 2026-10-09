@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
-// 备注：依赖 ui-core.js、ui-icons.js、ui-icon-rules.js；图标为 Tabler 内联 SVG，颜色跟随文字，按文字含义自动匹配；用法见 docs/ui-components.md。
+// 备注：依赖 ui-core.js、ui-icons.js、ui-icon-rules.js；图标为 Tabler 内联 SVG，颜色跟随文字，按文字含义自动匹配；用法见 private-docs/rujian-studio/开发文档-vscode/ui-components.md。
 // ------------------------------------------------------------------------
 
 'use strict';

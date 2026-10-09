@@ -89,6 +89,7 @@
 
   /** 天空：渐变，夜晚有星星与月亮，黄昏与清晨有贴着地平线的太阳，白天有太阳与云。bottom 为天空下沿的 y。 */
   function drawSky(ctx, scene, width, height, bottom) {
+    const base = ctx.globalAlpha;
     const colors = SKY[scene.time] || SKY.day;
     ctx.fillStyle = linear(ctx, 0, 0, 0, bottom, [[0, colors[0]], [1, colors[1]]]);
     ctx.fillRect(-width, -height, width * 3, bottom + height);
@@ -96,17 +97,17 @@
     const span = 1.5 * width;
     if (scene.time === 'night') {
       for (let index = 0; index < 46; index += 1) {
-        ctx.globalAlpha = 0.4 + 0.6 * rand(scene.seed, index + 200);
+        ctx.globalAlpha = base * (0.4 + 0.6 * rand(scene.seed, index + 200));
         circle(ctx, left + rand(scene.seed, index) * span, rand(scene.seed, index + 100) * bottom * 0.85, height * (0.0012 + 0.0018 * rand(scene.seed, index + 300)), '#FFFFFF');
       }
-      ctx.globalAlpha = 1;
+      ctx.globalAlpha = base;
       circle(ctx, width * 0.8, height * 0.17, height * 0.045, '#F3F1DC');
       return;
     }
     if (scene.time === 'day') {
-      ctx.globalAlpha = 0.25;
+      ctx.globalAlpha = base * 0.25;
       circle(ctx, width * 0.82, height * 0.15, height * 0.08, '#FFF3B0');
-      ctx.globalAlpha = 1;
+      ctx.globalAlpha = base;
       circle(ctx, width * 0.82, height * 0.15, height * 0.045, '#FFF3B0');
     } else {
       circle(ctx, width * (0.25 + 0.5 * rand(scene.seed, 7)), bottom, height * 0.08, '#FFD59A');
@@ -201,9 +202,10 @@
     ctx.fillStyle = '#2B2F38';
     ctx.fillRect(lampX - height * 0.004, height * 0.2, height * 0.008, height * 0.33);
     if (lit) {
-      ctx.globalAlpha = 0.2;
+      const base = ctx.globalAlpha;
+      ctx.globalAlpha = base * 0.2;
       circle(ctx, lampX, height * 0.2, height * 0.07, '#FFE6A0');
-      ctx.globalAlpha = 1;
+      ctx.globalAlpha = base;
     }
     circle(ctx, lampX, height * 0.2, height * 0.014, lit ? '#FFE6A0' : '#D8DCE2');
   }
@@ -268,9 +270,10 @@
       ctx.ellipse(left + rand(scene.seed, index + 700) * 1.5 * width, height * (0.56 + 0.4 * rand(scene.seed, index + 800)), width * 0.012, height * 0.008, 0, 0, TAU);
       ctx.fill();
     }
-    ctx.globalAlpha = 0.14;
+    const glowAlpha = ctx.globalAlpha;
+    ctx.globalAlpha = glowAlpha * 0.14;
     circle(ctx, width * 0.5, height * 0.62, height * 0.36, '#FFC27A');
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = glowAlpha;
   }
 
   function drawSea(ctx, scene, width, height) {
@@ -354,11 +357,12 @@
     ctx.fillStyle = linear(ctx, 0, 0, 0, horizon, [[0, '#04051A'], [1, '#1B1B4A']]);
     ctx.fillRect(-width, -height, width * 3, horizon + height);
     const left = -0.25 * width;
+    const base = ctx.globalAlpha;
     for (let index = 0; index < 90; index += 1) {
-      ctx.globalAlpha = 0.4 + 0.6 * rand(scene.seed, index + 200);
+      ctx.globalAlpha = base * (0.4 + 0.6 * rand(scene.seed, index + 200));
       circle(ctx, left + rand(scene.seed, index) * 1.5 * width, rand(scene.seed, index + 100) * horizon, height * (0.0012 + 0.002 * rand(scene.seed, index + 300)), '#FFFFFF');
     }
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = base;
     circle(ctx, width * 0.78, height * 0.26, height * 0.13, '#D98C5F');
     ctx.strokeStyle = 'rgba(255, 225, 190, 0.7)';
     ctx.lineWidth = height * 0.012;
@@ -722,9 +726,10 @@
       ctx.stroke();
     },
     light(ctx, x, y, u, color) {
-      ctx.globalAlpha = 0.25;
+      const base = ctx.globalAlpha;
+      ctx.globalAlpha = base * 0.25;
       circle(ctx, x, y - 13 * u, 7 * u, '#FFE9A8');
-      ctx.globalAlpha = 1;
+      ctx.globalAlpha = base;
       ctx.fillStyle = shade(color, 0.6);
       ctx.fillRect(x - 0.5 * u, y - 12 * u, 1 * u, 12 * u);
       ctx.fillRect(x - 2.4 * u, y - 0.8 * u, 4.8 * u, 0.8 * u);
@@ -1256,6 +1261,7 @@
 
   /** 画一个特效：按图形类型画火焰、烟、雨、雪、光芒或火花；r 为特效半径。 */
   function drawEffect(ctx, glyph, x, y, r, color, time, reducedMotion, options) {
+    const base = ctx.globalAlpha;
     const cycle = reducedMotion ? 0.25 : time;
     const cy = y - r;
     switch (glyph) {
@@ -1287,9 +1293,9 @@
         }
         break;
       case 'light':
-        ctx.globalAlpha = 0.3;
+        ctx.globalAlpha = base * 0.3;
         circle(ctx, x, cy, r, '#FFF3B0');
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = base;
         drawStar(ctx, x, cy, r, 8, '#FFF3B0');
         break;
       case 'lightning': {
@@ -1302,7 +1308,7 @@
         ctx.lineTo(x + r * 0.25, y - r * 1.15);
         ctx.lineTo(x - r * 0.3, y - r * 0.1);
         ctx.stroke();
-        ctx.globalAlpha = 0.25;
+        ctx.globalAlpha = base * 0.25;
         circle(ctx, x, y - r * 1.1, r * 0.9, '#9CC8FF');
         break;
       }
@@ -1322,7 +1328,7 @@
           else ctx.lineTo(px, py);
         }
         ctx.stroke();
-        ctx.globalAlpha = 0.25;
+        ctx.globalAlpha = base * 0.25;
         ctx.beginPath();
         ctx.ellipse(x, cy, r * 1.3, r * 0.55, 0, 0, TAU);
         ctx.fillStyle = '#A78BFA';
@@ -1397,7 +1403,7 @@
         break;
       }
       case 'dark': {
-        ctx.globalAlpha = 0.7;
+        ctx.globalAlpha = base * 0.7;
         for (const [dx, dy, scale] of [[-0.5, 0.2, 0.7], [0.5, 0, 0.8], [0, -0.5, 0.9], [0.1, 0.4, 0.6]]) {
           circle(ctx, x + dx * r + Math.sin(cycle * 1.5 + dy) * r * 0.1, cy + dy * r, r * scale, 'rgba(40, 25, 60, 0.7)');
         }
@@ -1408,7 +1414,7 @@
         for (let index = 0; index < 2; index += 1) {
           const grow = (cycle * 0.6 + index * 0.5) % 1;
           ctx.lineWidth = Math.max(1, r * 0.1 * (1 - grow));
-          ctx.globalAlpha = 1 - grow;
+          ctx.globalAlpha = base * (1 - grow);
           ctx.beginPath();
           ctx.ellipse(x, y - r * 0.2, r * (0.4 + 1.4 * grow), r * (0.15 + 0.5 * grow), 0, 0, TAU);
           ctx.stroke();
@@ -1419,7 +1425,7 @@
         if (EXTRA_EFFECTS[glyph]) EXTRA_EFFECTS[glyph](ctx, x, y, r, color, cycle, Boolean(reducedMotion), options || {});
         else drawStar(ctx, x, cy, r * (reducedMotion ? 1 : 1 + 0.1 * Math.sin(cycle * TAU)), 4, color);
     }
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = base;
   }
 
   /** 登记扩展的特效图形；绘制函数的参数为 (ctx, x, y, r, color, cycle, reducedMotion, { angle })，angle 是特效前进方向（弧度，0 朝右）。 */

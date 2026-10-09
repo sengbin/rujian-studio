@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：设计见 docs/production-profile-design.md 第 7.3、7.4 节；是各阶段 execute() 内部的一段逻辑，不是独立的阶段；重写结果更接近目标才采用，达到轮数上限仍超出容差时返回最接近目标的一稿并标明偏差，不再继续重写。
+// 备注：设计见 private-docs/rujian-studio/开发文档-vscode/production-profile-design.md 第 7.3、7.4 节；是各阶段 execute() 内部的一段逻辑，不是独立的阶段；重写结果更接近目标才采用，达到轮数上限仍超出容差时返回最接近目标的一稿并标明偏差，不再继续重写。
 // ------------------------------------------------------------------------
 
 import { CalibrationResult, evaluateCalibration } from '../../domain/rules/timing-calibration-rules';

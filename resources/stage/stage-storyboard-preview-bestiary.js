@@ -212,14 +212,15 @@
       for (let step = 1; step <= 6; step += 1) ctx.lineTo(baseX + Math.sin(spec.phase * 3 + step + index) * 0.9 * u, topY + (3.6 + step * 1.5) * u);
       ctx.stroke();
     }
-    ctx.globalAlpha = 0.82;
+    const base = ctx.globalAlpha;
+    ctx.globalAlpha = base * 0.82;
     ctx.fillStyle = shade(color, 1.4);
     ctx.beginPath();
     ctx.ellipse(x, topY + 2 * u, 6.4 * u, 5.6 * u, 0, Math.PI, 0);
     ctx.lineTo(x + 6.4 * u, topY + 3.6 * u);
     ctx.lineTo(x - 6.4 * u, topY + 3.6 * u);
     ctx.fill();
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = base;
     faceOrAvatar(ctx, spec, x, topY + 0.6 * u, 4 * u);
     outlineIfUnplaced(ctx, spec, 22, 7);
     return { headX: x, headY: topY, headR: 5.6 * u, height: 22 };
@@ -591,7 +592,8 @@
     const cy = y - 5.4 * u;
     const pulse = Math.sin(spec.phase * 2.2);
     ellipse(ctx, x, y, 8 * u, 1.3 * u, SHADOW);
-    ctx.globalAlpha = 0.88;
+    const base = ctx.globalAlpha;
+    ctx.globalAlpha = base * 0.88;
     ctx.fillStyle = shade(color, 1.35);
     ctx.beginPath();
     for (let step = 0; step <= 32; step += 1) {
@@ -604,7 +606,7 @@
     }
     ctx.closePath();
     ctx.fill();
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = base;
     circle(ctx, x - 2.8 * u, cy + 2.2 * u, 1.1 * u, 'rgba(255, 255, 255, 0.55)');
     circle(ctx, x + 3.4 * u, cy + 1.8 * u, 0.8 * u, 'rgba(255, 255, 255, 0.55)');
     circle(ctx, x + 2.4 * u, cy - 2.4 * u, 1.6 * u, shade(color, 0.7));

@@ -68,6 +68,9 @@ export interface GenerationRepository {
 
   /** 读取镜头组所在的项目、作品和集；镜头组不存在返回 undefined。 */
   getGroupLocation(groupId: number): GroupLocation | undefined;
+
+  /** 全部结果视频记录引用的文件路径（相对存储根目录），用于清理已无记录引用的视频文件。 */
+  listResultFilePaths(): string[];
 }
 
 /** 读取任务提交所需的素材内容：资产文件、尾帧图片与镜头指定的首帧图片。 */
@@ -104,4 +107,10 @@ export interface ResultStore {
 
   /** 把相对路径转换为本机绝对路径。 */
   resolvePath(filePath: string): string;
+
+  /** 列出存储中已保存的全部结果文件（相对存储根目录、使用 / 分隔的路径）；下载中的临时文件不列出。 */
+  listFiles(): Promise<string[]>;
+
+  /** 删除一个结果文件；文件不存在时什么都不做。 */
+  remove(filePath: string): Promise<void>;
 }

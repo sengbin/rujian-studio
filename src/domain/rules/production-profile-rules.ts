@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：设计见 docs/production-profile-design.md 第 5、11、15 节；新增体量只需在这里追加记录；电视剧、电影只占位（supported 为 false，没有节拍模板）。
+// 备注：设计见 private-docs/rujian-studio/开发文档-vscode/production-profile-design.md 第 5、11、15 节；新增体量只需在这里追加记录；电视剧、电影只占位（supported 为 false，没有节拍模板）。
 // ------------------------------------------------------------------------
 
 import { BeatTemplate, ProductionFormatType, ProductionProfile } from '../models/production-profile';
@@ -65,11 +65,6 @@ export function getProductionProfile(formatType: ProductionFormatType): Producti
 /** 体量是否按剧情拆分为多集。 */
 export function isMultiEpisode(formatType: ProductionFormatType): boolean {
   return getProductionProfile(formatType).multiEpisode;
-}
-
-/** 体量的界面名称。 */
-export function getFormatLabel(formatType: ProductionFormatType): string {
-  return getProductionProfile(formatType).label;
 }
 
 /** 已实现的体量，界面可选。 */

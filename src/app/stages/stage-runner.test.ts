@@ -9,7 +9,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { TextGenerationError, ValidationError } from '../../domain/errors';
+import { INTERRUPTED_MESSAGE, TextGenerationError, ValidationError } from '../../domain/errors';
 import { ChapterDraft } from '../../domain/models/creative';
 import { NewStageRun, ReviewPatch, StageProgress, StageRun, StageTarget } from '../../domain/models/stage-run';
 import { ChapterRepository } from '../../domain/ports/chapter-repository';
@@ -18,7 +18,7 @@ import { ImageInput, TextGenerationRequest, TextGenerationSource, TextModelInfo 
 import { NovelSplitSettings } from '../../domain/rules/novel-splitter';
 import { CreativeWorkflow } from './creative-workflow';
 import { fingerprintImages, fingerprintNovel, isSameFingerprint, parseFingerprint } from './source-fingerprint';
-import { INTERRUPTED_MESSAGE, StageRunner } from './stage-runner';
+import { StageRunner } from './stage-runner';
 import { DEFAULT_MODEL, FILE_PROMPTS, Responder, ScriptedText, readPrompt, standardResponder } from './testing/scripted-text';
 
 const TARGET: StageTarget = { workId: 1, stage: 'creative', episodeId: null };

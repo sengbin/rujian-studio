@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-09
-// 备注：接口是同步的：submit 内完成合成，结果（音频地址与时长）编码进 remoteJobId，query 解码后直接返回成功；请求用 url 输出方式，音频地址 24 小时有效，平台若返回 hex 音频数据则转成 data 地址；说话方式换算为语速、音量（平台没有语音指令，情绪由模型按文字自动匹配）；使用 HTTP Bearer 密钥，与其他类型共用同一份访问密钥。
+// 备注：接口是同步的：submit 内完成合成，结果（音频地址与时长）暂存在适配器内存里，以短编号作为 remoteJobId，query 凭编号取回并直接返回成功（应用重启后编号失效，需要重新生成）；请求用 url 输出方式，音频地址 24 小时有效，平台若返回 hex 音频数据则转成 data 地址；说话方式换算为语速、音量（平台没有语音指令，情绪由模型按文字自动匹配）；使用 HTTP Bearer 密钥，与其他类型共用同一份访问密钥。
 // ------------------------------------------------------------------------
 
 import { ProviderError } from '../../../domain/errors';
@@ -20,6 +20,7 @@ import {
 } from '../../../domain/ports/provider-adapters';
 import { readDeliveryRates } from '../../../domain/rules/voice-delivery-rules';
 import { readObject, validateExtraParams } from '../shared/provider-payload';
+import { SyncResultStore } from '../shared/sync-result-store';
 import { FetchFunction, MinimaxApiClient } from './minimax-api-client';
 import {
   MINIMAX_AUDIO_MODELS,
@@ -44,11 +45,15 @@ const RATE_PERCENT_DIVISOR = 100;
 /** 毫秒与秒的换算。 */
 const MS_PER_SECOND = 1000;
 
+/** 比生成队列的并发上限留有余量，暂存的结果不会在被查询前就被丢弃。 */
+const PENDING_RESULT_CAPACITY = 16;
+
 /** MiniMax 的音频适配器。 */
 export class MinimaxAudioProvider implements AudioModelProvider {
   readonly kind = 'audio';
   readonly provider: ProviderDescriptor = MINIMAX_PROVIDER;
   private readonly client: MinimaxApiClient;
+  private readonly results = new SyncResultStore<AudioJobResult>(PENDING_RESULT_CAPACITY);
 
   /**
    * @param fetchFunction 发起网络请求的函数，测试时可注入假实现。
@@ -79,16 +84,15 @@ export class MinimaxAudioProvider implements AudioModelProvider {
       throw new ProviderError('invalid_request', issues.join('；'));
     }
     const response = await this.client.postJson(context, MINIMAX_SPEECH_PATH, buildRequestBody(request), SPEECH_REQUEST_TIMEOUT_MS);
-    return { modelCode: request.modelCode, remoteJobId: JSON.stringify(readAudioResult(response)) };
+    return { modelCode: request.modelCode, remoteJobId: this.results.put(readAudioResult(response)) };
   }
 
   async query(ref: RemoteJobRef): Promise<RemoteJobState<AudioJobResult>> {
-    const audio = readObject(parseJson(ref.remoteJobId));
-    if (typeof audio.audioUrl !== 'string' || audio.audioUrl === '') {
-      throw new ProviderError('invalid_request', '音频任务引用已损坏，无法取得音频内容。');
+    const result = this.results.find(ref.remoteJobId);
+    if (result === undefined) {
+      throw new ProviderError('invalid_request', '合成结果已不在内存中（应用重启过），请重新生成。');
     }
-    const durationSeconds = typeof audio.durationSeconds === 'number' ? audio.durationSeconds : null;
-    return { status: 'succeeded', result: { audioUrl: audio.audioUrl, durationSeconds }, errorCategory: null, errorCode: null, errorMessage: null };
+    return { status: 'succeeded', result, errorCategory: null, errorCode: null, errorMessage: null };
   }
 }
 
@@ -157,13 +161,4 @@ function readAudioResult(response: Record<string, unknown>): AudioJobResult {
   const audioUrl = audio.startsWith('https://') ? audio : `data:${MINIMAX_SPEECH_MIME_TYPE};base64,${Buffer.from(audio, 'hex').toString('base64')}`;
   const lengthMs = readObject(response.extra_info).audio_length;
   return { audioUrl, durationSeconds: typeof lengthMs === 'number' ? lengthMs / MS_PER_SECOND : null };
-}
-
-/** 解析 JSON；不合法时返回 undefined，由调用方按任务引用损坏处理。 */
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return undefined;
-  }
 }

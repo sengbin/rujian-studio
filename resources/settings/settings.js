@@ -229,6 +229,7 @@
    */
   function renderApiKey(provider, resultSlots) {
     let configured = provider.apiKeyConfigured;
+    let isSaving = false;
     const status = createSaveStatus();
     const keyState = aiUi.h('span', { class: 'provider-key-state' });
     const keyInput = aiUi.textInput({ type: 'password', ariaLabel: `${provider.displayName}访问密钥`, onEnter: () => void saveKey() });
@@ -273,12 +274,15 @@
     }
 
     async function saveKey() {
+      // 回车触发不受按钮禁用的限制，保存中必须自己拒绝重入。
+      if (isSaving) return;
       const apiKey = keyInput.getValue().trim();
       if (apiKey === '') {
         keyField.setError('访问密钥不能为空。');
         return;
       }
       keyField.setError('');
+      isSaving = true;
       saveButton.setDisabled(true);
       status.show(SAVING_TEXT, false);
       try {
@@ -297,6 +301,7 @@
           status.show(`保存失败：${errorText(error)}`, true);
         }
       } finally {
+        isSaving = false;
         saveButton.setDisabled(false);
       }
     }
@@ -630,6 +635,7 @@
   /** 账户密钥弹出页的内容：AccessKey ID 与 SecretKey 输入、保存与清除；保存后在原位更新状态。 */
   function renderAccountKey(account) {
     let ready = account.credentialReady;
+    let isSaving = false;
     const status = createSaveStatus();
     const keyState = aiUi.h('span', { class: 'provider-key-state' });
     const idInput = aiUi.textInput({ type: 'password', ariaLabel: `${account.displayName}的 AccessKey ID` });
@@ -652,6 +658,9 @@
     }
 
     async function save() {
+      // 回车触发不受按钮禁用的限制，保存中必须自己拒绝重入。
+      if (isSaving) return;
+      isSaving = true;
       idField.setError('');
       secretField.setError('');
       saveButton.setDisabled(true);
@@ -675,6 +684,7 @@
         secretField.setError(secretMessage);
         status.show(idMessage || secretMessage ? '' : `保存失败：${errorText(error)}`, !(idMessage || secretMessage));
       } finally {
+        isSaving = false;
         saveButton.setDisabled(false);
       }
     }

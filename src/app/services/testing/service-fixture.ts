@@ -139,6 +139,7 @@ export function createServiceFixture(responder: Responder = standardResponder, s
     works,
     stages,
     jobs: new SqliteGenerationRepository(database, files),
+    results: { listFiles: async () => [], remove: async () => undefined },
     scheduler: {
       cancel: async () => {
         throw new Error('夹具没有视频队列。');

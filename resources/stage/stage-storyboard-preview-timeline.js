@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
-// 备注：不依赖 DOM，通过 window.aiStoryboardTimeline 暴露，规则见 docs/storyboard-animation-design.md 第 6 节；渲染在 stage-storyboard-preview-art.js 与 stage-storyboard-preview-renderer.js，对照视图在 stage-storyboard-preview-modes.js，检查在 stage-storyboard-preview-checks.js。
+// 备注：不依赖 DOM，通过 window.aiStoryboardTimeline 暴露，规则见 private-docs/rujian-studio/开发文档-vscode/storyboard-animation-design.md 第 6 节；渲染在 stage-storyboard-preview-art.js 与 stage-storyboard-preview-renderer.js，对照视图在 stage-storyboard-preview-modes.js，检查在 stage-storyboard-preview-checks.js。
 // ------------------------------------------------------------------------
 
 'use strict';

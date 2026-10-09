@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
-// 备注：依赖 ui-core.js、ui-button.js、ui-dialog.js（查看原图）、ui-audio-preview.js（音频文件的试听）；类型、数量、大小不符的文件不会加入，原因显示在控件下方；用法见 docs/ui-components.md。
+// 备注：依赖 ui-core.js、ui-button.js、ui-dialog.js（查看原图）、ui-audio-preview.js（音频文件的试听）；类型、数量、大小不符的文件不会加入，原因显示在控件下方；用法见 private-docs/rujian-studio/开发文档-vscode/ui-components.md。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -86,6 +86,8 @@
 
     let items = [];
     let pending = 0;
+    /** 正在读取、尚未加入列表的文件。 */
+    const reading = [];
     let readyWaiters = [];
 
     const input = aiUi.h('input', {
@@ -190,7 +192,8 @@
     async function addFiles(files) {
       const problems = [];
       const accepted = [];
-      const existing = multiple ? items.length : 0;
+      // 读取中的文件也算已选择，否则连续选择两次会超过数量上限或重复添加。
+      const existing = multiple ? items.length + reading.length : 0;
       for (const file of files) {
         const extension = extensionOf(file.name);
         if (accept.length > 0 && !accept.includes(extension)) {
@@ -201,7 +204,7 @@
           problems.push(`“${file.name}”超过大小上限 ${formatSize(maxFileBytes)}。`);
         } else if (existing + accepted.length >= maxFiles) {
           problems.push(`最多选择 ${maxFiles} 个文件，“${file.name}”未加入。`);
-        } else if (multiple && items.some((item) => item.name === file.name && item.size === file.size)) {
+        } else if (multiple && [...items, ...reading, ...accepted].some((item) => item.name === file.name && item.size === file.size)) {
           problems.push(`“${file.name}”已经添加过。`);
         } else {
           accepted.push(file);
@@ -211,6 +214,7 @@
       if (accepted.length === 0) return;
 
       pending += accepted.length;
+      reading.push(...accepted);
       showMessage(problems.length > 0 ? `${problems.join('\n')}\n${READING_TEXT}` : READING_TEXT, problems.length > 0);
       try {
         const loaded = await Promise.all(
@@ -227,6 +231,7 @@
         showMessage('读取文件失败，请重新选择。', true);
       } finally {
         pending -= accepted.length;
+        for (const file of accepted) reading.splice(reading.indexOf(file), 1);
         renderList();
         control.notifyChange();
         settleWaiters();
