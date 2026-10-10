@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import * as path from 'node:path';
 import { test } from 'node:test';
 import { resolveAppRequest } from './app-request';
-import { toFrameUrl, toResourceUrl } from './shell-channels';
+import { toFrameUrl, toResourceUrl } from '../app/shell/shell-channels';
 
 const ROOT = path.resolve('/app-root');
 const HTML_BY_ID: Record<string, string> = { 'work-list:text': '<p>work</p>', sidebar: '<p>side</p>' };

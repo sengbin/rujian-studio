@@ -7,9 +7,9 @@
 // 备注：不依赖 Electron，便于测试；静态文件只放行 PAGE_ROOT_PATHS 内的路径，拒绝 `..`、绝对路径与目录外路径。
 // ------------------------------------------------------------------------
 
-import { resolveInsideRoot } from '../../infra/storage/relative-path';
-import { PAGE_ROOT_PATHS } from '../panels/page-resources';
-import { APP_PROTOCOL } from './shell-channels';
+import { PAGE_ROOT_PATHS } from '../app/panels/page-resources';
+import { APP_PROTOCOL } from '../app/shell/shell-channels';
+import { resolveInsideRoot } from '../infra/storage/relative-path';
 
 /** 地址的主机部分：页面 HTML。 */
 const PAGE_HOST = 'page';

@@ -12,7 +12,7 @@ import { statSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { ShellBridge } from '../app/shell/shell-bridge';
 import { APP_PROTOCOL } from '../app/shell/shell-channels';
-import { resolveAppRequest } from '../app/shell/app-request';
+import { resolveAppRequest } from './app-request';
 
 /** 声明自定义协议为标准、安全协议，使页面可以用它加载脚本、样式与发起 fetch；必须在 app ready 之前调用。 */
 export function registerAppProtocolScheme(): void {
