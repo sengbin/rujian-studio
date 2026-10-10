@@ -36,7 +36,7 @@ export function seedGeneration(database: DatabaseSync, shotCount = 2, groupSizes
     { name: '项目甲', description: '', visualStyle: null, defaultAspectRatio: null, defaultResolution: null },
     't'
   );
-  const workId = insert("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (?, '作品甲', 'short_video', 't', 't')", project.id);
+  const workId = insert("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (?, '作品甲', 'short_video', 'text', 't', 't')", project.id);
   const episodeId = insert("INSERT INTO episodes (work_id, seq, title, created_at, updated_at) VALUES (?, 1, '第一集', 't', 't')", workId);
   const runId = insert(
     "INSERT INTO stage_runs (work_id, episode_id, stage, version, input_json, status, review_status, is_current, created_at) VALUES (?, ?, 'storyboard_script', 1, '{}', 'succeeded', 'approved', 1, 't')",

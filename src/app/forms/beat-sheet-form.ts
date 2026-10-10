@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：模板选项按作品形态自动过滤；文字灵感作品多一个“创作主题或灵感”字段，初始值取最近一次创意使用的灵感；所选文本模型保存为作品的文本模型，启动失败时恢复原选择；节拍表与创意、剧本互不依赖，可以在任何时候生成。
+// 备注：模板选项按作品形态自动过滤；文字灵感作品多一个“创作主题或灵感”字段，初始值取最近一次创意使用的灵感；所选文本模型保存为作品的文本模型，启动失败时恢复原选择（由阶段启动服务完成）；节拍表与创意、剧本互不依赖，可以在任何时候生成。
 // ------------------------------------------------------------------------
 
 import { BeatSheetParams } from '../../domain/models/beat-sheet';
@@ -22,6 +22,7 @@ import {
 import { getBeatTemplate, getProductionProfile, listBeatTemplates } from '../../domain/rules/production-profile-rules';
 import { BeatSheetService } from '../services/beat-sheet-service';
 import { StageService } from '../services/stage-service';
+import { StageStartService } from '../services/stage-start-service';
 import { WorkTextModelState } from '../services/text-settings-service';
 import { WorkService } from '../services/work-service';
 import { AsyncFormFactory, FormCatalog, FormDefinition, FormFactory, FormValues } from './form-definition';
@@ -29,10 +30,9 @@ import { FormFieldSchema } from './form-schema';
 import {
   TEXT_MODEL_FIELD_KEY,
   TEXT_MODEL_SAVED_NOTE,
-  WorkTextModels,
+  TextModelStates,
   createTextModelField,
   readTextModelKey,
-  startWithWorkTextModel,
   textModelInitialValue
 } from './text-model-field';
 
@@ -47,7 +47,9 @@ export interface BeatSheetFormDependencies {
   readonly beatSheets: BeatSheetService;
   /** 读取最近一次创意参数里的灵感，作为文字灵感作品的初始值。 */
   readonly stages: StageService;
-  readonly textModels: WorkTextModels;
+  readonly textModels: TextModelStates;
+  /** 保存作品的文本模型并启动节拍表生成。 */
+  readonly starts: Pick<StageStartService, 'startBeatSheet'>;
   /** 生成已开始后调用，用于打开阶段产出层。 */
   readonly onStarted: (workId: number) => void;
 }
@@ -88,7 +90,7 @@ function byTemplateLabel(templates: readonly BeatTemplate[], pick: (template: Be
 
 /** 创建“生成节拍表”表单的定义。 */
 function createStartForm(dependencies: BeatSheetFormDependencies, workId: number, textModelState: WorkTextModelState): FormDefinition {
-  const { works, beatSheets, stages, textModels, onStarted } = dependencies;
+  const { works, beatSheets, stages, starts, onStarted } = dependencies;
   const work = works.getWork(workId);
   const profile = getProductionProfile(work.kind);
   const templates = listBeatTemplates(work.kind);
@@ -170,9 +172,7 @@ function createStartForm(dependencies: BeatSheetFormDependencies, workId: number
     },
     submit: async (values) => {
       const textModel = readTextModelKey(textModelState, values);
-      await startWithWorkTextModel(textModels, workId, textModelState, textModel, async () => {
-        await beatSheets.start(workId, values);
-      });
+      await starts.startBeatSheet(workId, textModel, values);
       onStarted(workId);
     }
   };

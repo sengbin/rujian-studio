@@ -34,7 +34,7 @@ function createFixture() {
   projects.createProject({ name: '项目乙' });
 
   const insert = (sql: string, ...params: Array<string | number>) => Number(database.prepare(sql).run(...params).lastInsertRowid);
-  const work = insert("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (1, '作品甲', 'short_drama', 't', 't')");
+  const work = insert("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (1, '作品甲', 'short_drama', 'text', 't', 't')");
   const episode1 = insert("INSERT INTO episodes (work_id, seq, title, created_at, updated_at) VALUES (?, 1, '第一集', 't', 't')", work);
   const episode2 = insert("INSERT INTO episodes (work_id, seq, title, created_at, updated_at) VALUES (?, 2, '第二集', 't', 't')", work);
   const entity = (kind: string, name: string, aliases = '[]', active = 1) =>
@@ -45,7 +45,7 @@ function createFixture() {
   const guard = entity('character', '守夜人', '["老陈"]');
   const lighthouse = entity('scene', '灯塔');
   const retired = entity('prop', '旧钥匙', '[]', 0);
-  const otherWork = insert("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (2, '作品乙', 'short_video', 't', 't')");
+  const otherWork = insert("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (2, '作品乙', 'short_video', 'text', 't', 't')");
   const otherEpisode = insert("INSERT INTO episodes (work_id, seq, title, created_at, updated_at) VALUES (?, 1, '乙第一集', 't', 't')", otherWork);
   const otherEntity = insert(
     "INSERT INTO script_entities (work_id, kind, name, created_at, updated_at) VALUES (?, 'character', '外人', 't', 't')",

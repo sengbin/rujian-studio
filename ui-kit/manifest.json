@@ -1,5 +1,5 @@
 {
-  "styles": ["ui-tokens.css", "ui-controls.css", "ui-file-picker.css", "ui-table.css", "ui-dialog.css", "ui-scrollbar.css"],
+  "styles": ["ui-tokens.css", "ui-controls.css", "ui-feedback.css", "ui-file-picker.css", "ui-table.css", "ui-dialog.css", "ui-scrollbar.css"],
   "scripts": [
     "ui-core.js",
     "ui-scrollbar.js",
@@ -14,7 +14,9 @@
     "ui-table.js",
     "ui-tabs.js",
     "ui-list.js",
+    "ui-feedback.js",
     "ui-dialog.js",
+    "ui-image.js",
     "ui-file-picker.js"
   ]
 }

@@ -7,11 +7,13 @@
 // 备注：输出校验失败抛出 GeneratedOutputError，问题说明会反馈给模型重试；字数按汉字数加英文单词数统计，不计标点和空白；normalizeCreativeParams 的 forcedMode 供“参考节拍表生成”等提交按钮直接指定模式，跳过字段读取。
 // ------------------------------------------------------------------------
 
-import { GeneratedOutputError } from '../errors';
+import { GeneratedOutputError, ValidationError } from '../errors';
 import { BeatReferenceMode, ChapterDraft, ChapterOutlineItem, CreativeParams } from '../models/creative';
 import {
   FieldErrors,
   assertNoFieldErrors,
+  isBlank,
+  isRecord,
   readInteger,
   readOptionalText,
   readRecord,
@@ -48,10 +50,25 @@ export const BEAT_REFERENCE_LABELS: Readonly<Record<BeatReferenceMode, string>> 
 const CJK_CHARACTER = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/g;
 const LATIN_WORD = /[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g;
 
+/** 参考节拍表模式下节拍表尚未确认的提示。 */
+export const BEAT_REFERENCE_UNCONFIRMED_MESSAGE = '参考节拍表需要先确认节拍表。';
+
+/**
+ * 确认参考节拍表模式有已确认的节拍表；自由创作不需要。
+ * @param mode 节拍参考模式。
+ * @param beatSheet 已确认的节拍表（或它的快照）；没有为 undefined。
+ * @throws ValidationError 参考节拍表模式下没有已确认的节拍表。
+ */
+export function assertBeatReferenceReady(mode: BeatReferenceMode, beatSheet: unknown): void {
+  if (mode === 'reference' && beatSheet === undefined) {
+    throw new ValidationError({ beatReferenceMode: BEAT_REFERENCE_UNCONFIRMED_MESSAGE });
+  }
+}
+
 /** 读取节拍参考模式：接受界面名称或内部键，缺省为自由创作。 */
 function readBeatReferenceMode(source: Record<string, unknown>, errors: FieldErrors): BeatReferenceMode {
   const value = source.beatReferenceMode;
-  if (value === undefined || value === null || value === '') {
+  if (isBlank(value)) {
     return 'free';
   }
   const entries = Object.entries(BEAT_REFERENCE_LABELS) as Array<[BeatReferenceMode, string]>;
@@ -118,11 +135,6 @@ export function countWords(text: string): number {
   return (text.match(CJK_CHARACTER)?.length ?? 0) + (text.match(LATIN_WORD)?.length ?? 0);
 }
 
-/** 判断值是否为普通对象。 */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 /** 读取一章依据的原文分段序号；非小说素材（segmentCount 为 0）一律返回空数组。 */
 function readSources(item: unknown, seq: number, segmentCount: number, issues: string[]): number[] {
   if (segmentCount === 0) {
@@ -142,13 +154,13 @@ function readSources(item: unknown, seq: number, segmentCount: number, issues: s
 
 /**
  * 校验并整理模型返回的章节大纲，章节序号按顺序从 1 分配。
- * @param raw 解析后的 JSON，形如 { "chapters": [{ "title": "…", "summary": "…" }] }，也接受直接的数组。
+ * @param raw 解析后的 JSON，形如 { "chapters": [{ "title": "…", "summary": "…" }] }。
  * @param params 创意生成参数。
  * @param segmentCount 小说原文的分段数；大于 0 时每章必须给出依据的原文分段序号 sources。
  * @throws GeneratedOutputError 格式不对或章节数超过上限。
  */
 export function parseOutline(raw: unknown, params: CreativeParams, segmentCount = 0): ChapterOutlineItem[] {
-  const items: unknown = Array.isArray(raw) ? raw : isRecord(raw) ? raw.chapters : undefined;
+  const items: unknown = isRecord(raw) ? raw.chapters : undefined;
   if (!Array.isArray(items)) {
     throw new GeneratedOutputError(['大纲必须是包含 chapters 数组的 JSON，例如 {"chapters":[{"title":"…","summary":"…"}]}。']);
   }

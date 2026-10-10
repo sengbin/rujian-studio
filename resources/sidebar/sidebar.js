@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
-// 备注：请求名称与 src/sidebar/sidebar-handlers.ts 一致；依赖 shared/host-bridge.js 与界面组件库。
+// 备注：请求名称与 src/sidebar/sidebar-handlers.ts 一致；依赖 shared/host-bridge.js、shared/page-format.js 与界面组件库。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -18,7 +18,6 @@ const REQUEST_READ_STATUS = 'sidebar.readStatus';
 const EVENT_STATUS_CHANGED = 'sidebar.statusChanged';
 const NOTICE_TITLE = '提示';
 const UNAVAILABLE_MESSAGE = '该功能尚未开放。';
-const GENERIC_ERROR_MESSAGE = '操作失败，请重试。';
 
 /**
  * 通知宿主某一菜单行的按钮被点击；宿主未处理（功能尚未开放）时用页内对话框提示。
@@ -30,7 +29,7 @@ async function notifyClick(row, target) {
     const result = await window.hostBridge.request(REQUEST_OPEN, { itemId: row.dataset.itemId, target });
     if (!result.handled) await aiUi.alert({ title: NOTICE_TITLE, message: UNAVAILABLE_MESSAGE });
   } catch (error) {
-    await aiUi.alert({ title: NOTICE_TITLE, message: (error && error.message) || GENERIC_ERROR_MESSAGE });
+    await aiUi.alert({ title: NOTICE_TITLE, message: window.pageFormat.errorText(error) });
   }
 }
 

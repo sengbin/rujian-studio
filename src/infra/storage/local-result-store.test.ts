@@ -12,7 +12,7 @@ import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import * as path from 'node:path';
 import { test } from 'node:test';
-import { RESULT_VIDEO_MAX_BYTES } from '../../domain/rules/generation-rules';
+import { RESULT_VIDEO_MAX_BYTES } from '../../domain/rules/tail-frame-rules';
 import { LocalResultStore } from './local-result-store';
 
 const LOCATION = { projectId: 1, workId: 2, episodeId: 3 };

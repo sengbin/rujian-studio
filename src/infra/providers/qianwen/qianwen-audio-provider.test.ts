@@ -8,9 +8,10 @@
 // ------------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { mock, test } from 'node:test';
 import { ProviderError } from '../../../domain/errors';
 import { AudioGenerationRequest, MediaInput, ProviderCallContext } from '../../../domain/ports/provider-adapters';
+import { QianwenApiClient } from './qianwen-api-client';
 import { QianwenAudioProvider } from './qianwen-audio-provider';
 import { FakeResponse, createFakeFetch } from '../shared/testing/fake-fetch';
 
@@ -158,6 +159,22 @@ test('提交：语音接口——text_prompt 与 Base64 参考音频，结果编
   assert.equal(calls.length, 1, '查询不再发请求');
 });
 
+test('提交：同步生成用 120 秒的专用总超时，两个接口都一样', async () => {
+  const postJson = mock.method(QianwenApiClient.prototype, 'postJson', async () => ({ output: { audio: { url: 'https://oss.test/a.wav' } } }));
+  try {
+    const { provider } = createProvider();
+    await provider.submit(speech(), CONTEXT);
+    await provider.submit(music(), CONTEXT);
+    assert.equal(postJson.mock.calls.length, 2);
+    for (const call of postJson.mock.calls) {
+      assert.deepEqual(call.arguments[3], {});
+      assert.equal(call.arguments[4], 120_000);
+    }
+  } finally {
+    postJson.mock.restore();
+  }
+});
+
 test('提交：音乐接口——prompt 与专有参数写入 input，时长取自 usage', async () => {
   const { calls, provider } = createProvider([{ body: { output: { audio: { url: 'https://oss.test/m.mp3' }, finish_reason: 'stop' }, usage: { duration: 200 } } }]);
   const ref = await provider.submit(music({ extraParams: { instrumental: true, gender: 'male' } }), CONTEXT);
@@ -170,10 +187,11 @@ test('提交：音乐接口——prompt 与专有参数写入 input，时长取�
   assert.deepEqual((await provider.query(ref)).result, { audioUrl: 'https://oss.test/m.mp3', durationSeconds: 200 });
 });
 
-test('提交：平台返回 http 开头的音频地址时升级为 https', async () => {
+test('提交：平台返回非 https 的音频地址时报服务端错误，不改写', async () => {
   const { provider } = createProvider([{ body: { output: { audio: { url: 'http://oss.test/a.wav' }, finish_reason: 'stop' } } }]);
-  const ref = await provider.submit(speech({}), CONTEXT);
-  assert.equal((await provider.query(ref)).result?.audioUrl, 'https://oss.test/a.wav');
+  const error = await rejectedWith(provider.submit(speech({}), CONTEXT));
+  assert.equal(error.category, 'server');
+  assert.match(error.message, /非 https 的音频地址/);
 });
 
 test('提交：校验不通过时不发请求，没有音频地址时报服务端错误', async () => {

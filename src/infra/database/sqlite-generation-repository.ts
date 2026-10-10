@@ -25,6 +25,7 @@ import { AssetFileStore } from '../../domain/ports/asset-file-store';
 import { GenerationRepository, JobMediaReader } from '../../domain/ports/generation-repository';
 import { MediaInput } from '../../domain/ports/provider-adapters';
 import { removeUnreferencedFiles } from './asset-file-cleanup';
+import { placeholders } from './sql-placeholders';
 import { runInTransaction } from './transaction';
 
 /** video_jobs 表的一行。 */
@@ -101,11 +102,6 @@ function toResult(row: ResultRow): VideoResultRecord {
     isSelected: row.is_selected === 1,
     createdAt: row.created_at
   };
-}
-
-/** 生成 n 个占位符。 */
-function placeholders(count: number): string {
-  return Array.from({ length: count }, () => '?').join(', ');
 }
 
 /** 基于 SQLite 的生成任务仓库，同时负责读取任务素材内容。 */

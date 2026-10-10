@@ -4,11 +4,11 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：所有字段值以文本传输：选择类字段未选择时为空串，复选框、开关为 true/false，多选（checkboxes）为 JSON 数组文本，文件（file）为“[{name, mimeType, size, data}]”的 JSON 文本（data 为 Base64）。
+// 备注：所有字段值以文本传输：选择类字段未选择时为空串，多选（checkboxes）为 JSON 数组文本，文件（file）为“[{name, mimeType, size, data}]”的 JSON 文本（data 为 Base64）。
 // ------------------------------------------------------------------------
 
-/** 表单控件类型，对应界面组件库的控件：单行、多行、下拉、单选组、复选框、开关、复选框组、文件选择。 */
-export type FormControl = 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'switch' | 'checkboxes' | 'file';
+/** 表单控件类型，对应界面组件库的控件：单行、多行、下拉、单选组、复选框组、文件选择。 */
+export type FormControl = 'text' | 'textarea' | 'select' | 'radio' | 'checkboxes' | 'file';
 
 /** 单个字段的描述。 */
 export interface FormFieldSchema {
@@ -48,8 +48,6 @@ export interface FormFieldSchema {
   };
   /** 选项随可用模型实时刷新时，选中第一项（如“沿用默认（模型名）”）的字段改选新的第一项；仅 select 使用。 */
   readonly followsFirstOption?: boolean;
-  /** 显示但不能选中的选项（须在 options 内）；仅 radio 使用，宿主提交时仍会校验。 */
-  readonly disabledOptions?: readonly string[];
   /** 下拉框是否提供“其他（手动输入）”；仅 select 使用。 */
   readonly allowCustom?: boolean;
   /** 输入框的占位示例文字；下拉框用它作为“未选择”项（值为空串）的显示文字，不填为“请选择”。 */
@@ -95,21 +93,6 @@ export interface FormSubmitActionSchema {
   };
 }
 
-/** 表单里的一个动作按钮：把当前字段值发给宿主执行（可能较慢，可取消），结果回填到指定字段。 */
-export interface FormActionSchema {
-  /** 动作键，对应 FormDefinition.actions 的键。 */
-  readonly key: string;
-  readonly label: string;
-  /** 按钮显示在这个字段之前。 */
-  readonly before: string;
-  /** 执行成功后会被回填的字段键；这些字段已有内容时，回填前先询问是否覆盖。 */
-  readonly fills: readonly string[];
-  /** 随请求附带图片的文件字段键：只取前若干张、缩小后发送；不填则不发送任何文件字段。 */
-  readonly imageField?: string;
-  /** 随请求附带的图片数量上限；仅 imageField 有值时使用。 */
-  readonly maxImages?: number;
-}
-
 /** 表单描述。 */
 export interface FormSchema {
   /** 页面标题。 */
@@ -117,8 +100,6 @@ export interface FormSchema {
   /** 提交按钮文字。 */
   readonly submitLabel: string;
   readonly fields: readonly FormFieldSchema[];
-  /** 字段动作按钮，显示在指定字段之前。 */
-  readonly actions?: readonly FormActionSchema[];
   /** 多个提交按钮；不填则只有 submitLabel 一个提交按钮。 */
   readonly submitActions?: readonly FormSubmitActionSchema[];
 }

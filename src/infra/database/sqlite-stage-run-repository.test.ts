@@ -26,7 +26,7 @@ function createDatabase(): DatabaseSync {
   const database = openDatabase(IN_MEMORY_DATABASE_PATH);
   database.prepare('INSERT INTO projects (name, created_at, updated_at) VALUES (?, ?, ?)').run('项目甲', NOW, NOW);
   database
-    .prepare('INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (1, ?, ?, ?, ?)')
+    .prepare("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (1, ?, ?, 'text', ?, ?)")
     .run('作品甲', 'short_drama', NOW, NOW);
   database
     .prepare('INSERT INTO episodes (work_id, seq, title, created_at, updated_at) VALUES (1, 1, ?, ?, ?)')

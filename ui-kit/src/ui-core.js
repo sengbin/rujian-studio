@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：ui-core.js
-// 说明：界面组件库的基础：全局命名空间 aiUi、元素创建、唯一 id、事件发射器、层容器和控件基类。
+// 说明：界面组件库的基础：全局命名空间 aiUi、元素创建、唯一 id、事件发射器、层容器、控件基类，以及文本转换与字节格式化两个通用小工具。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
@@ -12,9 +12,35 @@
 (function () {
   const aiUi = window.aiUi || (window.aiUi = {});
   const LAYER_CLASS = 'ui-layer';
+  const BYTE_UNITS = ['B', 'KB', 'MB', 'GB'];
+  const BYTE_STEP = 1024;
 
   let idCounter = 0;
   let layerElement = null;
+
+  /**
+   * 值统一转为文本，空值（undefined、null）按空串。
+   * @param {unknown} value 任意值。
+   * @returns {string}
+   */
+  aiUi.toText = function (value) {
+    return value === undefined || value === null ? '' : String(value);
+  };
+
+  /**
+   * 字节数的可读文字：按 1024 进位，单位 B、KB、MB、GB；B 取整，其余保留一位小数，如 “1.5 MB”。
+   * @param {number} size 字节数。
+   * @returns {string}
+   */
+  aiUi.formatBytes = function (size) {
+    let value = size;
+    let unit = 0;
+    while (value >= BYTE_STEP && unit < BYTE_UNITS.length - 1) {
+      value /= BYTE_STEP;
+      unit += 1;
+    }
+    return `${unit === 0 ? value : value.toFixed(1)} ${BYTE_UNITS[unit]}`;
+  };
 
   /**
    * 生成页面内唯一的元素 id。

@@ -249,6 +249,8 @@ body {
 
 .wb-detail-title {
   margin: 0 0 2px;
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-strong);
 }
 
 .wb-detail-summary {
@@ -437,9 +439,46 @@ body {
 }
 
 /* ---------- 右栏：步骤页签与面板 ---------- */
-/* 页签条与页签的通用样式见组件库的卡片式 ui-tabs，这里只管页签里的内容 */
+/* 页签条与页签：卡片式（带图标、标题和副文字的步骤导航），等宽排列，选中项用底部强调线加底色表示；基础外观见组件库的 ui-tabs */
 .wb-steps__tabs {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  min-height: var(--panel-header-height);
   border-bottom: 1px solid var(--divider);
+}
+
+.wb-steps__tabs .ui-tab {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  padding: var(--space-sm) var(--space-page);
+  color: var(--text);
+  text-align: left;
+  border-bottom: 2px solid transparent;
+  transition: background-color var(--hover-duration) ease, border-color var(--hover-duration) ease;
+}
+
+.wb-steps__tabs .ui-tab:hover {
+  border-radius: 0;
+}
+
+.wb-steps__tabs .ui-tab:active {
+  background: var(--option-active-bg);
+}
+
+.wb-steps__tabs .ui-tab[aria-selected="true"],
+.wb-steps__tabs .ui-tab[aria-selected="true"]:hover,
+.wb-steps__tabs .ui-tab[aria-selected="true"]:active {
+  background: var(--option-selected-bg);
+  border-bottom-color: var(--host-button-background);
+  font-weight: inherit;
+}
+
+.wb-steps__tabs .ui-tab[aria-selected="true"]::after {
+  display: none;
 }
 
 .wb-steps__panel:focus-visible {
@@ -671,32 +710,9 @@ body {
   margin-top: var(--space-sm);
 }
 
+/* 绑定项的缩略图：沿用组件库的 .ui-thumb，只改尺寸为一行的高度 */
 .wb-bind-thumb {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: var(--row-height-lg);
-  height: var(--row-height-lg);
-  overflow: hidden;
-  border: 1px solid var(--table-border);
-  border-radius: var(--radius-md);
-}
-
-.wb-bind-thumb--empty {
-  color: var(--text-muted);
-  font-size: var(--font-size-caption);
-}
-
-.wb-bind-thumb--button {
-  padding: 0;
-  background: none;
-  cursor: pointer;
-}
-
-.wb-bind-thumb--button:focus-visible {
-  outline: 1px solid var(--host-focus-border);
-  outline-offset: 1px;
+  --thumb-size: var(--row-height-lg);
 }
 
 .wb-bind-picker__search {

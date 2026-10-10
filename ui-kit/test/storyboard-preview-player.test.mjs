@@ -9,9 +9,9 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { loadScript, makeShot, makeView } from './storyboard-preview-fixtures.mjs';
+import { loadScript, loadTimelineWindow, makeShot, makeView } from './storyboard-preview-fixtures.mjs';
 
-const timelineWindow = loadScript('stage/stage-storyboard-preview-timeline.js');
+const timelineWindow = loadTimelineWindow();
 const timeline = timelineWindow.aiStoryboardTimeline;
 const playerApi = loadScript('stage/stage-storyboard-preview-player.js', timelineWindow).aiStoryboardPlayer;
 

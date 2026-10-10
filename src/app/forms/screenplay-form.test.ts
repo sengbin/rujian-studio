@@ -15,6 +15,7 @@ import { createServiceFixture } from '../services/testing/service-fixture';
 import { FormDefinition } from './form-definition';
 import { SCREENPLAY_FORM_NAMES, createScreenplayFormCatalog } from './screenplay-form';
 import { DEFAULT_TEXT_MODEL_OPTION, createFakeTextModels } from './testing/fake-text-models';
+import { createTestStageStarts } from './testing/stage-starts';
 
 const CREATIVE_PARAMS = { chapterMinWords: 100, chapterMaxWords: 200, maxChapters: 3 };
 
@@ -35,6 +36,7 @@ async function createFixture(kind: '单个短视频' | '多集短片', approveCr
     works: fixture.works,
     screenplays: fixture.screenplays,
     textModels,
+    starts: createTestStageStarts(fixture, textModels),
     onStarted: (workId) => started.push(workId),
     onPicked: (workId) => picked.push(workId)
   });
@@ -117,6 +119,7 @@ test('选择作品：只列创意已确认的作品，标签为“项目 › 作
 
     // 限定项目：该项目下没有可选作品时不能打开。
     await assert.rejects(() => open({ projectId: other.id }, SCREENPLAY_FORM_NAMES.pick), (error) => error instanceof ValidationError && /没有可生成剧本的作品/.test(error.message));
+    await assert.rejects(() => open({ projectId: 'x' }, SCREENPLAY_FORM_NAMES.pick), (error) => error instanceof ValidationError && /项目标识无效/.test(error.message));
   } finally {
     database.close();
   }

@@ -483,7 +483,7 @@
    * 删除确认对话框：红色提示要求在输入框中输入名称，输入一致才能点“删除”。
    * @param {{ title?: string, message: string|string[], details?: string[], confirmName: string, nameLabel?: string,
    *   deleteText?: string, cancelText?: string, modal?: boolean }} options 选项：
-   *   confirmName 需要输入的名称（区分大小写，完全一致）；nameLabel 名称的称呼，如“项目名称”。
+   *   confirmName 需要输入的名称（区分大小写，完全一致）；nameLabel 名称的称呼，如“对象名称”。
    * @returns {Promise<boolean>} 确认删除为 true，其余为 false。
    */
   aiUi.confirmDelete = async function (options) {

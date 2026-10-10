@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：field-readers.ts
-// 说明：读取并校验来自界面的未知类型字段：文本和选项，错误累积到同一个记录中。
+// 说明：读取并校验来自界面的未知类型字段：对象、文本和选项，错误累积到同一个记录中；并提供未知值的对象与空值判断。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
@@ -22,15 +22,39 @@ export interface TextRule {
   readonly maxLength: number;
 }
 
+/** 判断值是否为普通对象（非 null、非数组）。 */
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/** 判断提交的字段值是否为空：缺省、null 或空串；仅含空白的文本不算空。 */
+export function isBlank(value: unknown): value is undefined | null | '' {
+  return value === undefined || value === null || value === '';
+}
+
 /**
  * 把未知输入转换为对象；不是对象时抛出校验错误。
  * @param rawInput 界面提交的原始内容。
  */
 export function readRecord(rawInput: unknown): Record<string, unknown> {
-  if (typeof rawInput !== 'object' || rawInput === null || Array.isArray(rawInput)) {
+  if (!isRecord(rawInput)) {
     throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: '提交内容格式不正确。' });
   }
-  return rawInput as Record<string, unknown>;
+  return rawInput;
+}
+
+/**
+ * 读取对象中的整数标识；缺失或不是整数时抛出校验错误。
+ * @param source 请求载荷对象。
+ * @param key 标识字段的键。
+ * @param label 用于错误提示的对象名称，如“项目”。
+ */
+export function readIdentifier(source: Record<string, unknown>, key: string, label: string): number {
+  const value = source[key];
+  if (typeof value !== 'number' || !Number.isInteger(value)) {
+    throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: `${label}标识无效。` });
+  }
+  return value;
 }
 
 /**
@@ -39,11 +63,13 @@ export function readRecord(rawInput: unknown): Record<string, unknown> {
  * @param entityLabel 用于错误提示的对象名称，如“项目”。
  */
 export function readEntityId(rawInput: unknown, entityLabel: string): number {
-  const id = readRecord(rawInput).id;
-  if (typeof id !== 'number' || !Number.isInteger(id)) {
-    throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: `${entityLabel}标识无效。` });
-  }
-  return id;
+  return readIdentifier(readRecord(rawInput), 'id', entityLabel);
+}
+
+/** 读取模型返回的文本字段并去除首尾空白；不是文本时按空串处理。 */
+export function textOf(record: Record<string, unknown>, key: string): string {
+  const value = record[key];
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 /**
@@ -106,7 +132,7 @@ export function readOptionalChoice(
   errors: FieldErrors
 ): string | null {
   const value = source[key];
-  if (value === undefined || value === null || value === '') {
+  if (isBlank(value)) {
     return null;
   }
   if (typeof value !== 'string' || !options.includes(value)) {

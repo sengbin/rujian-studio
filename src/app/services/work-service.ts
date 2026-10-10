@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：work-service.ts
-// 说明：作品应用服务：列出项目或某种素材来源下的作品及其创意、剧本阶段状态、检查名称唯一、创建、修改与删除作品，变化后通知订阅者。
+// 说明：作品应用服务：列出项目、某种素材来源或列表页某个视图下的作品及其创意、剧本阶段状态、检查名称唯一、创建、修改与删除作品，变化后通知订阅者。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
@@ -15,6 +15,7 @@ import { StageRunRepository } from '../../domain/ports/stage-run-repository';
 import { WorkRepository } from '../../domain/ports/work-repository';
 import { isMultiEpisode } from '../../domain/rules/production-profile-rules';
 import { isStale, toDisplayStatus } from '../../domain/rules/stage-review-rules';
+import { SCREENPLAY_VIEW, STORYBOARD_VIEW, WorkListView, isListedInScreenplayView } from '../../domain/rules/work-list-rules';
 import { NormalizedWorkCreation, WORK_KIND_LABELS, normalizeWorkUpdate } from '../../domain/rules/work-rules';
 import { ChangeNotifier } from './change-notifier';
 
@@ -85,6 +86,17 @@ export class WorkService {
   /** 列出所有项目、所有素材来源的作品及其阶段状态。 */
   listAllWorks(): WorkListItem[] {
     return this.works.listAll().map((work) => this.toListItem(work));
+  }
+
+  /**
+   * 列出作品列表页某个视图下的作品：素材来源视图列该来源的全部作品，剧本视图只列创意已确认或已有剧本记录的作品；
+   * 分镜脚本视图这里列出全部作品，其“剧本已确认或已有分镜脚本”的筛选见 isListedInStoryboardView，因为它依赖分镜脚本的汇总。
+   */
+  listForView(view: WorkListView): WorkListItem[] {
+    if (view === SCREENPLAY_VIEW) {
+      return this.listAllWorks().filter(isListedInScreenplayView);
+    }
+    return view === STORYBOARD_VIEW ? this.listAllWorks() : this.listWorksBySource(view);
   }
 
   /** 按标识查找作品；不存在返回 undefined。 */

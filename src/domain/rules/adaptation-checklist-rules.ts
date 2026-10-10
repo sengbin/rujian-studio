@@ -9,7 +9,7 @@
 
 import { GeneratedOutputError } from '../errors';
 import { AdaptationChecklist, AdaptationOption, AdaptationOptionKind } from '../models/adaptation-checklist';
-import { FieldErrors, assertNoFieldErrors, readRecord } from './field-readers';
+import { FieldErrors, assertNoFieldErrors, isRecord, readRecord } from './field-readers';
 import { evaluateCalibration } from './timing-calibration-rules';
 
 /** 取舍项文字字段的长度上限。 */
@@ -51,19 +51,14 @@ export function needsAdaptation(baselineSeconds: number, targetSeconds: number, 
   return !result.withinTolerance && result.deviationRatio > 0;
 }
 
-/** 判断值是否为普通对象。 */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 /**
  * 校验并整理模型返回的取舍项；标识按顺序分配，用户勾选状态初始等于模型的默认建议。
- * @param raw 解析后的 JSON，形如 { "options": [{ "kind", "label", "reason", "affectedRefs", "estimatedWordsSaved", "recommended" }] }，也接受直接的数组；没有可取舍的内容时 options 为空数组。
+ * @param raw 解析后的 JSON，形如 { "options": [{ "kind", "label", "reason", "affectedRefs", "estimatedWordsSaved", "recommended" }] }；没有可取舍的内容时 options 为空数组。
  * @param wordsPerSecond 语速（字/秒），用于把节省字数换算为秒。
  * @throws GeneratedOutputError 格式不对或字段不合法。
  */
 export function parseAdaptationOptions(raw: unknown, wordsPerSecond: number): AdaptationOption[] {
-  const items: unknown = Array.isArray(raw) ? raw : isRecord(raw) ? raw.options : undefined;
+  const items: unknown = isRecord(raw) ? raw.options : undefined;
   if (!Array.isArray(items)) {
     throw new GeneratedOutputError(['取舍清单必须是包含 options 数组的 JSON；没有可取舍的内容时给空数组。']);
   }

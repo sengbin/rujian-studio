@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：数据和操作由 workbench.js 注入的 host 提供，其中 loadVersions 在打开时与这一组的任务变化后读取该组全部历史成功版本（不受工作台列表只显示最近若干条任务的限制）；必须先于 workbench.js 加载；对外是 window.aiVersions 的 open、refresh；视频本身用系统播放器打开对比观看，页面内不播放。
+// 备注：数据和操作由 workbench.js 注入的 host 提供，其中 loadVersions 在打开时与这一组的任务变化后读取该组全部历史成功版本（不受工作台列表只显示最近若干条任务的限制）；必须先于 workbench.js 加载；依赖 shared/page-format.js（pageFormat）；对外是 window.aiVersions 的 open、refresh；视频本身用系统播放器打开对比观看，页面内不播放。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -13,6 +13,8 @@
   /** 对比时最多勾选的版本数。 */
   const COMPARE_COUNT = 2;
   const COMPARE_HINT = '勾选两个版本后可对比提交时的参数、结果信息和提示词；视频请点“播放”在系统播放器中对比观看。';
+
+  const { formatDateTime } = window.pageFormat;
 
   /** 当前打开的版本页；没有打开时为 null。 */
   let dialog = null;
@@ -26,13 +28,6 @@
   /** 宿主页面里这一组的变化摘要：序号、过期提示与任务状态变化时需要重新读取全部版本。 */
   function groupKey(group) {
     return JSON.stringify(group ? [group.seq, group.staleNote, group.jobs.map((job) => [job.id, job.status, job.result ? job.result.isSelected : null])] : null);
-  }
-
-  /** 在提示区显示文字；空串表示清除。 */
-  function showMessage(text, isError) {
-    dialog.messageElement.textContent = text;
-    dialog.messageElement.className = isError ? 'ui-message status-error' : 'ui-message status-success';
-    dialog.messageElement.hidden = text === '';
   }
 
   /** 按勾选数量刷新“对比”按钮。 */
@@ -107,7 +102,7 @@
   async function adopt(job) {
     const outcome = await dialog.host.select(job.result, dialog.groupId);
     if (!dialog || outcome.cancelled) return;
-    showMessage(outcome.ok ? `已采用第 ${job.attempt} 次的结果。` : outcome.message, !outcome.ok);
+    dialog.message.show(outcome.ok ? `已采用第 ${job.attempt} 次的结果。` : outcome.message, !outcome.ok);
   }
 
   /** 版本列表的列：勾选、版本与时间、提交参数与结果、操作。 */
@@ -127,7 +122,7 @@
             'div',
             {},
             aiUi.h('div', { class: 'wb-versions__title' }, aiUi.h('strong', { text: `第 ${job.attempt} 次` }), job.result.isSelected ? aiUi.chip({ text: '已采用' }) : null),
-            aiUi.h('div', { class: 'description', text: new Date(job.finishedAt || job.createdAt).toLocaleString('zh-CN') })
+            aiUi.h('div', { class: 'description', text: formatDateTime(job.finishedAt || job.createdAt) })
           )
       },
       {
@@ -176,9 +171,9 @@
     if (dialog !== current || token !== current.loadToken) return;
     if (!outcome.ok) {
       current.status = 'failed';
-      showMessage(outcome.message, true);
+      current.message.show(outcome.message, true);
     } else {
-      if (current.status === 'failed') showMessage('', false);
+      if (current.status === 'failed') current.message.show('', false);
       current.jobs = outcome.jobs;
       current.status = 'ready';
     }
@@ -197,12 +192,12 @@
    */
   function open(groupId, host) {
     if (dialog) return;
-    const messageElement = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
+    const message = aiUi.message();
     const bodyElement = aiUi.h('div');
     const compareButton = aiUi.button({ text: '', compact: true, disabled: true, onClick: compareSelected });
     const hint = aiUi.h('p', { class: 'description', text: COMPARE_HINT });
-    const content = aiUi.h('div', { class: 'wb-versions' }, aiUi.h('div', { class: 'wb-versions__bar' }, compareButton.element, hint), messageElement, bodyElement);
-    dialog = { host, groupId, selected: new Set(), jobs: [], status: 'loading', loadToken: 0, messageElement, bodyElement, compareButton, page: null, key: '' };
+    const content = aiUi.h('div', { class: 'wb-versions' }, aiUi.h('div', { class: 'wb-versions__bar' }, compareButton.element, hint), message.element, bodyElement);
+    dialog = { host, groupId, selected: new Set(), jobs: [], status: 'loading', loadToken: 0, message, bodyElement, compareButton, page: null, key: '' };
     const group = currentGroup();
     dialog.key = groupKey(group);
     dialog.page = aiUi.openPage({

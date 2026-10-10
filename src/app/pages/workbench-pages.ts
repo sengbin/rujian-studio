@@ -16,11 +16,13 @@ import { MessageRouter } from '../messaging/message-router';
 import { WORKBENCH_PAGE_RESOURCES } from '../panels/page-resources';
 import { PanelManager } from '../panels/panel-manager';
 import { AssetCategoryService } from '../services/asset-category-service';
+import { AssetCreationService } from '../services/asset-creation-service';
 import { AssetGenerationService } from '../services/asset-generation-service';
 import { AssetPromptService } from '../services/asset-prompt-service';
 import { AssetService } from '../services/asset-service';
 import { ProjectService } from '../services/project-service';
 import { ProviderService } from '../services/provider-service';
+import { StageStartService } from '../services/stage-start-service';
 import { TextSettingsService } from '../services/text-settings-service';
 import { VoiceDraftService } from '../services/voice-draft-service';
 import { VoicePreviewService } from '../services/voice-preview-service';
@@ -43,6 +45,10 @@ export interface WorkbenchPageServices extends WorkbenchServices {
   readonly prompts: AssetPromptService;
   readonly providers: ProviderService;
   readonly textModels: TextSettingsService;
+  /** 重新生成分镜脚本时保存文本模型并启动生成。 */
+  readonly starts: StageStartService;
+  /** 从实体新建资产时创建、绑定并出图。 */
+  readonly assetCreations: AssetCreationService;
   readonly voices: VoicePreviewService;
   readonly voiceDrafts: VoiceDraftService;
 }
@@ -60,15 +66,15 @@ export class WorkbenchPages {
     if (this.panels.reveal(WORKBENCH_PANEL_KEY)) {
       return;
     }
-    const { generation, profiles, bindings, assets, assetGeneration, categories, prompts, works, stages, projects, storyboards, providers, textModels } = this.services;
+    const { generation, profiles, bindings, assets, assetGeneration, categories, prompts, works, stages, projects, storyboards, providers, textModels, starts, assetCreations } = this.services;
     const router = new MessageRouter();
     registerWorkbenchHandlers(router, this.services, this.host);
     // 分镜动画预览的台词试听与音色生成，与阶段产出请求一样按作品校验归属。
     registerVoicePreviewHandlers(router, this.services.voices, this.services.voiceDrafts, (payload) => works.getWork(readEntityId({ id: readRecord(payload).workId }, '作品')).id);
     // 产出层里的“重新生成”会弹出分镜表单（作品和集都已确定，开始后产出层随阶段事件自行刷新）；实体绑定页的“新建资产”弹出资产表单。路由器只能注册一次表单请求，因此合并两个目录。
     const catalog: FormCatalog = new Map([
-      ...createStoryboardFormCatalog({ projects, works, storyboards, textModels, profiles, providers, onStarted: () => undefined, onPicked: () => undefined }),
-      ...createAssetFormCatalog({ projects, assets, categories, prompts, textModels, generation: assetGeneration, entities: bindings })
+      ...createStoryboardFormCatalog({ projects, works, storyboards, textModels, starts, profiles, providers, onStarted: () => undefined, onPicked: () => undefined }),
+      ...createAssetFormCatalog({ projects, assets, categories, prompts, textModels, generation: assetGeneration, creations: assetCreations, entities: bindings })
     ]);
     registerFormHandlers(router, catalog);
 

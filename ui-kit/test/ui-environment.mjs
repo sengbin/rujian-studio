@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：ui-environment.mjs
-// 说明：界面组件库的 DOM 测试环境：用 jsdom 建立页面，按清单顺序加载 src 下的脚本，并提供模拟操作的辅助函数。
+// 说明：界面组件库的 DOM 测试环境：用 jsdom 建立页面，按清单顺序加载 src 下的脚本，再加载页面共用脚本（与真实页面一致），并提供模拟操作的辅助函数。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
@@ -9,8 +9,13 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { scripts, sourceRoot } from './load-manifest.mjs';
+
+/** 页面共用脚本（相对 resources/shared），真实页面在组件库之后、页面自己的脚本之前加载它们。 */
+const SHARED_PAGE_SCRIPTS = ['page-format.js', 'page-icons.js'];
+const sharedRoot = fileURLToPath(new URL('../../resources/shared/', import.meta.url));
 
 /** 内联样式没有给出尺寸时使用的替代尺寸。 */
 const FALLBACK_SIZE = 100;
@@ -45,6 +50,7 @@ export function createUiEnvironment() {
   const { window } = dom;
   installLayoutStubs(window);
   for (const file of scripts) window.eval(readFileSync(join(sourceRoot, file), 'utf8'));
+  for (const file of SHARED_PAGE_SCRIPTS) window.eval(readFileSync(join(sharedRoot, file), 'utf8'));
   return { window, document: window.document, aiUi: window.aiUi, close: () => window.close() };
 }
 

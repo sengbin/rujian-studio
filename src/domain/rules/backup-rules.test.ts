@@ -36,6 +36,8 @@ test('版本高于当前应用：拒绝并说明两个版本号', () => {
 test('缺少核心表或没有结构版本号：判定为不是如见 Studio 的备份', () => {
   assert.match(findBackupFileProblem(inspection({ tableNames: ['projects', 'works'] }), LATEST_VERSION) ?? '', /不是如见 Studio 的数据库备份/);
   assert.match(findBackupFileProblem(inspection({ schemaVersion: 0 }), LATEST_VERSION) ?? '', /不是如见 Studio 的数据库备份/);
+  const withoutFileTable = BACKUP_REQUIRED_TABLES.filter((table) => table !== 'asset_files');
+  assert.match(findBackupFileProblem(inspection({ tableNames: withoutFileTable }), LATEST_VERSION) ?? '', /不是如见 Studio 的数据库备份/, '缺少引用本地文件的表也不能恢复');
 });
 
 test('完整性检查未通过：拒绝并带上原因', () => {

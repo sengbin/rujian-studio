@@ -296,7 +296,7 @@ test('使用情况与删除：被绑定的音频不能改类型；删除资产�
   try {
     const asset = service.createAsset('audio', { name: '音色', audioKind: 'voice', files: files(audioItem('v.wav')) }, UPLOAD);
     const work = database
-      .prepare("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (?, '作品甲', 'short_drama', 't', 't')")
+      .prepare("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (?, '作品甲', 'short_drama', 'text', 't', 't')")
       .run(first.id);
     const episode = database
       .prepare("INSERT INTO episodes (work_id, seq, title, created_at, updated_at) VALUES (?, 2, '雨夜', 't', 't')")
@@ -426,7 +426,7 @@ test('删除项目不影响资产；来源实体随作品删除后资产保留�
   const { database, projects, service, first } = createFixture();
   try {
     const insert = (sql: string, ...params: Array<string | number>) => Number(database.prepare(sql).run(...params).lastInsertRowid);
-    const work = insert("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (?, '作品甲', 'short_video', 't', 't')", first.id);
+    const work = insert("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (?, '作品甲', 'short_video', 'text', 't', 't')", first.id);
     const entity = insert("INSERT INTO script_entities (work_id, kind, name, created_at, updated_at) VALUES (?, 'character', '林夏', 't', 't')", work);
     const asset = service.createAsset('character', { name: '林夏', files: files(imageItem('a.png')) }, { sourceEntityId: entity, fileSource: 'upload' });
     assert.equal(asset.sourceEntityId, entity);
@@ -457,6 +457,51 @@ test('由试听确认的音色样本：创建上传来源的音色参考，记�
     const edited = service.updateAsset(voice.id, { name: '守夜人·音色', audioKind: 'voice', description: '改过', language: '中文', files: files(audioItem('v.wav')) });
     assert.equal(edited.attributes.preset_voice, '小明', '编辑表单没有预置音色字段，修改后仍保留');
     assert.equal(edited.attributes.description, '改过');
+  } finally {
+    database.close();
+  }
+});
+
+test('列表行：附带提示词需更新、有改动未生成与能否生成的标记，有无可用模型按每条资产判断', () => {
+  const { database, service } = createFixture();
+  try {
+    const key = service.createAsset('prop', { name: '钥匙', appearance: '黄铜' });
+    service.createAsset('prop', { name: '锁', appearance: '铁制' });
+    const rows = service.listAssetRows('prop', (asset) => asset.id === key.id);
+    const byName = new Map(rows.map((row) => [row.name, row]));
+    assert.equal(byName.get('钥匙')?.availability.available, true);
+    assert.match(byName.get('锁')?.availability.reason ?? '', /启用图像模型/);
+    assert.deepEqual([byName.get('钥匙')?.isPromptOutdated, byName.get('钥匙')?.hasUngeneratedChanges], [false, false]);
+  } finally {
+    database.close();
+  }
+});
+
+test('切换文件来源：来源必须是 upload 或 generated，无效值被拒绝', () => {
+  const { database, service } = createFixture();
+  try {
+    const asset = service.createAsset('prop', { name: '钥匙' });
+    for (const bogus of [undefined, '', 'bogus', 1]) {
+      assert.throws(() => service.switchFileSource(asset.id, bogus), (error) => error instanceof ValidationError && /文件来源无效/.test(error.message));
+    }
+    assert.equal(service.switchFileSource(asset.id, 'generated').fileSource, 'generated');
+  } finally {
+    database.close();
+  }
+});
+
+test('参考原图与参考音频：返回第一个参考文件的类型与 Base64 内容，没有文件或资产不存在时报错', () => {
+  const { database, service } = createFixture();
+  try {
+    const image = service.createAsset('prop', { name: '钥匙', files: files(imageItem('a.png'), imageItem('b.png', JPEG)) }, UPLOAD);
+    assert.deepEqual(service.readReferenceImage(image.id), { mime: 'image/png', data: PNG.toString('base64') });
+    const voice = service.createAsset('audio', { name: '嗓音', audioKind: 'voice', files: files(audioItem('v.wav')) }, UPLOAD);
+    assert.deepEqual(service.readReferenceAudio(voice.id), { mime: 'audio/wav', data: WAV.toString('base64') });
+
+    const empty = service.createAsset('prop', { name: '锁' });
+    assert.throws(() => service.readReferenceImage(empty.id), (error) => error instanceof NotFoundError && /没有参考图/.test(error.message));
+    assert.throws(() => service.readReferenceAudio(empty.id), (error) => error instanceof NotFoundError && /没有参考音频/.test(error.message));
+    assert.throws(() => service.readReferenceImage(9999), NotFoundError);
   } finally {
     database.close();
   }

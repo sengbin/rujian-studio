@@ -196,6 +196,11 @@
   border-bottom-color: var(--sbp-line);
 }
 
+/* 检查页签有警告时，数量用警示色 */
+.sbp-tab--warning .ui-tab__count {
+  color: var(--status-warning);
+}
+
 .sbp-info__body {
   flex: 1 1 auto;
   min-height: 0;

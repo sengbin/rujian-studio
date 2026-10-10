@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：类型由入口决定、创建后不能修改，资产不属于项目；文件来源由入口参数 fileSource 决定（缺省为生成）：上传表单只有名称、分类、必填的文件（音频另有类型、描述、语言），没有提示词按钮；生成表单没有文件字段；编辑时可用 fileSource=upload 打开上传表单，保存后资产改用上传；字段约束取自领域规则常量，保证界面与宿主校验一致；风格留空表示不指定风格，语言仅对音色参考有效；“所属分类”是下拉，选项为该类型已有的分类名称，不选（空串）表示不分类，提交时由分类服务解析为分类标识（null 为不分类）；新建表单（含从实体新建）的生成来源带“生成方式”与出图（音频）参数（见 asset-generation-fields.ts）：“仅创建”只保存，“创建并生成”按所选方式直接出图、后台生成提示词，或生成提示词后自动出图，创建后提交生成失败时删除刚创建的资产，不留半成品；编辑表单的提交按钮区分“仅保存”与“保存并重新生成提示词”，后者在保存后启动后台提示词生成，并带文本模型下拉，所选模型只对本次生成提示词有效；从实体新建（参数带 episodeId、entityId）时按实体设定预填，画面风格预填为作品所在项目的视觉风格，默认生成方式为“AI 生成提示词并出图”，保存后自动绑定为形象。
+// 备注：类型由入口决定、创建后不能修改，资产不属于项目；文件来源由入口参数 fileSource 决定（缺省为生成）：上传表单只有名称、分类、必填的文件（音频另有类型、描述、语言），没有提示词按钮；生成表单没有文件字段；编辑时可用 fileSource=upload 打开上传表单，保存后资产改用上传；字段约束取自领域规则常量，保证界面与宿主校验一致；风格留空表示不指定风格，语言仅对音色参考有效；“所属分类”是下拉，选项为该类型已有的分类名称，不选（空串）表示不分类，提交时由分类服务解析为分类标识（null 为不分类）；新建表单（含从实体新建）的生成来源带“生成方式”与出图（音频）参数（见 asset-generation-fields.ts）：“仅创建”只保存，“创建并生成”按所选方式直接出图、后台生成提示词，或生成提示词后自动出图，创建后继续的步骤失败时由新建资产服务删除刚创建的资产，不留半成品；编辑表单的提交按钮区分“仅保存”与“保存并重新生成提示词”，后者在保存后启动后台提示词生成，并带文本模型下拉，所选模型只对本次生成提示词有效；从实体新建（参数带 episodeId、entityId）时按实体设定预填，画面风格预填为作品所在项目的视觉风格，默认生成方式为“AI 生成提示词并出图”，保存后自动绑定为形象。
 // ------------------------------------------------------------------------
 
 import { FORM_LEVEL_ERROR_KEY, ValidationError } from '../../domain/errors';
@@ -30,36 +30,35 @@ import {
   ASSET_EXTRA_MAX_LENGTH,
   ASSET_FILE_FIELD_KEY,
   ASSET_IMAGE_EXTENSIONS,
-  ASSET_IMAGE_MAX_BYTES,
   ASSET_IMAGE_MAX_FILES,
   ASSET_NAME_MAX_LENGTH,
   ASSET_STYLE_MAX_LENGTH,
-  readAssetKind
+  readAssetKind,
+  readOptionalAssetFileSource
 } from '../../domain/rules/asset-rules';
 import { buildAssetPrefill } from '../../domain/rules/entity-asset-prefill';
 import { hasPrompt } from '../../domain/rules/asset-generation-rules';
 import { readEntityId, readRecord } from '../../domain/rules/field-readers';
+import { IMAGE_FILE_MAX_BYTES } from '../../domain/rules/image-size';
 import { AssetService, DUPLICATE_ASSET_NAME_MESSAGE } from '../services/asset-service';
 import { ASSET_CATEGORY_FIELD_KEY, AssetCategoryService } from '../services/asset-category-service';
 import { GenerationModelOption } from '../services/asset-generation-service';
 import { AssetPromptService } from '../services/asset-prompt-service';
+import { AssetCreationService } from '../services/asset-creation-service';
 import { ProjectService } from '../services/project-service';
 import { WorkTextModelState } from '../services/text-settings-service';
 import { AsyncFormFactory, FormCatalog, FormDefinition, FormFactory, FormValues } from './form-definition';
 import { FormFieldSchema, FormSubmitActionSchema } from './form-schema';
+import { storedFilesToFieldValue } from './file-field-value';
 import { TEXT_MODEL_FIELD_KEY, TextModelStates, createTextModelField, readTextModelKey, textModelInitialValue } from './text-model-field';
 import { ASSET_PROMPT_FORM_NAME, createAssetPromptForm } from './asset-prompt-form';
 import {
   AssetRunState,
   GenerateMode,
-  assertDirectPromptReady,
-  assertTextModelAvailable,
   createGenerationFields,
   createGenerationInitialValues,
-  needsRun,
-  needsText,
-  readGenerateMode,
-  readRunRequest
+  readFollowUp,
+  readGenerateMode
 } from './asset-generation-fields';
 
 /** 资产表单在表单目录中的名称，页面据此请求打开。 */
@@ -233,13 +232,13 @@ function createImageFileField(): FormFieldSchema {
   return {
     key: ASSET_FILE_FIELD_KEY,
     label: '参考图',
-    description: `至少 1 张，最多 ${ASSET_IMAGE_MAX_FILES} 张；PNG、JPEG、WebP，每张不超过 ${ASSET_IMAGE_MAX_BYTES / MEGABYTE} MB，点击缩略图查看原图，可调整顺序；保存时自动生成缩略图`,
+    description: `至少 1 张，最多 ${ASSET_IMAGE_MAX_FILES} 张；PNG、JPEG、WebP，每张不超过 ${IMAGE_FILE_MAX_BYTES / MEGABYTE} MB，点击缩略图查看原图，可调整顺序；保存时自动生成缩略图`,
     control: 'file',
     required: true,
     accept: ASSET_IMAGE_EXTENSIONS,
     multiple: true,
     maxFiles: ASSET_IMAGE_MAX_FILES,
-    maxFileBytes: ASSET_IMAGE_MAX_BYTES,
+    maxFileBytes: IMAGE_FILE_MAX_BYTES,
     preview: 'image',
     derive: 'image'
   };
@@ -316,31 +315,16 @@ function createFields(kind: AssetKind, categories: AssetCategoryService, fileSou
   return [createNameField(kind), createCategoryField(kind, categoryNames), ...sourceFields];
 }
 
-/** 读取表单参数里的文件来源：只接受 upload、generated，不传返回 undefined。 */
-function readOptionalFileSource(value: unknown): AssetFileSource | undefined {
-  if (value === undefined || value === 'generated' || value === 'upload') {
-    return value;
-  }
-  throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: '文件来源无效。' });
-}
-
 /** 读取新建表单参数里的文件来源：缺省为生成。 */
 function readFileSource(value: unknown): AssetFileSource {
-  return readOptionalFileSource(value) ?? 'generated';
-}
-
-/** 已保存的上传文件转文件字段的初始值（与界面提交的格式一致：JSON 文本，Base64 内容）。 */
-function filesToValue(files: readonly AssetFileRecord[]): string {
-  return JSON.stringify(
-    files.map((file) => ({ name: file.fileName, mimeType: file.mime, size: file.content.length, data: file.content.toString('base64') }))
-  );
+  return readOptionalAssetFileSource(value) ?? 'generated';
 }
 
 /** 资产转表单初始值：未设置的选项为空串；上传来源的表单带上已上传的文件，生成来源的表单没有文件字段。 */
 function toFormValues(asset: AssetRecord, fileSource: AssetFileSource, uploadFiles: readonly AssetFileRecord[]): FormValues {
   const values: Record<string, string> = { name: asset.name, extra: asset.extraRequirements };
   if (fileSource === 'upload') {
-    values[ASSET_FILE_FIELD_KEY] = filesToValue(uploadFiles);
+    values[ASSET_FILE_FIELD_KEY] = storedFilesToFieldValue(uploadFiles);
   }
   if (asset.kind === 'audio') {
     const audioKind = asset.attributes.audio_kind as AudioKind | undefined;
@@ -364,10 +348,9 @@ function createUploadTitle(kind: AssetKind): string {
   return kind === 'audio' ? '上传音频' : `上传${ASSET_KIND_LABELS[kind]}图片`;
 }
 
-/** 新建表单需要的出图（音频）能力：列出可选模型、提交生成（AssetGenerationService 实现）。 */
+/** 新建表单需要的出图（音频）能力：列出可选模型（AssetGenerationService 实现）；提交生成由新建资产服务完成。 */
 export interface AssetRunSource {
   listModelOptions(kind: AssetKind): Promise<readonly GenerationModelOption[]>;
-  submit(rawInput: unknown): Promise<unknown>;
 }
 
 /** 新建资产表单依赖的服务。 */
@@ -380,16 +363,17 @@ export interface AssetFormDependencies {
   readonly textModels: TextModelStates;
   /** 读取所属分类的选项，并把表单选择的分类名称解析为分类标识。 */
   readonly categories: AssetCategoryService;
-  /** 新建时选择出图（音频）模型并直接提交生成。 */
+  /** 新建时选择出图（音频）模型。 */
   readonly generation: AssetRunSource;
-  /** 从实体新建资产时读取实体设定并绑定；不支持从实体新建的页面可以不传。 */
+  /** 创建资产（从实体新建时同时绑定）并按所选方式出图或生成提示词。 */
+  readonly creations: Pick<AssetCreationService, 'createAndContinue'>;
+  /** 从实体新建资产时读取实体设定；不支持从实体新建的页面可以不传。 */
   readonly entities?: AssetEntitySource;
 }
 
-/** 从实体新建资产需要的能力：读取实体设定、把新资产绑定到实体（BindingService 实现）。 */
+/** 从实体新建资产需要的能力：读取实体设定（BindingService 实现）。 */
 export interface AssetEntitySource {
   getEntityDetail(episodeId: number, entityId: number): BindingEntityDetail;
-  bind(rawInput: unknown): unknown;
 }
 
 /** 读取文本模型选择状态；上传来源的表单没有提示词生成，不需要。 */
@@ -461,10 +445,10 @@ interface GeneratedCreateSpec {
 
 /**
  * 创建“生成”来源的新建表单：设定字段之后是“生成方式”与出图（音频）参数；“仅创建”只保存，“创建并生成”按所选方式继续。
- * 提交前先把能校验的都校验好；创建之后没能完成（绑定实体、提交生成）时删除刚创建的资产，用户修改后重新提交不会因重名被拒绝。
+ * 提交前先把能校验的都校验好；创建、绑定实体与后续的出图、提示词生成由新建资产服务完成，后续步骤没能完成时它会删除刚创建的资产。
  */
 async function createGeneratedAssetForm(dependencies: AssetFormDependencies, spec: GeneratedCreateSpec): Promise<FormDefinition> {
-  const { assets, categories, prompts, generation, entities } = dependencies;
+  const { assets, categories, prompts, generation, creations } = dependencies;
   const { kind, entity } = spec;
   const [textModel, models] = await Promise.all([dependencies.textModels.getWorkState(null), generation.listModelOptions(kind)]);
   const state: AssetRunState = { models, textModel };
@@ -485,35 +469,14 @@ async function createGeneratedAssetForm(dependencies: AssetFormDependencies, spe
     submit: async (values, submitKey) => {
       const categoryId = categories.resolveCategoryId(kind, values[ASSET_CATEGORY_FIELD_KEY] ?? '');
       const mode = submitKey === ASSET_SUBMIT_KEYS.createAndRun ? readGenerateMode(kind, values) : null;
-      const runRequest = mode !== null && needsRun(mode) ? readRunRequest(kind, values, state) : null;
-      if (mode === 'direct') {
-        assertDirectPromptReady(kind, values);
-      }
-      let textModelKey: string | null = null;
-      if (mode !== null && needsText(mode)) {
-        assertTextModelAvailable(kind, state);
-        prompts.assertCanGenerate(kind, values, false);
-        textModelKey = readTextModelKey(textModel, values);
-      }
-
-      const asset = assets.createAsset(kind, values, { categoryId, ...(entity === undefined ? {} : { sourceEntityId: entity.entityId }) });
-      try {
-        if (entity !== undefined) {
-          entities?.bind({ episodeId: entity.episodeId, entityId: entity.entityId, assetId: asset.id, purpose: 'visual' });
-        }
-        if (mode === 'direct') {
-          await generation.submit({ assetId: asset.id, ...runRequest });
-        } else if (mode === 'prompt') {
-          prompts.start(asset.id, textModelKey);
-        } else if (mode === 'promptAndRun') {
-          prompts.start(asset.id, textModelKey, async () => {
-            await generation.submit({ assetId: asset.id, ...runRequest });
-          });
-        }
-      } catch (error) {
-        assets.deleteAsset(asset.id);
-        throw error;
-      }
+      const followUp = mode === null ? undefined : readFollowUp(kind, mode, values, state, prompts);
+      await creations.createAndContinue({
+        kind,
+        rawInput: values,
+        options: { categoryId, ...(entity === undefined ? {} : { sourceEntityId: entity.entityId }) },
+        ...(entity === undefined ? {} : { entity }),
+        ...(followUp === undefined ? {} : { followUp })
+      });
     }
   };
 }
@@ -597,7 +560,7 @@ export function createAssetFormCatalog(dependencies: AssetFormDependencies): For
         createEditAssetForm(
           dependencies,
           readEntityId({ id: readRecord(params ?? {}).assetId }, '资产'),
-          readOptionalFileSource(readRecord(params ?? {}).fileSource)
+          readOptionalAssetFileSource(readRecord(params ?? {}).fileSource)
         )
     ],
     [

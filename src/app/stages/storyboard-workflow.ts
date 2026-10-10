@@ -19,7 +19,8 @@ import { FieldErrors, assertNoFieldErrors, readOptionalText, readRecord, readTex
 import { PROJECT_VISUAL_STYLE_MAX_LENGTH } from '../../domain/rules/project-rules';
 import { WORK_NAME_MAX_LENGTH } from '../../domain/rules/work-rules';
 import { SceneBatch, planSceneBatches } from '../../domain/rules/scene-batching';
-import { MAX_SHOTS_LIMIT, normalizeStoryboardParams, parseStoryboard } from '../../domain/rules/storyboard-rules';
+import { parseStoryboard } from '../../domain/rules/storyboard-output-rules';
+import { MAX_SHOTS_LIMIT, normalizeStoryboardParams } from '../../domain/rules/storyboard-params-rules';
 import { groupMaxSecondsOf, sumSeconds } from '../../domain/rules/shot-group-rules';
 import { renderAnnotatedText } from '../../domain/rules/text-segmenter';
 import { CalibrationResult, describeDeviation } from '../../domain/rules/timing-calibration-rules';
@@ -27,7 +28,7 @@ import { syncShotGroups } from '../services/shot-grouping';
 import { askModel } from './ask-model';
 import { runWithCalibration } from './calibration';
 import { createStoryboardTool } from './output-tools/storyboard-output-tools';
-import { wrapMaterial } from './prompt-templates';
+import { NOT_APPLICABLE, wrapMaterial } from './prompt-templates';
 import { StageContext, StageWorkflow } from './stage-workflow';
 
 /** 分镜脚本阶段保存到阶段记录的输入快照。 */
@@ -57,7 +58,6 @@ export const STORYBOARD_PROMPT_VARIABLES: Readonly<Record<string, readonly strin
   storyboard: ['material', 'entities', 'style', 'aspectRatio', 'shotRules', 'continuityRule', 'audioRule', 'extra', 'calibrationFeedback']
 };
 
-const NOT_APPLICABLE = '（无）';
 /** 正文带说话人标记时在素材头部的说明。 */
 const ANNOTATION_NOTE = '说明：正文中的“〔角色名说〕”表示紧随其后的这段话由该角色说出，“〔角色名心想〕”表示该角色的内心想法，“说话人未知”表示暂时无法确定；这些标记不是剧本原文。\n';
 const NO_STYLE = '（没有指定，按剧情自行确定一种统一的画面风格，并在各镜头中保持一致）';
@@ -218,7 +218,7 @@ export class StoryboardWorkflow implements StageWorkflow {
     );
     const aspectRatio = readOptionalText(source, { key: 'aspectRatio', label: '画幅', required: false, maxLength: ASPECT_RATIO_MAX_LENGTH }, errors);
     assertNoFieldErrors(errors);
-    const params = normalizeStoryboardParams(typeof source.params === 'object' && source.params !== null ? source.params : source);
+    const params = normalizeStoryboardParams(source.params);
     const beatSheet = readBeatSheetSnapshot(source.beatSheet);
     return beatSheet === undefined ? { workName, projectStyle, aspectRatio, params } : { workName, projectStyle, aspectRatio, params, beatSheet };
   }

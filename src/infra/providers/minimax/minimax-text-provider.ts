@@ -13,6 +13,7 @@ import { ModelDescriptor, ProviderDescriptor } from '../../../domain/models/mode
 import { ProviderCallContext, TextModelProvider } from '../../../domain/ports/provider-adapters';
 import { TextGenerationRequest } from '../../../domain/ports/text-generation-port';
 import { buildUserContent, collectToolCallArguments } from '../shared/chat-tool-call';
+import { findDescribedModelByCode } from '../shared/provider-model-lookup';
 import { FetchFunction, MinimaxApiClient, classifyMinimaxErrorCode } from './minimax-api-client';
 import { MINIMAX_PROVIDER, MINIMAX_PROVIDER_NAME } from './minimax-catalog';
 import { MINIMAX_CHAT_PATH, MINIMAX_TEXT_MODELS, MinimaxTextModel } from './minimax-text-catalog';
@@ -35,11 +36,11 @@ export class MinimaxTextProvider implements TextModelProvider {
   }
 
   getCapability(modelCode: string): TextCapability | undefined {
-    return findModel(modelCode)?.descriptor.capability;
+    return findDescribedModelByCode(MINIMAX_TEXT_MODELS, modelCode)?.descriptor.capability;
   }
 
   async generate(modelCode: string, request: TextGenerationRequest, context: ProviderCallContext): Promise<unknown> {
-    const model = findModel(modelCode);
+    const model = findDescribedModelByCode(MINIMAX_TEXT_MODELS, modelCode);
     if (model === undefined) {
       throw new ProviderError('invalid_request', `${MINIMAX_PROVIDER_NAME}没有文本模型 ${modelCode}。`);
     }
@@ -50,10 +51,6 @@ export class MinimaxTextProvider implements TextModelProvider {
     const events = this.client.postEventStream(context, MINIMAX_CHAT_PATH, buildBody(model, request));
     return collectToolCallArguments(events, request.tool.name, { providerName: MINIMAX_PROVIDER_NAME, classifyErrorCode: classifyMinimaxErrorCode });
   }
-}
-
-function findModel(modelCode: string): MinimaxTextModel | undefined {
-  return MINIMAX_TEXT_MODELS.find((model) => model.descriptor.code === modelCode);
 }
 
 /** 构造对话请求体：系统段与用户段分开发送，提供输出工具，思考内容单独返回，并按模型压低思考。 */

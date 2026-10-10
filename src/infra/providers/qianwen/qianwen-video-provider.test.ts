@@ -8,9 +8,10 @@
 // ------------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import { mock, test } from 'node:test';
 import { ProviderError } from '../../../domain/errors';
 import { MediaInput, ProviderCallContext, VideoGenerationRequest } from '../../../domain/ports/provider-adapters';
+import { QianwenApiClient } from './qianwen-api-client';
 import { QianwenVideoProvider } from './qianwen-video-provider';
 
 const CONTEXT: ProviderCallContext = { apiKey: 'sk-test', settings: { endpoint: 'https://api.test/api/v1' } };
@@ -147,6 +148,20 @@ test('提交：构造请求体与请求头，素材以 Base64 内联，返回任
     input: { prompt: '一只猫在奔跑', media: [{ type: 'first_frame', url: `data:image/png;base64,${Buffer.from([1, 2, 3]).toString('base64')}` }] },
     parameters: { resolution: '720P', ratio: '9:16', duration: 8, audio: true, seed: 7, prompt_extend: false }
   });
+});
+
+test('提交：素材以 Base64 内联上传，用 180 秒的专用总超时，附加请求头不变', async () => {
+  const postJson = mock.method(QianwenApiClient.prototype, 'postJson', async () => ({ output: { task_id: 'T-3' } }));
+  try {
+    const { provider } = createFakeFetch([]);
+    await provider.submit(request({ firstFrame: media('image/png') }), CONTEXT);
+    assert.equal(postJson.mock.calls.length, 1);
+    const [, , , extraHeaders, timeoutMs] = postJson.mock.calls[0].arguments;
+    assert.deepEqual(extraHeaders, { 'X-DashScope-Async': 'enable' });
+    assert.equal(timeoutMs, 180_000);
+  } finally {
+    postJson.mock.restore();
+  }
 });
 
 test('提交：参考图与参考音频按顺序写入；未指定的参数不写入，智能时长透传 -1', async () => {

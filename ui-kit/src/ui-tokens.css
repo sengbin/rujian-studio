@@ -5,18 +5,22 @@
  * 作者：Lion
  * 邮箱：chengbin@3578.cn
  * 日期：2026-10-06
- * 备注：除全局字体的 body 规则外只定义 CSS 变量，侧栏与标签页页面都会加载，字体在此统一调整；颜色统一使用 rgb() 写法。
+ * 备注：只定义 CSS 变量，窄栏与标签页页面都会加载；页面字体由 host-theme.css 的 body 规则设置，本文件的 --font-family 供对话框等组件引用；颜色统一使用 rgb() 写法。
  * ------------------------------------------------------------------------
  */
 
 :root {
   color-scheme: light dark;
-  /* 全局字体：默认跟随应用主题字体；要换字体，只改这一行 */
+  /* 组件字体：跟随应用主题字体（host-theme.css） */
   --font-family: var(--host-font-family);
   --bg: var(--host-sidebar-background);
   --text: var(--host-foreground);
   --text-muted: var(--host-description-foreground);
   --focus-border: var(--host-focus-border, rgb(0, 120, 212));
+  /* 强调色及其上的文字色（主要按钮、选中态、开关），输入文字色；组件样式只引用这些令牌，不直接写 --host-* */
+  --accent: var(--host-button-background);
+  --accent-foreground: var(--host-button-foreground);
+  --input-foreground: var(--host-input-foreground);
   /* 统一间距，页面、组件的边距与间隙都只引用这几级，不再写死像素；要整体调松或调紧，只改这里。
      区块级：页面外边距、区块（卡片、分组、表格容器）之间的间距与区块内边距 */
   --space-page: 10px;
@@ -26,7 +30,7 @@
   --space-xs: 4px;
 
   /* ---------- 字体总控：字号、字重、行高按“角色”分类，页面与组件只引用角色，不再写死数值；同一角色的文字在所有页面属性一致 ---------- */
-  /* 字号：display 详情页大标题；title 页面、面板、卡片、表格主标题；heading 分组与小节标题（对话框标题同级）；
+  /* 字号：display 页面内的大标题；title 页面、面板、卡片、表格主标题；heading 分组与小节标题（对话框标题同级）；
      subheading 面板内的小标题；body 正文与控件文字；caption 说明、辅助、状态、表头；micro 标签、元数据 */
   --font-size-display: 16px;
   --font-size-title: 13px;
@@ -42,7 +46,7 @@
   --line-height-tight: 1.3;
   --line-height-body: 1.45;
 
-  /* 圆角：控件、列表项、卡片、表格等圆角只用这几级；卡片（侧栏分区、面板、设置卡片）共用 --card-bg、--card-shadow、--card-radius */
+  /* 圆角：控件、列表项、卡片、表格等圆角只用这几级；卡片（分区、面板、设置卡片）共用 --card-bg、--card-shadow、--card-radius */
   --radius-sm: 3px;
   --radius-md: 4px;
   --radius-lg: 6px;
@@ -108,10 +112,11 @@
   --tab-padding-x: var(--space-page);
   --tab-font-size: var(--font-size-body);
   --tab-count-font-size: var(--font-size-caption);
-  /* 行与面板：菜单行、文件选择行、绑定项等行高，面板头高度；动效时长统一 */
+  /* 行与面板：菜单行、文件选择行、列表内的一行等行高，面板头高度；缩略图边长；动效时长统一 */
   --row-height: 26px;
   --row-height-lg: 36px;
   --panel-header-height: 44px;
+  --thumb-size: 48px;
   --motion-duration: 0.18s;
   /* 列表项（可选择的列表行） */
   --list-gap: var(--space-xs);
@@ -264,10 +269,6 @@ body.theme-light {
   --option-selected-bg: color-mix(in srgb, var(--host-button-background) 30%, transparent);
   --option-selected-hover-bg: color-mix(in srgb, var(--accent-hover) 30%, transparent);
   --option-selected-active-bg: color-mix(in srgb, var(--accent-active) 30%, transparent);
-}
-
-body {
-  font-family: var(--font-family);
 }
 
 @media (prefers-reduced-motion: reduce) {

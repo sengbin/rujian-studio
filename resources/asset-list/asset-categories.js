@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
-// 备注：请求与表单名称与 src/app/pages/asset-category-handlers.ts、src/app/forms/asset-category-form.ts 一致；依赖 form/form-runtime.js（aiForm）；分类数据由资产列表页加载后传入，创建、编辑、删除后宿主推送变化事件，列表页重新加载并调用 refresh 更新本页；对外是 window.aiAssetCategories 的 open、refresh。
+// 备注：请求与表单名称与 src/app/pages/asset-category-handlers.ts、src/app/forms/asset-category-form.ts 一致；依赖 form/form-runtime.js（aiForm）与 shared/page-format.js（pageFormat）；分类数据由资产列表页加载后传入，创建、编辑、删除后宿主推送变化事件，列表页重新加载并调用 refresh 更新本页；对外是 window.aiAssetCategories 的 open、refresh。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -15,44 +15,26 @@
   const FORM_CREATE = 'assetCategory.create';
   const FORM_EDIT = 'assetCategory.edit';
 
-  const GENERIC_ERROR_TEXT = '操作失败，请重试。';
   const PAGE_WIDTH = 520;
   const PAGE_HEIGHT = 420;
   const PAGE_MIN_WIDTH = 360;
   const PAGE_MIN_HEIGHT = 240;
 
+  const { createActionRunner, createFormOpener } = window.pageFormat;
+
   /** 当前打开的分类管理页；没有打开时为 null。 */
   let session = null;
 
-  /** 在提示区显示文字；空串表示清除。 */
-  function showMessage(text, isError) {
-    session.message.textContent = text;
-    session.message.className = isError ? 'ui-message ui-message--flush status-error' : 'ui-message ui-message--flush status-success';
-    session.message.hidden = text === '';
-  }
-
-  /** 发起请求；失败时在提示区显示原因并返回 undefined。 */
-  async function runAction(name, payload) {
-    showMessage('', false);
-    try {
-      return await window.hostBridge.request(name, payload);
-    } catch (error) {
-      if (session) showMessage((error && error.message) || GENERIC_ERROR_TEXT, true);
-      return undefined;
-    }
-  }
+  /** 发起请求；失败时在提示区显示原因并返回 undefined；管理页已关闭时不显示。 */
+  const runAction = createActionRunner(() => (session ? session.message : null));
 
   /** 弹出表单；已有表单打开时忽略，避免重复点击叠出多个；保存成功后在提示区显示 savedText。 */
   async function showForm(options, savedText) {
-    if (session.isFormOpen) return;
-    session.isFormOpen = true;
-    showMessage('', false);
-    try {
-      const isSaved = await aiForm.open(options);
-      if (isSaved && session) showMessage(savedText, false);
-    } finally {
-      if (session) session.isFormOpen = false;
-    }
+    const { forms, message } = session;
+    if (forms.isOpen()) return;
+    message.show('', false);
+    const isSaved = await forms.open(options);
+    if (isSaved && session) session.message.show(savedText, false);
   }
 
   /** 删除分类：先取受影响的资产数量，再用页内对话框确认，最后请求删除。 */
@@ -71,7 +53,7 @@
     if (!confirmed || !session) return;
 
     const result = await runAction(REQUEST_DELETE, { id: category.id });
-    if (result && session) showMessage(`已删除分类“${result.name}”。`, false);
+    if (result && session) session.message.show(`已删除分类“${result.name}”。`, false);
   }
 
   /** 分类表格的列：名称、资产数量（为 0 时淡化）、修改与删除按钮。 */
@@ -112,12 +94,12 @@
       text: '创建分类',
       onClick: () => void showForm({ form: FORM_CREATE, params: { kind: options.kind } }, '已创建分类。')
     });
-    const message = aiUi.h('p', { class: 'ui-message ui-message--flush', hidden: true, attrs: { role: 'status' } });
+    const message = aiUi.message({ flush: true });
     const body = aiUi.h('div');
-    session = { label: options.label, categories: options.categories, message, body, isFormOpen: false };
+    session = { label: options.label, categories: options.categories, message, body, forms: createFormOpener(aiForm) };
     const page = aiUi.openPage({
       title: `${options.label}分类管理`,
-      content: aiUi.h('div', { class: 'ui-stack asset-cat' }, aiUi.h('div', { class: 'asset-cat__bar' }, create.element), message, body),
+      content: aiUi.h('div', { class: 'ui-stack asset-cat' }, aiUi.h('div', { class: 'asset-cat__bar' }, create.element), message.element, body),
       width: PAGE_WIDTH,
       height: PAGE_HEIGHT,
       minWidth: PAGE_MIN_WIDTH,

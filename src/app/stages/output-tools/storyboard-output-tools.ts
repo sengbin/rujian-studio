@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：字段含义与 storyboard-rules 的解析一致；拒绝生成用可选的 refused 字段表达，所以顶层不设 required。
+// 备注：字段含义与 storyboard-output-rules 的解析一致；拒绝生成用可选的 refused 字段表达，所以顶层不设 required。
 // ------------------------------------------------------------------------
 
 import { ENTITY_KIND_LABELS } from '../../../domain/models/screenplay';

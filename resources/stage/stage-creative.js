@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：向 stage.js 的外壳登记；请求名称与 src/app/pages/stage-handlers.ts、重新生成表单名称与 src/app/forms/work-form.ts 一致。
+// 备注：向 stage.js 的外壳登记；请求名称与 src/app/pages/stage-handlers.ts、重新生成表单名称与 src/app/forms/work-form.ts 一致；只读原因、保存按钮状态、已确认版本被编辑时的确认、偏差文案与汇总列表写法来自 stage-editor-common.js（aiStageEditor），必须先于本文件加载。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -13,11 +13,10 @@
   const REQUEST_SAVE_CHAPTER = 'stage.saveChapter';
   const FORM_REGENERATE = 'work.regenerate';
   const SAVE_TEXT = '保存本章';
-  const SAVED_TEXT = '已保存';
-  const SAVE_STATE_DIRTY = 'dirty';
-  const SAVE_STATE_SAVED = 'saved';
   // 正文按内容增高，最多长到这个行数再滚动（与阶段页的编辑区高度相当）。
   const BODY_MAX_ROWS = 20;
+
+  const { SAVE_STATE_DIRTY, SAVE_STATE_SAVED, readonlyReason, createSaveButton, confirmReopening, describeReference, limitedList } = window.aiStageEditor;
 
   /**
    * 创建创意阶段的内容。
@@ -44,8 +43,7 @@
     /** “参考目标 / 实测值 / 偏差”的文字，如“参考 54 字，实测 55 字，偏差 +2%”。 */
     function referenceText(chapter) {
       const { targetWords, deviationRatio } = chapter.reference;
-      const percent = Math.round(deviationRatio * 100);
-      return `参考 ${targetWords} 字，实测 ${chapter.wordCount} 字，偏差 ${percent > 0 ? '+' : ''}${percent}%`;
+      return describeReference(`${targetWords} 字`, `${chapter.wordCount} 字`, deviationRatio);
     }
 
     /** 生成结束后的字数汇总：参考节拍表模式说明超出容差的章节；自由创作说明设定的大约范围与实际字数。 */
@@ -61,8 +59,7 @@
           text: `字数：设定${range}，实际共 ${chapters.length} 章 ${totalWords} 字，各章均在范围内。`
         });
       }
-      const listed = outOfRange.slice(0, 5).map((chapter) => `第 ${chapter.seq} 章 ${chapter.wordCount} 字`).join('、');
-      const more = outOfRange.length > 5 ? `（共 ${outOfRange.length} 章）` : '';
+      const { listed, more } = limitedList(outOfRange, (chapter) => `第 ${chapter.seq} 章 ${chapter.wordCount} 字`, '章');
       return aiUi.h('p', {
         class: 'status-warning',
         text:
@@ -79,8 +76,7 @@
       if (outOfRange.length === 0) {
         return aiUi.h('p', { class: 'description', text: `参考节拍表：共 ${chapters.length} 章 ${totalWords} 字，各章均在参考字数的${tolerance}内。` });
       }
-      const listed = outOfRange.slice(0, 5).map((chapter) => `第 ${chapter.seq} 章（${referenceText(chapter)}）`).join('、');
-      const more = outOfRange.length > 5 ? `（共 ${outOfRange.length} 章）` : '';
+      const { listed, more } = limitedList(outOfRange, (chapter) => `第 ${chapter.seq} 章（${referenceText(chapter)}）`, '章');
       return aiUi.h('p', {
         class: 'status-error',
         text: `参考节拍表：有 ${outOfRange.length} 章超出参考字数的${tolerance}，已自动重写 ${maxCalibrationRounds} 轮仍未达标（已达上限）：${listed}${more}。生成结果已全部保留，可直接编辑调整后再确认采用。`
@@ -112,15 +108,7 @@
     async function performSaveChapter() {
       const view = context.getView();
       const { title, content } = editorControls;
-      if (view.actions.editNeedsConfirm) {
-        const confirmed = await aiUi.confirm({
-          title: '保存修改',
-          message: '该版本已确认采用。保存后将回到待确认，需要重新确认。',
-          confirmText: '保存',
-          cancelText: '取消'
-        });
-        if (!confirmed) return;
-      }
+      if (!(await confirmReopening(view, { title: '保存修改', action: '保存', confirmText: '保存' }))) return;
       const result = await context.runAction(REQUEST_SAVE_CHAPTER, {
         id: view.run.id,
         seq: selectedSeq,
@@ -157,15 +145,6 @@
       );
     }
 
-    /** 不能编辑时的原因。 */
-    function readonlyReason(view) {
-      const { run, actions } = view;
-      if (actions.canEdit) return '';
-      if (run.display === 'running') return '生成中，暂不能编辑。';
-      if (run.display === 'failed' || run.display === 'canceled') return '生成尚未成功，暂不能编辑。';
-      return '历史版本只读；如需修改，请切换到最新版本。';
-    }
-
     /** 章节编辑区：切换章节时重建；同一章节有未保存的修改时保留输入。 */
     function renderEditor(view, chapter) {
       const key = `${view.run.id}:${chapter.seq}:${view.actions.canEdit}:${view.actions.editNeedsConfirm}`;
@@ -187,12 +166,7 @@
       const title = aiUi.textInput({ value: chapter.title, ariaLabel: '章节标题', disabled: !canEdit, onChange: markDirty });
       const content = aiUi.textArea({ value: chapter.content, ariaLabel: '章节正文', maxRows: BODY_MAX_ROWS, disabled: !canEdit, onChange: markDirty });
       const reason = readonlyReason(view);
-      const saveButton = aiUi.button({ text: SAVE_TEXT, variant: 'primary', disabled: true, onClick: () => void saveChapter() });
-      /** 保存按钮只在有修改时可点，保存后显示“已保存”，再次修改后恢复。 */
-      const setSaveState = (state) => {
-        saveButton.setText(state === SAVE_STATE_SAVED ? SAVED_TEXT : SAVE_TEXT);
-        saveButton.setDisabled(state !== SAVE_STATE_DIRTY);
-      };
+      const { button: saveButton, setSaveState } = createSaveButton({ text: SAVE_TEXT, onClick: () => void saveChapter() });
 
       const element = aiUi.h(
         'section',

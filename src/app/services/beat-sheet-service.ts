@@ -21,6 +21,7 @@ import { WORK_KIND_LABELS } from '../../domain/rules/work-rules';
 import { ApprovedBeatSheetReader, createApprovedBeatSheetReader } from '../stages/approved-beat-sheet';
 import { StageRunner } from '../stages/stage-runner';
 import { StageActions, StageRunView, StageService, StageVersionItem, toRunView, toVersionItem } from './stage-service';
+import { readRunParams } from './stage-run-params';
 import { WorkService } from './work-service';
 
 /** 节拍表阶段产出页的完整视图。 */
@@ -38,7 +39,7 @@ export interface BeatSheetStageView {
   };
   readonly versions: StageVersionItem[];
   readonly run: StageRunView;
-  /** 本次生成使用的参数；输入快照结构不符时为 null。 */
+  /** 本次生成使用的参数；输入快照中没有参数时为 null。 */
   readonly params: BeatSheetParams | null;
   /** 节拍模板名称；参数缺失时为空串。 */
   readonly templateLabel: string;
@@ -90,7 +91,7 @@ export class BeatSheetService {
    */
   getLastParams(workId: number): BeatSheetParams | undefined {
     const [latest] = this.dependencies.runs.listVersions(beatSheetTarget(workId));
-    return latest === undefined ? undefined : (readParams(latest) ?? undefined);
+    return latest === undefined ? undefined : (readRunParams<BeatSheetParams>(latest) ?? undefined);
   }
 
   /**
@@ -121,7 +122,7 @@ export class BeatSheetService {
     }
 
     const sheet = beatSheets.find(run.id);
-    const params = sheet?.params ?? readParams(run);
+    const params = sheet?.params ?? readRunParams<BeatSheetParams>(run);
     return {
       work: { id: work.id, projectId: work.projectId, name: work.name, kind: work.kind, kindLabel: WORK_KIND_LABELS[work.kind], multiEpisode: isMultiEpisode(work.kind), sourceType: work.sourceType },
       versions: versions.map(toVersionItem),
@@ -159,10 +160,4 @@ export class BeatSheetService {
 /** 作品节拍表阶段的目标。 */
 function beatSheetTarget(workId: number): StageTarget {
   return { workId, stage: 'beat_sheet', episodeId: null };
-}
-
-/** 从记录的输入快照中取出参数；快照结构不符时返回 null。 */
-function readParams(run: StageRun): BeatSheetParams | null {
-  const params = (run.input as { params?: unknown }).params;
-  return typeof params === 'object' && params !== null ? (params as BeatSheetParams) : null;
 }

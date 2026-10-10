@@ -141,6 +141,24 @@ test('没有调用工具、输出被截断、参数不是合法 JSON：都按参
   assert.match((await rejectedWith(badJson.provider.generate(M3, REQUEST, CONTEXT))).message, /工具参数不是合法的 JSON/);
 });
 
+test('模型调用了其他工具、流事件不是合法的 JSON 对象：报错，不取第一个调用也不忽略', async () => {
+  const wrongTool = createProvider([stream(toolChunk({ name: 'other_tool', argumentsText: '{}' }, 'tool_calls'))]);
+  const wrongToolError = await rejectedWith(wrongTool.provider.generate(M3, REQUEST, CONTEXT));
+  assert.equal(wrongToolError.category, 'invalid_request');
+  assert.match(wrongToolError.message, /非预期的工具“other_tool”/);
+
+  const garbage = createProvider([{ body: null, raw: `data: {oops\n\ndata: ${JSON.stringify(toolChunk({ name: 'submit_creative', argumentsText: '{}' }, 'tool_calls'))}\n\ndata: [DONE]\n\n` }]);
+  const garbageError = await rejectedWith(garbage.provider.generate(M3, REQUEST, CONTEXT));
+  assert.equal(garbageError.category, 'server');
+  assert.match(garbageError.message, /流式事件不是合法的 JSON/);
+
+  const notObject = createProvider([{ body: null, raw: 'data: 42\n\ndata: [DONE]\n\n' }]);
+  assert.match((await rejectedWith(notObject.provider.generate(M3, REQUEST, CONTEXT))).message, /流式事件不是 JSON 对象/);
+
+  const keepAlive = createProvider([{ body: null, raw: `: keep-alive\n\n\ndata: ${JSON.stringify(toolChunk({ name: 'submit_creative', argumentsText: '{}' }, 'tool_calls'))}\n\ndata: [DONE]\n\n` }]);
+  assert.deepEqual(await keepAlive.provider.generate(M3, REQUEST, CONTEXT), {});
+});
+
 test('错误：未知模型、HTTP 错误、流事件里的 base_resp 错误分别按分类报告，并带平台错误码', async () => {
   const unknown = createProvider([]);
   const unknownError = await rejectedWith(unknown.provider.generate('nope', REQUEST, CONTEXT));

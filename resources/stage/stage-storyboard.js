@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：向 stage.js 的外壳登记；页签内容由 stage-storyboard-panels.js（aiStoryboardPanels）提供，必须先于本文件加载；样式在 stage-storyboard.css；请求名称与 src/app/pages/stage-handlers.ts、表单名称与 src/app/forms/storyboard-form.ts 一致；镜头的 ref 就是镜头标识，页面原样回传；支持在末尾新增、删除镜头以及与相邻镜头互换位置（上移、下移）；打开时可由 aiStage.open 的 focus 参数（镜头标识）定位到所选镜头：选中、滚动到可见；头部“分镜动画”与镜头编辑区“从此镜头预览”打开 stage-storyboard-preview.js 提供的预览层（aiStoryboardPreview.open，点击时才取用）。
+// 备注：向 stage.js 的外壳登记；只读原因、已确认版本被编辑时的确认与偏差文案来自 stage-editor-common.js（aiStageEditor），必须先于本文件加载；页签内容由 stage-storyboard-panels.js（aiStoryboardPanels）提供，必须先于本文件加载；样式在 stage-storyboard.css；请求名称与 src/app/pages/stage-handlers.ts、表单名称与 src/app/forms/storyboard-form.ts 一致；镜头的 ref 就是镜头标识，页面原样回传；支持在末尾新增、删除镜头以及与相邻镜头互换位置（上移、下移）；打开时可由 aiStage.open 的 focus 参数（镜头标识）定位到所选镜头：选中、滚动到可见；头部“分镜动画”与镜头编辑区“从此镜头预览”打开 stage-storyboard-preview.js 提供的预览层（aiStoryboardPreview.open，点击时才取用）。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -35,15 +35,15 @@
   const PAGE_WIDTH = 1200;
   const PAGE_HEIGHT = 780;
   /** 汇总里镜头连贯策略的文字。 */
-  const CONTINUITY_LABELS = { cut: '组间硬切', none: '无', prev_tail: '尾帧接首帧', ai: '由 AI 判断是否接尾帧' };
-  /** 还没有完整镜头的状态，这些状态下不能预览分镜动画。 */
-  const PREVIEW_UNAVAILABLE_DISPLAYS = ['running', 'failed', 'canceled'];
+  const CONTINUITY_LABELS = { cut: '组间硬切（推荐）', none: '无', prev_tail: '尾帧接首帧', ai: '由 AI 判断是否接尾帧' };
 
   const panels = window.aiStoryboardPanels;
+  const { readonlyReason, confirmReopening, formatDeviation, DELETE_REOPEN_NOTE } = window.aiStageEditor;
+  const { formatSeconds, isStageUnfinished } = window.pageFormat;
 
   /** 分镜动画是否可用：有镜头且生成已经结束。 */
   function canPreview(view) {
-    return view.shots.length > 0 && !PREVIEW_UNAVAILABLE_DISPLAYS.includes(view.run.display);
+    return view.shots.length > 0 && !isStageUnfinished(view.run.display);
   }
 
   /** 打开分镜动画预览；查看的是历史版本时预览该版本，否则始终预览最新版本。shotId 省略时从第 1 镜开始。 */
@@ -56,11 +56,6 @@
     });
   }
 
-  /** 秒数显示：整数不带小数点。 */
-  function formatSeconds(seconds) {
-    return `${Number.isInteger(seconds) ? seconds : seconds.toFixed(1)} 秒`;
-  }
-
   /** 镜头所在的镜头组；还没有分组时为 undefined。 */
   function findGroup(view, shot) {
     return (view.groups || []).find((group) => group.shotIds.includes(shot.id));
@@ -69,15 +64,6 @@
   /** 汇总里的一项：说明文字加加粗的数值。 */
   function summaryItem(prefix, value, suffix = '') {
     return aiUi.h('span', { class: 'storyboard-summary__item' }, prefix, aiUi.h('strong', { text: value }), suffix);
-  }
-
-  /** 不能编辑时的原因。 */
-  function readonlyReason(view) {
-    const { run, actions } = view;
-    if (actions.canEdit) return '';
-    if (run.display === 'running') return '生成中，暂不能编辑。';
-    if (run.display === 'failed' || run.display === 'canceled') return '生成尚未成功，暂不能编辑。';
-    return '历史版本只读；如需修改，请切换到最新版本。';
   }
 
   /** 导航里的一个镜头按钮：序号、画面描述（过长时省略）与附加信息；isCurrent 为 true 时带当前标记。 */
@@ -116,8 +102,7 @@
       const { reference } = view;
       if (reference) {
         // 有节拍表时：参考目标、实测值与偏差；超出容差说明已达到自动重写上限，标红提示。
-        const percent = Math.round(reference.deviationRatio * 100);
-        const text = `参考 ${formatSeconds(reference.targetSeconds)}，偏差 ${percent > 0 ? '+' : ''}${percent}%（容差 ±${Math.round(reference.toleranceRatio * 100)}%）`;
+        const text = `参考 ${formatSeconds(reference.targetSeconds)}，偏差 ${formatDeviation(reference.deviationRatio)}（容差 ±${Math.round(reference.toleranceRatio * 100)}%）`;
         items.push(
           reference.withinTolerance
             ? summaryItem('', text)
@@ -219,15 +204,8 @@
     async function performSave() {
       const view = context.getView();
       const isNew = selectedId === NEW_SHOT;
-      if (view.actions.editNeedsConfirm) {
-        const confirmed = await aiUi.confirm({
-          title: isNew ? '添加镜头' : '保存修改',
-          message: `该版本已确认采用。${isNew ? '添加' : '保存'}后将回到待确认，需要重新确认。`,
-          confirmText: isNew ? '添加' : '保存',
-          cancelText: '取消'
-        });
-        if (!confirmed) return;
-      }
+      const verb = isNew ? '添加' : '保存';
+      if (!(await confirmReopening(view, { title: isNew ? '添加镜头' : '保存修改', action: verb, confirmText: verb }))) return;
       const payload = { id: view.run.id, ...editorControls.collect() };
       if (!isNew) payload.ref = selectedId;
       const result = await context.runAction(isNew ? REQUEST_ADD_SHOT : REQUEST_SAVE_SHOT, payload);
@@ -247,7 +225,7 @@
       const view = context.getView();
       const shot = view.shots.find((candidate) => candidate.id === selectedId);
       const lines = [`删除第 ${shot.seq} 个镜头及其声音后，后面的镜头序号会前移。`];
-      if (view.actions.editNeedsConfirm) lines.push('该版本已确认采用，删除后将回到待确认。');
+      if (view.actions.editNeedsConfirm) lines.push(DELETE_REOPEN_NOTE);
       const confirmed = await aiUi.confirm({ title: '删除镜头', message: lines, confirmText: '删除', variant: 'danger' });
       if (!confirmed) return;
       if (await context.runAction(REQUEST_DELETE_SHOT, { id: view.run.id, ref: shot.id })) {
@@ -265,15 +243,7 @@
       const other = view.shots[index + (direction === 'up' ? -1 : 1)];
       if (index < 0 || !other) return;
       if (!(await context.confirmDiscard())) return;
-      if (view.actions.editNeedsConfirm) {
-        const confirmed = await aiUi.confirm({
-          title: '调整镜头顺序',
-          message: '该版本已确认采用。调整顺序后将回到待确认，需要重新确认。',
-          confirmText: '调整',
-          cancelText: '取消'
-        });
-        if (!confirmed) return;
-      }
+      if (!(await confirmReopening(view, { title: '调整镜头顺序', action: '调整顺序', confirmText: '调整' }))) return;
       const crossesGroups = findGroup(view, view.shots[index]) !== findGroup(view, other);
       if (await context.runAction(REQUEST_MOVE_SHOT, { id: view.run.id, ref: selectedId, direction })) {
         editorDirty = false;

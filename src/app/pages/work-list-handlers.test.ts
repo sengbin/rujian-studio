@@ -13,7 +13,8 @@ import { normalizeWorkCreation } from '../../domain/rules/work-rules';
 import { MessageRouter } from '../messaging/message-router';
 import { createServiceFixture } from '../services/testing/service-fixture';
 import { STAGE_REQUESTS } from './stage-handlers';
-import { SCREENPLAY_VIEW, STORYBOARD_VIEW, WORK_LIST_REQUESTS, WorkListRequest, WorkListRow, registerWorkListHandlers } from './work-list-handlers';
+import { SCREENPLAY_VIEW, STORYBOARD_VIEW } from '../../domain/rules/work-list-rules';
+import { WORK_LIST_REQUESTS, WorkListRequest, WorkListRow, registerWorkListHandlers } from './work-list-handlers';
 
 const PARAMS = { chapterMinWords: 100, chapterMaxWords: 200, maxChapters: 3 };
 

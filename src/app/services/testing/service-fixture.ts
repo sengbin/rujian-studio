@@ -18,6 +18,7 @@ import { SqliteProjectRepository } from '../../../infra/database/sqlite-project-
 import { SqliteScreenplayRepository } from '../../../infra/database/sqlite-screenplay-repository';
 import { SqliteChapterRepository, SqliteStageRunRepository } from '../../../infra/database/sqlite-stage-run-repository';
 import { SqliteStoryboardRepository } from '../../../infra/database/sqlite-storyboard-repository';
+import { SqliteUnitOfWork } from '../../../infra/database/sqlite-unit-of-work';
 import { SqliteWorkRepository } from '../../../infra/database/sqlite-work-repository';
 import { SqliteWorkSourceReader } from '../../../infra/database/sqlite-work-source-reader';
 import { createApprovedBeatSheetReader } from '../../stages/approved-beat-sheet';
@@ -37,12 +38,15 @@ import { StageChange, StageService } from '../stage-service';
 import { StoryboardService } from '../storyboard-service';
 import { WorkService } from '../work-service';
 import { MemoryAssetFileStore } from '../../../domain/ports/testing/memory-asset-file-store';
+import { UnitOfWork } from '../../../domain/ports/unit-of-work';
 
 /** 服务层夹具。 */
 export interface ServiceFixture {
   readonly database: DatabaseSync;
   /** 各仓库共用的内存文件存储，测试可检查落盘的文件。 */
   readonly files: MemoryAssetFileStore;
+  /** 各仓库共用连接上的工作单元，供需要事务的服务注入。 */
+  readonly transaction: UnitOfWork;
   readonly runs: SqliteStageRunRepository;
   readonly projects: ProjectService;
   readonly works: WorkService;
@@ -69,6 +73,7 @@ export interface ServiceFixture {
 export function createServiceFixture(responder: Responder = standardResponder, sceneBatchMaxChars?: number): ServiceFixture {
   const database = openDatabase(IN_MEMORY_DATABASE_PATH);
   const files = new MemoryAssetFileStore();
+  const transaction = new SqliteUnitOfWork(database);
   const runs = new SqliteStageRunRepository(database);
   const chapters = new SqliteChapterRepository(database);
   const beatSheetRepository = new SqliteBeatSheetRepository(database);
@@ -114,6 +119,7 @@ export function createServiceFixture(responder: Responder = standardResponder, s
       runs,
       chapters,
       sources: new SqliteWorkSourceReader(database, files),
+      transaction,
       getSplitSettings: () => ({ mode: 'chapter', maxSegmentChars: 1000 })
     }),
     changes
@@ -146,5 +152,5 @@ export function createServiceFixture(responder: Responder = standardResponder, s
       }
     }
   });
-  return { database, files, runs, projects, works, deletion, beatSheets, stages, screenplays, storyboards, runner, text, changes, changed, project };
+  return { database, files, transaction, runs, projects, works, deletion, beatSheets, stages, screenplays, storyboards, runner, text, changes, changed, project };
 }

@@ -8,7 +8,7 @@
 // ------------------------------------------------------------------------
 
 import { VideoCapability } from '../models/model-capability';
-import { maxGroupSeconds } from './generation-rules';
+import { maxGroupSeconds } from './group-duration-rules';
 import { FieldErrors } from './field-readers';
 
 /** 待检查的目标参数；画幅、分辨率为空串或 null 表示未指定。 */

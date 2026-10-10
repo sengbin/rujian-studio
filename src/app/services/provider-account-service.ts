@@ -14,7 +14,7 @@ import { AccountCallContext, ProviderAccountAdapter } from '../../domain/ports/p
 import { ProviderRegistry } from '../../domain/ports/provider-registry';
 import { ProviderRepository } from '../../domain/ports/provider-repository';
 import { SecretStore } from '../../domain/ports/secret-store';
-import { describeJobFailure } from '../../domain/rules/generation-rules';
+import { describeJobFailure } from '../../domain/rules/generation-failure-copy';
 import { providerAccountSecretKeys, providerApiKeySecretKey, readAccountKeyInput, readProviderId } from '../../domain/rules/provider-rules';
 
 /** 一次账户查询的总超时（毫秒）：账单明细可能要翻多页。 */

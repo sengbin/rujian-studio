@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
-// 备注：请求名称与 src/app/pages/backup-handlers.ts 一致；备份文件路径只在宿主内保存，确认恢复只带选择时返回的标识、取消恢复只带待恢复项的标识；操作进行中按钮都禁用，防止重复提交。
+// 备注：依赖 shared/page-format.js（pageFormat）；请求名称与 src/app/pages/backup-handlers.ts 一致；备份文件路径只在宿主内保存，确认恢复只带选择时返回的标识、取消恢复只带待恢复项的标识；操作进行中按钮都禁用，防止重复提交。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -17,15 +17,12 @@
   const REQUEST_CANCEL_RESTORE = 'backup.cancelRestore';
   const REQUEST_RESTART_APP = 'backup.restartApp';
 
-  const GENERIC_ERROR_TEXT = '操作失败，请重试。';
   const BACKUP_BUSY_TEXT = '正在备份…';
   const CHOOSE_BUSY_TEXT = '正在检查备份文件…';
   const RESTORE_BUSY_TEXT = '正在准备恢复…';
   const CANCEL_RESTORE_BUSY_TEXT = '正在取消恢复…';
   const RESTART_BUSY_TEXT = '正在重启应用…';
   const CANCELLED_TEXT = '已取消，没有做任何改动。';
-  const BYTE_UNITS = ['B', 'KB', 'MB', 'GB'];
-  const BYTE_STEP = 1024;
   /** 各类数据的显示名称，顺序即页面显示顺序；键与 src/domain/models/backup.ts 的 BackupDataCounts 一致。 */
   const COUNT_LABELS = [
     ['projects', '项目'],
@@ -36,6 +33,8 @@
     ['videoResults', '视频结果']
   ];
 
+  const { errorText, formatBytes, formatDateTime } = window.pageFormat;
+
   const root = document.getElementById('app');
   document.body.classList.add('backup-page');
 
@@ -43,27 +42,6 @@
   let overview = null;
   /** 是否有操作正在进行。 */
   let busy = false;
-
-  /** 取错误载荷中的说明文字。 */
-  function errorText(error) {
-    return (error && error.message) || GENERIC_ERROR_TEXT;
-  }
-
-  /** 文件大小的可读文字，如 “1.5 MB”。 */
-  function formatBytes(bytes) {
-    let value = bytes;
-    let unit = 0;
-    while (value >= BYTE_STEP && unit < BYTE_UNITS.length - 1) {
-      value /= BYTE_STEP;
-      unit += 1;
-    }
-    return `${unit === 0 ? value : value.toFixed(1)} ${BYTE_UNITS[unit]}`;
-  }
-
-  /** ISO 时间的本地时间文字。 */
-  function formatTime(isoText) {
-    return new Date(isoText).toLocaleString('zh-CN');
-  }
 
   /**
    * 创建状态文字：颜色之外都带文字说明。
@@ -86,7 +64,7 @@
   function createCard(title, descriptions, ...content) {
     return aiUi.h(
       'section',
-      { class: 'backup-card' },
+      { class: 'ui-card ui-card--flat backup-card' },
       aiUi.h('h2', { class: 'ui-title backup-card__title', text: title }),
       ...descriptions.map((text) => aiUi.h('p', { class: 'backup-card__description', text })),
       ...content
@@ -151,7 +129,7 @@
       createCard(
         '恢复已准备好，重启应用后生效',
         [
-          `已在 ${formatTime(pending.stagedAt)} 准备好待恢复的数据（${formatBytes(pending.sizeBytes)}）。重启应用时，当前数据库会先自动备份到 ${overview.autoBackupDirectory}（文件名带时间戳），再被备份数据替换。`,
+          `已在 ${formatDateTime(pending.stagedAt)} 准备好待恢复的数据（${formatBytes(pending.sizeBytes)}）。重启应用时，当前数据库会先自动备份到 ${overview.autoBackupDirectory}（文件名带时间戳），再被备份数据替换。`,
           '在重启应用之前，当前数据没有任何改动，可以取消恢复。'
         ],
         aiUi.h('div', { class: 'backup-actions' }, restartButton.element, cancelButton.element, pendingStatus.element)
@@ -175,7 +153,7 @@
 
   /** 恢复确认里关于本地文件的说明：从备份文件旁的 .files 文件夹补回缺少的文件，找不到的文件会让对应的图片、音频、素材无法使用。 */
   function describeAssetFiles(assetFiles) {
-    if (assetFiles === null || assetFiles.referencedCount === 0) return '备份里没有图片、音频、素材等本地文件。';
+    if (assetFiles.referencedCount === 0) return '备份里没有图片、音频、素材等本地文件。';
     const missing = assetFiles.referencedCount - assetFiles.availableCount;
     if (missing === 0) return `备份引用的 ${assetFiles.referencedCount} 个本地文件齐全，缺少的会从 ${assetFiles.directory} 补回，不覆盖也不删除现有文件。`;
     return `备份引用 ${assetFiles.referencedCount} 个本地文件，其中 ${missing} 个在 ${assetFiles.directory} 和当前本地文件目录里都找不到，恢复后对应的图片、音频、素材无法使用；请把备份文件的 .files 文件夹放在备份文件旁再选择。`;

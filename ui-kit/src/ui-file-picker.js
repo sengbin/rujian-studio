@@ -12,7 +12,6 @@
 (function () {
   const aiUi = window.aiUi;
 
-  const BYTES_PER_MB = 1024 * 1024;
   const READING_TEXT = '读取中…';
   const VIEWER_WIDTH = 720;
   const VIEWER_HEIGHT = 520;
@@ -34,11 +33,6 @@
   function extensionOf(name) {
     const index = name.lastIndexOf('.');
     return index < 0 ? '' : name.slice(index).toLowerCase();
-  }
-
-  /** 文件大小的可读文字。 */
-  function formatSize(bytes) {
-    return bytes < BYTES_PER_MB ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / BYTES_PER_MB).toFixed(2)} MB`;
   }
 
   /** 把文件读取为不带前缀的 Base64 文本。 */
@@ -139,14 +133,14 @@
                 },
                 aiUi.h('img', { class: 'ui-file-picker__thumb-image', attrs: { src: toDataUrl(item), alt: item.name } })
               ),
-              aiUi.h('span', { class: 'ui-file-picker__size', text: formatSize(item.size) })
+              aiUi.h('span', { class: 'ui-file-picker__size', text: aiUi.formatBytes(item.size) })
             )
           : aiUi.h(
               'li',
               { class: 'ui-file-picker__item' },
               item.mimeType.startsWith('audio/') ? renderAudioPreview(item) : null,
               aiUi.h('span', { class: 'ui-file-picker__name', text: item.name, attrs: { title: item.name } }),
-              aiUi.h('span', { class: 'ui-file-picker__size', text: formatSize(item.size) })
+              aiUi.h('span', { class: 'ui-file-picker__size', text: aiUi.formatBytes(item.size) })
             );
         const actions = aiUi.h('span', { class: 'ui-file-picker__actions' });
         const addAction = (text, label, disabled, handler) => {
@@ -201,7 +195,7 @@
         } else if (file.size === 0) {
           problems.push(`“${file.name}”是空文件。`);
         } else if (file.size > maxFileBytes) {
-          problems.push(`“${file.name}”超过大小上限 ${formatSize(maxFileBytes)}。`);
+          problems.push(`“${file.name}”超过大小上限 ${aiUi.formatBytes(maxFileBytes)}。`);
         } else if (existing + accepted.length >= maxFiles) {
           problems.push(`最多选择 ${maxFiles} 个文件，“${file.name}”未加入。`);
         } else if (multiple && [...items, ...reading, ...accepted].some((item) => item.name === file.name && item.size === file.size)) {

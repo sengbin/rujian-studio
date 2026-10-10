@@ -112,6 +112,9 @@ export const MINIMAX_VOICES: readonly MinimaxVoice[] = [
   voice('英文·Grinch', 'Grinch')
 ];
 
+/** 请求没有指定音色时使用的默认音色：音色目录里的第一个。 */
+export const MINIMAX_DEFAULT_VOICE: MinimaxVoice = MINIMAX_VOICES[0];
+
 /** 语音合成：只生成语音，文字内容决定时长，不支持参考音频；语速与音量可按说话方式调整，语言选项用于增强识别。 */
 const SPEECH_CAPABILITY: AudioCapability = {
   audioKinds: ['voice'],

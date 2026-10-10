@@ -18,12 +18,13 @@ function createFixture() {
   const database = openDatabase(IN_MEMORY_DATABASE_PATH);
   const insert = (sql: string, ...params: Array<string | number>) => Number(database.prepare(sql).run(...params).lastInsertRowid);
   const project = insert("INSERT INTO projects (name, created_at, updated_at) VALUES ('项目甲', 't', 't')");
-  const work = insert("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (?, '作品甲', 'short_drama', 't', 't')", project);
-  const otherWork = insert("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (?, '作品乙', 'short_video', 't', 't')", project);
+  const work = insert("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (?, '作品甲', 'short_drama', 'text', 't', 't')", project);
+  const otherWork = insert("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (?, '作品乙', 'short_video', 'text', 't', 't')", project);
   const episode2 = insert("INSERT INTO episodes (work_id, seq, title, created_at, updated_at) VALUES (?, 2, '第二集', 't', 't')", work);
   const episode1 = insert("INSERT INTO episodes (work_id, seq, title, created_at, updated_at) VALUES (?, 1, '第一集', 't', 't')", work);
   const otherEpisode = insert("INSERT INTO episodes (work_id, seq, title, created_at, updated_at) VALUES (?, 1, '乙第一集', 't', 't')", otherWork);
-  const asset = (name: string) => insert("INSERT INTO assets (kind, name, created_at, updated_at) VALUES ('audio', ?, 't', 't')", name);
+  const asset = (name: string) =>
+    insert(`INSERT INTO assets (kind, name, attributes_json, created_at, updated_at) VALUES ('audio', ?, '{"audio_kind":"voice"}', 't', 't')`, name);
   return { database, work, otherWork, episode1, episode2, otherEpisode, voiceA: asset('旁白甲'), voiceB: asset('旁白乙') };
 }
 

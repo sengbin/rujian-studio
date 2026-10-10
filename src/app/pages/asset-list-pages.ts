@@ -16,6 +16,7 @@ import { MessageRouter } from '../messaging/message-router';
 import { ASSET_LIST_PAGE_RESOURCES } from '../panels/page-resources';
 import { OpenedPanel, PanelManager } from '../panels/panel-manager';
 import { AssetCategoryService } from '../services/asset-category-service';
+import { AssetCreationService } from '../services/asset-creation-service';
 import { AssetGenerationService } from '../services/asset-generation-service';
 import { AssetPromptService } from '../services/asset-prompt-service';
 import { TextSettingsService } from '../services/text-settings-service';
@@ -60,6 +61,7 @@ export class AssetListPages {
       readonly textModels: TextSettingsService;
       readonly providers: ProviderService;
       readonly generation: AssetGenerationService;
+      readonly creations: AssetCreationService;
     },
     private readonly panels: PanelManager
   ) {}
@@ -79,7 +81,7 @@ export class AssetListPages {
       return;
     }
 
-    const { projects, assets, categories, prompts, textModels, providers, generation } = this.services;
+    const { projects, assets, categories, prompts, textModels, providers, generation, creations } = this.services;
     const entry: OpenedAssetList = { panel: undefined, pending: request };
     const router = new MessageRouter();
     registerAssetListHandlers(router, kind, this.services, {
@@ -92,7 +94,7 @@ export class AssetListPages {
     registerAssetCategoryHandlers(router, categories);
     // 路由器只能注册一次表单请求，因此合并资产表单与分类表单两个目录。
     const catalog: FormCatalog = new Map([
-      ...createAssetFormCatalog({ projects, assets, categories, prompts, textModels, generation }),
+      ...createAssetFormCatalog({ projects, assets, categories, prompts, textModels, generation, creations }),
       ...createAssetCategoryFormCatalog(categories)
     ]);
     registerFormHandlers(router, catalog);

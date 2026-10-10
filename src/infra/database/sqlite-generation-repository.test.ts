@@ -25,9 +25,12 @@ const SNAPSHOT: JobSnapshot = {
   providerCode: 'fake',
   modelCode: 'fake-video',
   prompt: '提示词',
-  params: { aspectRatio: '16:9', resolution: '720P', durationSeconds: 4, audioMode: 'native', seed: null, extraParams: {} },
+  promptFormat: 3,
+  params: { aspectRatio: '16:9', resolution: '720P', durationSeconds: 4, audioMode: 'native', audioElements: null, seed: null, negativeList: null, extraParams: {} },
   referenceImageFileIds: [],
   referenceAudioFileIds: [],
+  firstFrameFileId: null,
+  firstFrameImageId: null,
   warnings: ['提醒']
 };
 

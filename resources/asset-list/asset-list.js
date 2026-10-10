@@ -33,13 +33,12 @@
   const FILTER_ALL = 'all';
   const FILTER_NONE = 'none';
 
-  const GENERIC_ERROR_TEXT = '操作失败，请重试。';
   const REFRESH_DELAY_MS = 150;
   const MAX_USAGE_LINES = 8;
   const KIND_LABELS = { character: '角色', scene: '场景', prop: '道具', effect: '特效', audio: '音频' };
   const AUDIO_KIND_LABELS = { voice: '音色参考', music: '背景音乐', sfx: '音效' };
 
-  const { formatRelativeTime } = window.pageFormat;
+  const { formatRelativeTime, formatDateTime, createActionRunner, createFormOpener } = window.pageFormat;
 
   const root = document.getElementById('app');
   /** 页面绑定的资产类型，首次加载成功后由宿主告知。 */
@@ -49,34 +48,18 @@
   let categories = [];
   let loadError = '';
   let isLoading = true;
-  let isFormOpen = false;
   let keyword = '';
   let categoryFilter = FILTER_ALL;
   /** 分类下拉当前对应的选项内容，没变化时不重建下拉。 */
   let categoryOptionsKey = '';
   let refreshTimer = 0;
   let contentElement = null;
-  let messageElement = null;
   let categorySlot = null;
   let manageButton = null;
-
-  /** 在操作结果区显示文字；空串表示清除。 */
-  function showMessage(text, isError) {
-    messageElement.textContent = text;
-    messageElement.className = isError ? 'ui-message status-error' : 'ui-message status-success';
-    messageElement.hidden = text === '';
-  }
-
-  /** 发起请求，失败时在操作结果区显示原因；成功返回响应数据，失败返回 undefined。 */
-  async function runAction(name, payload) {
-    showMessage('', false);
-    try {
-      return await window.hostBridge.request(name, payload);
-    } catch (error) {
-      showMessage((error && error.message) || GENERIC_ERROR_TEXT, true);
-      return undefined;
-    }
-  }
+  /** 操作结果提示区。 */
+  const message = aiUi.message();
+  const runAction = createActionRunner(message);
+  const forms = createFormOpener(aiForm);
 
   /** 加载请求的序号，只采纳最后一次请求的响应。 */
   let loadSerial = 0;
@@ -123,14 +106,8 @@
   }
 
   /** 弹出表单；已有表单打开时忽略，避免重复点击叠出多个。 */
-  async function showForm(options) {
-    if (isFormOpen) return;
-    isFormOpen = true;
-    try {
-      await aiForm.open(options);
-    } finally {
-      isFormOpen = false;
-    }
+  function showForm(options) {
+    return forms.open(options);
   }
 
   /** 弹出“添加方式”选择：直接上传文件，或填写设定后由模型生成；返回所选的文件来源，取消返回空串。 */
@@ -154,15 +131,11 @@
   }
 
   /** 新建资产：先选择上传还是 AI 生成，再弹出对应的表单；已有表单或选择框打开时忽略，避免重复点击叠出多个。 */
-  async function openCreateForm() {
-    if (isFormOpen) return;
-    isFormOpen = true;
-    try {
+  function openCreateForm() {
+    return forms.runExclusive(async () => {
       const fileSource = await chooseCreateSource();
       if (fileSource) await aiForm.open({ form: FORM_CREATE, params: { kind, fileSource } });
-    } finally {
-      isFormOpen = false;
-    }
+    });
   }
 
   /** 弹出“编辑资产”表单：表单随资产当前使用的来源（上传、生成）而不同。 */
@@ -222,7 +195,7 @@
     if (!confirmed) return;
 
     const result = await runAction(REQUEST_DELETE, { id: asset.id });
-    if (result) showMessage(`已删除“${result.name}”。`, false);
+    if (result) message.show(`已删除“${result.name}”。`, false);
   }
 
   /** 处理宿主带来的请求：弹出“新建资产”表单；页面还没加载完时先等一次加载，才知道类型。 */
@@ -258,19 +231,13 @@
         )
       );
     }
-    if (!asset.thumbnail) return aiUi.h('div', { class: 'asset-thumb asset-thumb--empty', text: '无图' });
-    return aiUi.h(
-      'button',
-      {
-        class: 'asset-thumb asset-thumb--button',
-        attrs: { type: 'button', 'aria-label': `查看原图：${asset.name}` },
-        on: { click: () => void viewReferenceImage(asset) }
-      },
-      aiUi.h('img', {
-        class: 'ui-image ui-image--cover',
-        attrs: { src: `data:${asset.thumbnail.mime};base64,${asset.thumbnail.data}`, alt: asset.name }
-      })
-    );
+    if (!asset.thumbnail) return aiUi.thumb({ text: '无图' });
+    return aiUi.thumb({
+      src: `data:${asset.thumbnail.mime};base64,${asset.thumbnail.data}`,
+      alt: asset.name,
+      ariaLabel: `查看原图：${asset.name}`,
+      onClick: () => void viewReferenceImage(asset)
+    });
   }
 
   /** 点击预览缩略图：向宿主取第一张参考图的原图，弹出页查看。 */
@@ -437,7 +404,7 @@
         nowrap: true,
         muted: true,
         render: (asset) => formatRelativeTime(asset.updatedAt),
-        tooltip: (asset) => new Date(asset.updatedAt).toLocaleString('zh-CN')
+        tooltip: (asset) => formatDateTime(asset.updatedAt)
       },
       { title: '操作', type: 'actions', render: renderActions }
     ];
@@ -481,29 +448,24 @@
     return String(asset.categoryId) === categoryFilter;
   }
 
-  /** 空状态和错误状态。 */
-  function renderState(text, button) {
-    return aiUi.h('div', { class: 'ui-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
-  }
-
   /** 按当前状态刷新内容区：按名称关键字筛选。 */
   function renderContent() {
     contentElement.textContent = '';
     if (isLoading) {
-      contentElement.append(renderState('加载中…'));
+      contentElement.append(aiUi.state({ text: '加载中…' }));
       return;
     }
     if (loadError) {
-      contentElement.append(renderState(loadError, aiUi.button({ text: '重试', onClick: () => void loadAssets(true) })));
+      contentElement.append(aiUi.state({ text: loadError, button: aiUi.button({ text: '重试', onClick: () => void loadAssets(true) }) }));
       return;
     }
     if (assets.length === 0) {
-      contentElement.append(renderState(`还没有${KIND_LABELS[kind] || ''}资产。`, aiUi.button({ text: '新建', kind: 'add', onClick: openCreateForm })));
+      contentElement.append(aiUi.state({ text: `还没有${KIND_LABELS[kind] || ''}资产。`, button: aiUi.button({ text: '新建', kind: 'add', onClick: openCreateForm }) }));
       return;
     }
     const text = keyword.trim().toLowerCase();
     const visible = assets.filter((asset) => matchesCategory(asset) && asset.name.toLowerCase().includes(text));
-    contentElement.append(visible.length === 0 ? renderState('没有匹配的资产。') : aiUi.table({ columns: buildColumns(), rows: visible, ariaLabel: '资产' }).element);
+    contentElement.append(visible.length === 0 ? aiUi.state({ text: '没有匹配的资产。' }) : aiUi.table({ columns: buildColumns(), rows: visible, ariaLabel: '资产' }).element);
   }
 
   /** 渲染页面骨架：搜索框、分类筛选与分类管理按钮、操作结果、资产区。 */
@@ -519,11 +481,10 @@
     });
     categorySlot = aiUi.h('div', { class: 'assets-filter' });
     manageButton = aiUi.button({ text: '分类管理', disabled: true, onClick: openCategoryManager });
-    document.getElementById('page-toolbar').append(aiUi.h('div', { class: 'assets-search' }, search.element), categorySlot, manageButton.element);
+    document.getElementById('page-toolbar').append(aiUi.h('div', { class: 'page-search' }, search.element), categorySlot, manageButton.element);
 
-    messageElement = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
     contentElement = aiUi.h('div');
-    root.append(messageElement, contentElement);
+    root.append(message.element, contentElement);
   }
 
   renderPage();

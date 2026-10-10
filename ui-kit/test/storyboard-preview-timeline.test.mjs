@@ -9,9 +9,12 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { IDS, loadTimeline, makeShot, makeSound, makeStaging, makeView } from './storyboard-preview-fixtures.mjs';
+import { IDS, loadTimeline, loadTimelineWindow, makeShot, makeSound, makeStaging, makeView } from './storyboard-preview-fixtures.mjs';
 
 const timeline = loadTimeline();
+
+/** 角色种类名（classifyCharacterDetail 的 species）。 */
+const speciesOf = (name, hint) => timeline.classifyCharacterDetail(name, hint).species;
 
 /** 一个角色从画面左侧走到右侧的镜头。 */
 function walkingShot(seq, overrides = {}) {
@@ -400,9 +403,9 @@ test('镜头对照：上一镜结尾、本镜开头、本镜结尾；第一个�
   assert.deepEqual(timeline.comparePanels(compiled, 5), []);
 });
 test('角色种类：河马是河马，不被当成马；人名“河马医生”也按河马画', () => {
-  assert.equal(timeline.classifyCharacter('河马'), 'hippo');
-  assert.equal(timeline.classifyCharacter('河马医生'), 'hippo');
-  assert.equal(timeline.classifyCharacter('老马'), 'horse');
+  assert.equal(speciesOf('河马'), 'hippo');
+  assert.equal(speciesOf('河马医生'), 'hippo');
+  assert.equal(speciesOf('老马'), 'horse');
 });
 
 test('取景之外：景别放大对准说话的角色时，站位在另一侧的角色整个镜头都看不到；不放大、走入取景或站位本就在画面外的不算', () => {
@@ -424,7 +427,7 @@ test('取景之外：景别放大对准说话的角色时，站位在另一侧�
 });
 
 test('角色种类：动物、奇幻角色与人按名称归类；容易是姓氏的单字只在名称末尾才算；设定只看开头的身份介绍', () => {
-  const classify = (name, hint) => timeline.classifyCharacter(name, hint);
+  const classify = speciesOf;
   assert.deepEqual(
     ['松鼠', '刺猬', '蝙蝠', '小黑猫', '小白兔', '大灰狼', '小熊', '老马', '啄木鸟', '金鱼', '眼镜蛇', '蝴蝶'].map((name) => classify(name)),
     ['squirrel', 'hedgehog', 'bat', 'cat', 'rabbit', 'wolf', 'bear', 'horse', 'bird', 'fish', 'snake', 'butterfly']
@@ -512,7 +515,7 @@ test('道具归类扩展：常见物品都有图形，认不出的用通用图�
 });
 
 test('动物、昆虫与微生物：各自归到具体种类，容易混的（长颈鹿、骆驼、熊猫、老虎）不再被当成别的；认不出的兽类用野兽托底', () => {
-  const classify = (name) => timeline.classifyCharacter(name);
+  const classify = (name) => speciesOf(name);
   assert.deepEqual(
     ['大象', '长颈鹿', '骆驼', '熊猫', '老虎', '狮子', '猎豹', '斑马', '独角兽', '袋鼠', '鳄鱼', '乌龟', '蜥蜴', '恐龙', '猴子', '大猩猩', '犀牛', '河马'].map(classify),
     ['elephant', 'giraffe', 'camel', 'panda', 'tiger', 'lion', 'leopard', 'zebra', 'unicorn', 'kangaroo', 'crocodile', 'turtle', 'lizard', 'dinosaur', 'monkey', 'gorilla', 'rhino', 'hippo']
@@ -543,4 +546,69 @@ test('家电、家具、厨卫、武器与特效：各有归类，具体的名�
   assert.deepEqual(['抽油烟机', '蛋糕'].map((name) => timeline.classifyCharacterDetail(name).glyph), ['hood', 'cake']);
   const setting = (text) => timeline.classifyScene(text).setting;
   assert.deepEqual(['厨房 夜', '卫生间', '卧室', '医院病房', '教室', '便利店'].map(setting), ['kitchen', 'bathroom', 'bedroom', 'hospital', 'classroom', 'shop']);
+});
+
+test('角色种类：姓氏开头的人名即使末字是动物字也是人；设定写明“是…”时才按动物；动物的名字不受影响', () => {
+  assert.deepEqual(['李燕', '赵鹤', '张雁', '林鸥', '王虎', '刘豹', '陈熊'].map((name) => speciesOf(name)), Array(7).fill('human'));
+  assert.equal(speciesOf('王虎', '是一只老虎'), 'tiger');
+  assert.equal(speciesOf('陈熊', '一只憨厚的熊'), 'bear');
+  assert.deepEqual(['小黑猫', '金鱼', '小熊', '老马', '大灰狼'].map((name) => speciesOf(name)), ['cat', 'fish', 'bear', 'horse', 'wolf']);
+  assert.equal(speciesOf('熊'), 'bear', '名称就是这个字');
+});
+
+test('仙人掌与仙人球是会说话的植物，不是神仙；“仙人”仍是神仙', () => {
+  assert.deepEqual(timeline.classifyCharacterDetail('仙人掌'), { species: 'thing', glyph: 'cactus' });
+  assert.deepEqual(timeline.classifyCharacterDetail('仙人球'), { species: 'thing', glyph: 'cactus' });
+  assert.deepEqual(timeline.classifyCharacterDetail('小刺', '一株仙人掌'), { species: 'thing', glyph: 'cactus' });
+  assert.equal(speciesOf('仙人'), 'deity');
+});
+
+test('性别：姐夫、姑父是男性，不被“姐”“姑”判成女性；姐姐、姑姑仍是女性', () => {
+  const gender = (name) => timeline.classifyHuman(name).gender;
+  assert.deepEqual(['姐夫', '妹夫', '姑父', '姨夫'].map(gender), ['male', 'male', 'male', 'male']);
+  assert.deepEqual(['姐姐', '姑姑', '姨妈'].map(gender), ['female', 'female', 'female']);
+});
+
+test('道具归类：书包、茶几、酒桶、水晶球、座钟、键盘不被“书”“茶”“酒”“水晶”“座”“盘”抢先', () => {
+  const prop = (name) => timeline.classifyProp(name);
+  assert.deepEqual(['书包', '茶几', '酒桶', '水晶球', '座钟', '键盘'].map(prop), ['bag', 'table', 'barrel', 'ball', 'clock', 'generic']);
+  assert.deepEqual(['书', '茶', '酒', '水晶', '座椅', '盘子'].map(prop), ['book', 'cup', 'cup', 'gem', 'chair', 'plate']);
+  assert.deepEqual(['书包', '茶几', '酒桶', '水晶球', '座钟'].map((name) => timeline.classifyCharacterDetail(name).glyph), ['bag', 'table', 'barrel', 'ball', 'clock']);
+});
+
+test('运镜：跟拍后退是跟拍；固定机位里的推近是推近；只有固定才是固定', () => {
+  assert.equal(timeline.parseCamera('跟拍后退').type, 'follow');
+  assert.deepEqual(
+    { type: timeline.parseCamera('固定机位缓慢推近').type, amount: timeline.parseCamera('固定机位缓慢推近').amount },
+    { type: 'zoomIn', amount: 0.6 }
+  );
+  assert.equal(timeline.parseCamera('固定机位').type, 'static');
+  assert.equal(timeline.parseCamera('向左摇').type, 'panLeft');
+});
+
+test('场景归类：洞房在屋里，学院是教室类，山洞仍是洞穴', () => {
+  const setting = (text) => timeline.classifyScene(text).setting;
+  assert.deepEqual(['洞房', '学院', '山洞', '洞内'].map(setting), ['indoor', 'classroom', 'cave', 'cave']);
+});
+
+test('规则表没有死词：每个词单独作为名称，都命中自己所在的规则（具体的词排在笼统的词之前）', () => {
+  const { TABLES } = loadTimelineWindow().aiStoryboardRules;
+  const dead = [];
+  const check = (label, rules, key, words, classify) => {
+    for (const rule of rules) for (const word of words(rule)) if (classify(word) !== rule[key]) dead.push(`${label}:${word}`);
+  };
+  const sharedWords = (rule) => rule.words;
+  const allWords = (rule) => [...rule.words, ...(rule.propWords || [])];
+  check('object', TABLES.object, 'glyph', allWords, (word) => timeline.classifyProp(word));
+  check('thing', TABLES.object, 'glyph', sharedWords, (word) => {
+    const detail = timeline.classifyCharacterDetail(word);
+    return detail.species === 'thing' ? detail.glyph : detail.species;
+  });
+  check('effect', TABLES.effect, 'glyph', sharedWords, (word) => timeline.classifyEffect(word));
+  check('sceneSetting', TABLES.sceneSetting, 'setting', sharedWords, (word) => timeline.classifyScene(word).setting);
+  check('sceneTime', TABLES.sceneTime, 'time', sharedWords, (word) => timeline.classifyScene(word).time);
+  check('camera', TABLES.camera, 'type', sharedWords, (word) => timeline.parseCamera(word).type);
+  check('shotSize', TABLES.shotSize, 'zoom', sharedWords, (word) => timeline.parseShotSize(word).zoom);
+  check('species', TABLES.species, 'species', sharedWords, (word) => speciesOf(word));
+  assert.deepEqual(dead, []);
 });

@@ -10,14 +10,16 @@
 import { FORM_LEVEL_ERROR_KEY, ValidationError } from '../../domain/errors';
 import { AUDIO_KIND_LABELS, AssetKind, AudioKind } from '../../domain/models/asset';
 import { AudioCapability, ImageCapability } from '../../domain/models/model-capability';
-import { NO_GENERATION_PROMPT_MESSAGE } from '../../domain/rules/asset-generation-rules';
+import { NO_GENERATION_PROMPT_MESSAGE, languageCodeOf, readAudioRunParams, readImageRunParams } from '../../domain/rules/asset-generation-rules';
 import { compileAssetPrompt } from '../../domain/rules/asset-prompt-rules';
 import { normalizeAssetContent } from '../../domain/rules/asset-rules';
 import { GenerationModelOption } from '../services/asset-generation-service';
+import { AssetFollowUp } from '../services/asset-creation-service';
+import { AssetPromptService } from '../services/asset-prompt-service';
 import { WorkTextModelState } from '../services/text-settings-service';
 import { FormValues } from './form-definition';
 import { FormFieldSchema } from './form-schema';
-import { TEXT_MODEL_FIELD_KEY, createTextModelField } from './text-model-field';
+import { TEXT_MODEL_FIELD_KEY, createTextModelField, readTextModelKey } from './text-model-field';
 
 /** 生成方式字段的键。 */
 export const GENERATE_MODE_FIELD_KEY = 'generateMode';
@@ -45,7 +47,6 @@ const AI_UNAVAILABLE_NOTE = '当前没有启用任何文本模型，无法使用
 const CREATE_ONLY_NOTE = '点“仅创建”只保存设定，不生成。';
 const COUNT_PLACEHOLDER = '默认 1 张';
 const MODEL_DECIDES_PLACEHOLDER = '由模型决定';
-const LANGUAGE_CODES: Readonly<Record<string, string>> = { 中文: 'zh', 英文: 'en' };
 
 /** 出图（音频）动作的称呼：图像类叫“出图”，音频叫“生成音频”。 */
 function verbOf(kind: AssetKind): string {
@@ -68,10 +69,17 @@ const RUN_MODES: readonly GenerateMode[] = ['direct', 'promptAndRun'];
 /** 需要文本模型的生成方式。 */
 const AI_MODES: readonly GenerateMode[] = ['prompt', 'promptAndRun'];
 
-/** 音频类型的表单文字（或键）转音频类型；不认识的按音色参考。 */
+/**
+ * 音频类型的表单文字（或键）转音频类型。
+ * @throws ValidationError 没有选择音频类型或选项无效。
+ */
 function readAudioKindKey(raw: string | undefined): AudioKind {
   const entries = Object.entries(AUDIO_KIND_LABELS) as Array<[AudioKind, string]>;
-  return entries.find(([key, label]) => raw === key || raw === label)?.[0] ?? 'voice';
+  const found = entries.find(([key, label]) => raw === key || raw === label);
+  if (found === undefined) {
+    throw new ValidationError({ audioKind: '请选择音频类型。' });
+  }
+  return found[0];
 }
 
 /** 某类资产可用的模型：音频资产只保留支持其音频类型的模型。 */
@@ -252,14 +260,28 @@ export function readGenerateMode(kind: AssetKind, values: FormValues): GenerateM
   return found[0];
 }
 
-/** 生成方式是否需要出图（音频）。 */
-export function needsRun(mode: GenerateMode): boolean {
-  return RUN_MODES.includes(mode);
-}
-
-/** 生成方式是否需要文本模型。 */
-export function needsText(mode: GenerateMode): boolean {
-  return AI_MODES.includes(mode);
+/**
+ * 读取创建之后继续做什么：按生成方式校验并解析出图（音频）请求与文本模型。
+ * @param prompts 检查设定是否足够生成提示词。
+ * @throws ValidationError 没有可用的模型、参数不在模型支持的范围内，或设定不足以拼出、生成提示词。
+ */
+export function readFollowUp(
+  kind: AssetKind,
+  mode: GenerateMode,
+  values: FormValues,
+  state: AssetRunState,
+  prompts: Pick<AssetPromptService, 'assertCanGenerate'>
+): AssetFollowUp {
+  if (mode === 'direct') {
+    const runRequest = readRunRequest(kind, values, state);
+    assertDirectPromptReady(kind, values);
+    return { mode, runRequest };
+  }
+  const runRequest = mode === 'promptAndRun' ? readRunRequest(kind, values, state) : undefined;
+  assertTextModelAvailable(kind, state);
+  prompts.assertCanGenerate(kind, values, false);
+  const textModelKey = readTextModelKey(state.textModel, values);
+  return runRequest === undefined ? { mode: 'prompt', textModelKey } : { mode: 'promptAndRun', textModelKey, runRequest };
 }
 
 /**
@@ -291,7 +313,7 @@ export function assertDirectPromptReady(kind: AssetKind, values: FormValues): vo
  * @param kind 资产类型。
  * @param values 表单提交的值。
  * @param state 打开表单时读取的模型状态。
- * @throws ValidationError 没有可用模型、没有选择模型，或参数不在所选模型支持的范围内。
+ * @throws ValidationError 音频类型无效、没有可用模型、没有选择模型，或参数不在所选模型支持的范围内。
  */
 export function readRunRequest(kind: AssetKind, values: FormValues, state: AssetRunState): Record<string, unknown> {
   const audioKind = kind === 'audio' ? readAudioKindKey(values.audioKind) : null;
@@ -311,41 +333,27 @@ export function readRunRequest(kind: AssetKind, values: FormValues, state: Asset
   let request: Record<string, unknown>;
   if (kind === 'audio') {
     const capability = model.capability as AudioCapability;
-    const languageCode = LANGUAGE_CODES[(values.language ?? '').trim()] ?? '';
-    let language = '';
-    if (audioKind === 'voice' && languageCode !== '' && capability.languages.length > 0) {
-      if (capability.languages.includes(languageCode)) {
-        language = languageCode;
-      } else {
-        errors.language = `所选模型不支持语言“${values.language}”，请换一个模型或语言。`;
-      }
-    }
-    const voice = values[RUN_VOICE_FIELD_KEY] ?? '';
-    if (voice !== '' && !capability.voices.includes(voice)) {
-      errors[RUN_VOICE_FIELD_KEY] = '预置音色不在所选模型支持的范围内。';
-    }
-    request = { modelId: model.id, language, voice };
+    // 只有音色参考且模型有语言可选时才传语言。
+    const language = audioKind === 'voice' && capability.languages.length > 0 ? (languageCodeOf((values.language ?? '').trim()) ?? '') : '';
+    const params = readAudioRunParams(
+      { language, voice: values[RUN_VOICE_FIELD_KEY] },
+      capability,
+      { language: 'language', voice: RUN_VOICE_FIELD_KEY },
+      errors
+    );
+    request = { modelId: model.id, language: params.language ?? '', voice: params.voice ?? '' };
   } else {
     const capability = model.capability as ImageCapability;
     const rawCount = values[RUN_COUNT_FIELD_KEY] ?? '';
-    const count = rawCount === '' ? 1 : Number(rawCount);
-    if (!Number.isInteger(count) || count < 1 || count > capability.imagesPerRequestMax) {
-      errors[RUN_COUNT_FIELD_KEY] = `生成数量必须是 1 到 ${capability.imagesPerRequestMax} 之间的整数。`;
-    }
-    const resolution = values[RUN_RESOLUTION_FIELD_KEY] ?? '';
-    if (resolution !== '' && !capability.resolutions.includes(resolution)) {
-      errors[RUN_RESOLUTION_FIELD_KEY] = '分辨率不在所选模型支持的范围内。';
-    }
-    const ratio = (values.referenceAspectRatio ?? '').trim();
-    let aspectRatio = '';
-    if (ratio !== '' && capability.aspectRatios.length > 0) {
-      if (capability.aspectRatios.includes(ratio)) {
-        aspectRatio = ratio;
-      } else {
-        errors.referenceAspectRatio = `所选模型不支持画幅 ${ratio}（支持：${capability.aspectRatios.join('、')}），请换一个参考图画幅或模型。`;
-      }
-    }
-    request = { modelId: model.id, count, aspectRatio, resolution, useReferenceImages: false };
+    // 资产的参考图画幅与出图画幅是两回事，模型没有画幅可选时不传画幅。
+    const aspectRatio = capability.aspectRatios.length > 0 ? (values.referenceAspectRatio ?? '').trim() : '';
+    const params = readImageRunParams(
+      { count: rawCount === '' ? undefined : Number(rawCount), aspectRatio, resolution: values[RUN_RESOLUTION_FIELD_KEY] },
+      capability,
+      { count: RUN_COUNT_FIELD_KEY, aspectRatio: 'referenceAspectRatio', resolution: RUN_RESOLUTION_FIELD_KEY },
+      errors
+    );
+    request = { modelId: model.id, count: params.count, aspectRatio: params.aspectRatio ?? '', resolution: params.resolution ?? '', useReferenceImages: false };
   }
   if (Object.keys(errors).length > 0) {
     throw new ValidationError(errors);

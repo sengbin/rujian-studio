@@ -22,7 +22,7 @@ interface WorkRow {
   readonly project_id: number;
   readonly name: string;
   readonly kind: ProductionFormatType;
-  readonly source_type: WorkSourceType | null;
+  readonly source_type: WorkSourceType;
   readonly created_at: string;
   readonly updated_at: string;
 }
@@ -55,10 +55,9 @@ export class SqliteWorkRepository implements WorkRepository {
   }
 
   listBySource(sourceType: WorkSourceType): Work[] {
-    // 旧数据没有素材来源，按文字灵感处理。
     const rows = this.database
-      .prepare("SELECT * FROM works WHERE source_type = ? OR (? = 'text' AND source_type IS NULL) ORDER BY created_at DESC, id DESC")
-      .all(sourceType, sourceType) as unknown as WorkRow[];
+      .prepare('SELECT * FROM works WHERE source_type = ? ORDER BY created_at DESC, id DESC')
+      .all(sourceType) as unknown as WorkRow[];
     return rows.map(toWork);
   }
 
@@ -195,14 +194,14 @@ export class SqliteWorkRepository implements WorkRepository {
   }
 }
 
-/** 数据库行转领域对象；旧数据没有素材来源时按文字灵感处理。 */
+/** 数据库行转领域对象。 */
 function toWork(row: WorkRow): Work {
   return {
     id: row.id,
     projectId: row.project_id,
     name: row.name,
     kind: row.kind,
-    sourceType: row.source_type ?? 'text',
+    sourceType: row.source_type,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };

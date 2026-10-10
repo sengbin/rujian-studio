@@ -97,6 +97,21 @@ test('生成：剧本未确认时拒绝；确认后为这一集生成镜头、�
   }
 });
 
+test('输入快照：生成参数必须放在 params 里，平铺在输入顶层的参数被拒绝', async () => {
+  const fixture = await createFixture();
+  try {
+    const target = { workId: fixture.work.id, stage: 'storyboard_script' as const, episodeId: firstEpisodeId(fixture) };
+    const base = { workName: '作品甲', projectStyle: null, aspectRatio: null };
+    await assert.rejects(fixture.runner.start({ target, input: { ...base, continuity: '无' } }), ValidationError);
+    assert.equal(fixture.runs.listVersions(target).length, 0, '被拒绝时没有留下记录');
+    await fixture.runner.start({ target, input: { ...base, params: { continuity: '无' } } });
+    await fixture.runner.whenIdle();
+    assert.equal(fixture.storyboards.getLastParams(fixture.work.id)?.continuity, 'none');
+  } finally {
+    fixture.database.close();
+  }
+});
+
 test('视图：带生成时的目标画幅，没有指定时为 null', async () => {
   const fixture = await createFixture();
   try {

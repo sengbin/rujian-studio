@@ -40,7 +40,6 @@ function createFixture(options: { readonly voiceBindings?: Record<number, number
   const rendered: Array<{ modelId: number; request: AudioGenerationRequest; fresh: boolean }> = [];
   const bound: Array<{ episodeId: number; entityId: number; assetId: number; purpose: string }> = [];
   const created: Array<Record<string, unknown>> = [];
-  const deleted: number[] = [];
   const narratorSet: Array<{ workId: number; assetId: number }> = [];
   const taken = new Set(options.takenNames ?? []);
   const voiceBindings = options.voiceBindings ?? {};
@@ -79,9 +78,6 @@ function createFixture(options: { readonly voiceBindings?: Record<number, number
         if (taken.has(sample.name as string)) throw new ConflictError('name', '已有同名资产，请换一个名称。');
         created.push(sample);
         return { id: 90 + created.length, name: sample.name as string } as never;
-      },
-      deleteAsset: (id: number) => {
-        deleted.push(id);
       }
     } as unknown as VoiceDraftServiceDependencies['assets'],
     narrators: {
@@ -91,6 +87,22 @@ function createFixture(options: { readonly voiceBindings?: Record<number, number
       }
     },
     drafts,
+    // 事务桩：失败时把已创建的资产、已写入的绑定和旁白音色一起撤销，模拟数据库事务的回滚；真实数据库下的回滚见 voice-draft-transaction.test.ts。
+    transaction: {
+      runInTransaction: <T>(work: () => T): T => {
+        const snapshot = { created: created.length, bound: bound.length, narrators: narratorSet.length, voiceBindings: structuredClone(voiceBindings) };
+        try {
+          return work();
+        } catch (error) {
+          created.length = snapshot.created;
+          bound.length = snapshot.bound;
+          narratorSet.length = snapshot.narrators;
+          for (const key of Object.keys(voiceBindings)) delete voiceBindings[Number(key)];
+          Object.assign(voiceBindings, snapshot.voiceBindings);
+          throw error;
+        }
+      }
+    },
     providers: {
       resolveAudioCall: async (modelId: number): Promise<ResolvedAudioCall> => {
         const model = MODELS.find((candidate) => candidate.id === modelId);
@@ -106,7 +118,7 @@ function createFixture(options: { readonly voiceBindings?: Record<number, number
     },
     now: () => new Date('2026-10-07T00:00:00.000Z')
   };
-  return { service: new VoiceDraftService(dependencies), drafts, rendered, bound, created, deleted, narratorSet, attributes, voiceBindings };
+  return { service: new VoiceDraftService(dependencies), drafts, rendered, bound, created, narratorSet, attributes, voiceBindings };
 }
 
 const draftRequest = (overrides: Record<string, unknown> = {}) => ({ episodeId: 1, entityId: SPEAKER_ID, modelId: 5, sampleText: '今晚会下雨', delivery: '低声', description: '低沉沙哑的老年男声', ...overrides });
@@ -164,14 +176,17 @@ test('按描述生成（支持参考音频的模型）：提示词是描述、�
   assert.equal(service.getDraftInfo(1, { episodeId: 1, entityId: SPEAKER_ID }).draft?.sampleText, 'Rain tonight');
 });
 
-test('按描述生成（只有预置音色的模型）：用所选的预置音色，不在模型里时按说话人挑，提示描述不起作用', async () => {
+test('按描述生成（只有预置音色的模型）：用所选的预置音色，没选时按说话人挑，所选不在模型里报错，提示描述不起作用', async () => {
   const { service, rendered } = createFixture();
   const chosen = await service.createDraft(1, draftRequest({ modelId: 6, presetVoice: '小刚' }));
   assert.deepEqual([rendered[0].request.voice, rendered[0].request.prompt, chosen.presetVoice], ['小刚', '今晚会下雨', '小刚']);
   assert.match(chosen.note ?? '', /只有预置音色/);
 
-  const fallback = await service.createDraft(1, draftRequest({ modelId: 6, presetVoice: '不存在' }));
-  assert.equal(fallback.presetVoice, PRESET_CAPABILITY.voices[SPEAKER_ID % PRESET_CAPABILITY.voices.length]);
+  const picked = await service.createDraft(1, draftRequest({ modelId: 6, presetVoice: '' }));
+  assert.equal(picked.presetVoice, PRESET_CAPABILITY.voices[SPEAKER_ID % PRESET_CAPABILITY.voices.length]);
+
+  await assert.rejects(() => service.createDraft(1, draftRequest({ modelId: 6, presetVoice: '不存在' })), (error: unknown) => error instanceof ValidationError && /没有“不存在”这个预置音色/.test(error.message));
+  assert.equal(rendered.length, 2, '预置音色无效时不调用模型');
 });
 
 test('生成校验：试听台词不能为空或过长，模型不存在或不能生成语音', async () => {
@@ -225,10 +240,11 @@ test('采用校验：没有试听音色、本集已有音色、名称不合法�
   assert.equal(created.length, 0);
 });
 
-test('采用时绑定失败：不留下没人用的新资产，暂存保留以便重试', async () => {
-  const { service, deleted, drafts } = createFixture({ bindFailsOnEpisode: 2 });
+test('采用时绑定失败：事务整体撤销，不留下没人用的新资产和已写入的绑定，暂存保留以便重试', async () => {
+  const { service, created, bound, drafts } = createFixture({ bindFailsOnEpisode: 2 });
   await service.createDraft(1, draftRequest());
   assert.throws(() => service.adopt(1, { episodeId: 1, entityId: SPEAKER_ID, name: '音色甲', applyToOtherEpisodes: true }), ValidationError);
-  assert.deepEqual(deleted, [91]);
+  assert.deepEqual(created, []);
+  assert.deepEqual(bound, []);
   assert.ok(drafts.find(1, `entity:${SPEAKER_ID}`) !== undefined);
 });

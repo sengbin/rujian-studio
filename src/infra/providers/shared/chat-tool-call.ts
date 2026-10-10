@@ -9,7 +9,7 @@
 
 import { ProviderError, ProviderFailure } from '../../../domain/errors';
 import { TextGenerationRequest } from '../../../domain/ports/text-generation-port';
-import { toDataUri } from './provider-payload';
+import { isRecord, toDataUri } from './provider-payload';
 import { toStrictSchema } from './strict-json-schema';
 
 /** 流式响应中累积的一次工具调用。 */
@@ -58,15 +58,18 @@ export function buildUserContent(request: TextGenerationRequest): string | Array
 /**
  * 读完流式事件，取出模型通过指定工具返回的参数对象。
  * @param events 事件的 data 内容，不含结束标记。
- * @param toolName 期望被调用的工具名称；模型调用了其他名称的工具时取第一个调用。
+ * @param toolName 期望被调用的工具名称。
  * @param options 服务商名称与错误码分类。
- * @throws ProviderError 事件是错误信息、输出被截断、没有通过工具返回，或工具参数不是合法的 JSON 对象。
+ * @throws ProviderError 事件是错误信息、输出被截断、没有通过期望的工具返回，或工具参数不是合法的 JSON 对象。
  */
 export async function collectToolCallArguments(events: AsyncIterable<string>, toolName: string, options: ChatToolCallOptions): Promise<object> {
   const { calls, content } = await readStream(events, options);
   const drafts = [...calls.values()];
-  const chosen = drafts.find((draft) => draft.name === toolName) ?? drafts[0];
+  const chosen = drafts.find((draft) => draft.name === toolName);
   if (chosen === undefined) {
+    if (drafts.length > 0) {
+      throw new ProviderError('invalid_request', `模型调用了非预期的工具“${drafts[0].name}”，应为“${toolName}”，请重试。`);
+    }
     const detail = content.trim() === '' ? '' : `：${content.trim().slice(0, 200)}`;
     throw new ProviderError('invalid_request', `模型没有通过工具返回结果${detail}`);
   }
@@ -110,18 +113,19 @@ async function readStream(events: AsyncIterable<string>, options: ChatToolCallOp
 }
 
 /**
- * 解析一个流式事件。无法解析或没有候选的事件（如用量统计）忽略；事件里带错误信息时抛出。
- * @throws ProviderError 事件是错误信息。
+ * 解析一个流式事件。没有候选的事件（如用量统计）忽略；事件里带错误信息或内容不是 JSON 对象时抛出。
+ * keep-alive、空行与结束标记在传输层已经过滤，不会到这里。
+ * @throws ProviderError 事件是错误信息，或不是合法的 JSON 对象。
  */
 function readChoice(data: string, options: ChatToolCallOptions): ChoiceDelta {
   let chunk: unknown;
   try {
     chunk = JSON.parse(data);
-  } catch {
-    return EMPTY_DELTA;
+  } catch (error) {
+    throw new ProviderError('server', `${options.providerName}返回的流式事件不是合法的 JSON。`, { cause: error });
   }
   if (!isRecord(chunk)) {
-    return EMPTY_DELTA;
+    throw new ProviderError('server', `${options.providerName}返回的流式事件不是 JSON 对象。`);
   }
   if (isRecord(chunk.error)) {
     const code = typeof chunk.error.code === 'string' ? chunk.error.code : null;
@@ -166,8 +170,4 @@ function parseJsonObject(text: string, subject: string): object {
     throw new ProviderError('invalid_request', `模型返回的${subject}不是 JSON 对象，请重试。`);
   }
   return parsed;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

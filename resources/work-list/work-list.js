@@ -37,10 +37,9 @@
   const VIEW_STORYBOARD = 'storyboard';
   const VIEW_ORIGINAL = 'original';
 
-  const GENERIC_ERROR_TEXT = '操作失败，请重试。';
   const FILTER_ALL = 'all';
   const REFRESH_DELAY_MS = 150;
-  const SOURCE_LABELS = { text: '文字灵感', image: '图片灵感', novel: '小说原文', original: '原创文稿' };
+  const SOURCE_LABELS = { text: '文字灵感', image: '灵感图片', novel: '小说原文', original: '原创文稿' };
   /** 剧本视图的状态筛选：值为剧本阶段的展示状态，none 表示还没开始。 */
   const STATUS_FILTER_OPTIONS = [
     { value: FILTER_ALL, label: '全部状态' },
@@ -52,7 +51,7 @@
     { value: 'canceled', label: '已取消' }
   ];
 
-  const { formatRelativeTime, stageStatusLabel, stageStatusClass } = window.pageFormat;
+  const { formatRelativeTime, formatDateTime, stageStatusLabel, stageStatusClass, errorText, createActionRunner, createFormOpener } = window.pageFormat;
 
   const root = document.getElementById('app');
   /** 页面绑定的视图（素材来源或剧本），首次加载成功后由宿主告知。 */
@@ -61,7 +60,6 @@
   let works = [];
   let loadError = '';
   let isLoading = true;
-  let isFormOpen = false;
   /** 表单还开着时收到的「稍后执行」请求（如弹出产出层、打开下一个表单），表单关闭后执行。 */
   let afterFormClosed = null;
   let filterProjectId = FILTER_ALL;
@@ -73,25 +71,10 @@
   let projectSlot = null;
   let statusSlot = null;
   let contentElement = null;
-  let messageElement = null;
-
-  /** 在操作结果区显示文字；空串表示清除。 */
-  function showMessage(text, isError) {
-    messageElement.textContent = text;
-    messageElement.className = isError ? 'ui-message status-error' : 'ui-message status-success';
-    messageElement.hidden = text === '';
-  }
-
-  /** 发起请求，失败时在操作结果区显示原因；成功返回响应数据，失败返回 undefined。 */
-  async function runAction(name, payload) {
-    showMessage('', false);
-    try {
-      return await window.hostBridge.request(name, payload);
-    } catch (error) {
-      showMessage((error && error.message) || GENERIC_ERROR_TEXT, true);
-      return undefined;
-    }
-  }
+  /** 操作结果提示区。 */
+  const message = aiUi.message();
+  const runAction = createActionRunner(message);
+  const forms = createFormOpener(aiForm);
 
   /** 项目下拉：全部项目加各个项目；项目被删除时回到“全部项目”。 */
   function renderProjectFilter() {
@@ -172,14 +155,12 @@
     }, REFRESH_DELAY_MS);
   }
 
-  /** 弹出表单；已有表单打开时忽略，避免重复点击叠出多个。 */
+  /** 弹出表单；已有表单打开时忽略，避免重复点击叠出多个；表单关闭后执行等待中的动作。 */
   async function showForm(options) {
-    if (isFormOpen) return;
-    isFormOpen = true;
+    if (forms.isOpen()) return;
     try {
-      await aiForm.open(options);
+      await forms.open(options);
     } finally {
-      isFormOpen = false;
       const next = afterFormClosed;
       afterFormClosed = null;
       if (next) next();
@@ -188,7 +169,7 @@
 
   /** 执行一个动作；表单还开着时等它关闭后再执行，避免两个弹出页同时出现。 */
   function runAfterForm(action) {
-    if (isFormOpen) afterFormClosed = action;
+    if (forms.isOpen()) afterFormClosed = action;
     else action();
   }
 
@@ -304,7 +285,7 @@
         );
       } catch (error) {
         content.textContent = '';
-        content.append(aiUi.h('p', { class: 'status-error', text: (error && error.message) || GENERIC_ERROR_TEXT }));
+        content.append(aiUi.h('p', { class: 'status-error', text: errorText(error) }));
       }
     }
     episodeListRefresh = load;
@@ -337,7 +318,7 @@
     if (!confirmed) return;
 
     const result = await runAction(REQUEST_DELETE, { id: work.id, confirmName: prepared.name });
-    if (result) showMessage(`已删除作品“${result.name}”。`, false);
+    if (result) message.show(`已删除作品“${result.name}”。`, false);
   }
 
   /** 处理宿主带来的请求：弹出“新建作品”或“选择作品”表单；页面还没加载完时先等一次加载，才知道视图。 */
@@ -408,7 +389,7 @@
       nowrap: true,
       muted: true,
       render: (work) => formatRelativeTime(work.createdAt),
-      tooltip: (work) => new Date(work.createdAt).toLocaleString('zh-CN')
+      tooltip: (work) => formatDateTime(work.createdAt)
     },
     {
       title: '操作',
@@ -461,7 +442,7 @@
       nowrap: true,
       muted: true,
       render: (work) => formatRelativeTime(work.createdAt),
-      tooltip: (work) => new Date(work.createdAt).toLocaleString('zh-CN')
+      tooltip: (work) => formatDateTime(work.createdAt)
     },
     {
       title: '操作',
@@ -509,7 +490,7 @@
       nowrap: true,
       muted: true,
       render: (work) => formatRelativeTime(work.createdAt),
-      tooltip: (work) => new Date(work.createdAt).toLocaleString('zh-CN')
+      tooltip: (work) => formatDateTime(work.createdAt)
     },
     { title: '操作', type: 'actions', render: (work) => [renderScreenplayButton(work)] }
   ];
@@ -582,34 +563,29 @@
       nowrap: true,
       muted: true,
       render: (work) => formatRelativeTime(work.createdAt),
-      tooltip: (work) => new Date(work.createdAt).toLocaleString('zh-CN')
+      tooltip: (work) => formatDateTime(work.createdAt)
     },
     { title: '操作', type: 'actions', render: (work) => renderStoryboardButtons(work) }
   ];
-
-  /** 空状态和错误状态。 */
-  function renderState(text, button) {
-    return aiUi.h('div', { class: 'ui-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
-  }
 
   /** 按当前状态刷新内容区：先按项目、再按名称关键字筛选。 */
   function renderContent() {
     contentElement.textContent = '';
     if (isLoading) {
-      contentElement.append(renderState('加载中…'));
+      contentElement.append(aiUi.state({ text: '加载中…' }));
       return;
     }
     if (loadError) {
-      contentElement.append(renderState(loadError, aiUi.button({ text: '重试', onClick: () => void loadWorks(true) })));
+      contentElement.append(aiUi.state({ text: loadError, button: aiUi.button({ text: '重试', onClick: () => void loadWorks(true) }) }));
       return;
     }
     if (works.length === 0) {
       contentElement.append(
         view === VIEW_SCREENPLAY
-          ? renderState('还没有可生成剧本的作品。请先在“创作”列表中新建作品并确认创意。')
+          ? aiUi.state({ text: '还没有可生成剧本的作品。请先在“创作”列表中新建作品并确认创意。' })
           : view === VIEW_STORYBOARD
-            ? renderState('还没有可生成分镜脚本的作品。请先在“剧本”列表中确认剧本。')
-            : renderState('还没有作品。', aiUi.button({ text: '新建作品', kind: 'add', onClick: openCreateForm }))
+            ? aiUi.state({ text: '还没有可生成分镜脚本的作品。请先在“剧本”列表中确认剧本。' })
+            : aiUi.state({ text: '还没有作品。', button: aiUi.button({ text: '新建作品', kind: 'add', onClick: openCreateForm }) })
       );
       return;
     }
@@ -630,7 +606,7 @@
             : WORK_COLUMNS;
     contentElement.append(
       visible.length === 0
-        ? renderState('没有匹配的作品。')
+        ? aiUi.state({ text: '没有匹配的作品。' })
         : aiUi.table({ columns, rows: visible, ariaLabel: '作品' }).element
     );
   }
@@ -650,11 +626,10 @@
     statusSlot = aiUi.h('div', { class: 'works-filter works-filter--status', hidden: true });
     document
       .getElementById('page-toolbar')
-      .append(aiUi.h('div', { class: 'works-search' }, search.element), projectSlot, statusSlot);
+      .append(aiUi.h('div', { class: 'page-search' }, search.element), projectSlot, statusSlot);
 
-    messageElement = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
     contentElement = aiUi.h('div');
-    root.append(messageElement, contentElement);
+    root.append(message.element, contentElement);
     renderProjectFilter();
   }
 

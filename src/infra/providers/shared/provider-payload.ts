@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：provider-payload.ts
-// 说明：各服务商适配器共用的请求内容处理：Base64 素材编码与校验，以及模型专有参数的校验与转换。
+// 说明：各服务商适配器共用的请求内容处理：Base64 素材编码与校验、模型专有参数的校验与转换，以及任务引用（remoteJobId）里 JSON 的解析。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-05
@@ -8,6 +8,10 @@
 // ------------------------------------------------------------------------
 
 import { MediaInput } from '../../../domain/ports/provider-adapters';
+import { isRecord } from '../../../domain/rules/field-readers';
+
+/** 各适配器判断对象时统一从这里导入，定义在领域层。 */
+export { isRecord };
 
 /** 模型专有参数的声明：请求体中的键，以及允许的取值。 */
 export interface ExtraParamSpec {
@@ -17,7 +21,16 @@ export interface ExtraParamSpec {
 
 /** 把未知值当作对象读取；不是对象时返回空对象。 */
 export function readObject(value: unknown): Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+  return isRecord(value) ? value : {};
+}
+
+/** 解析 JSON；不合法时返回 undefined，由调用方按任务引用损坏处理。 */
+export function parseJson(text: string): unknown {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
 }
 
 /** 把素材转换为 Base64 内联地址：data:{类型};base64,{内容}。 */

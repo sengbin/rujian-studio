@@ -10,6 +10,7 @@
 import { ProductionFormatType } from '../models/production-profile';
 import { NewWorkSource, WorkInput, WorkSourceType, WorkUpdate } from '../models/work';
 import { FieldErrors, assertNoFieldErrors, readRecord, readText } from './field-readers';
+import { IMAGE_FILE_MAX_BYTES, detectImageMime } from './image-size';
 import { PRODUCTION_PROFILES, UNSUPPORTED_FORMAT_SUFFIX } from './production-profile-rules';
 import { UploadedFile, getExtension, readUploadedFiles } from './upload-readers';
 
@@ -36,7 +37,6 @@ export const MANUSCRIPT_TEXT_FIELD_KEY = 'manuscriptText';
 
 export const IMAGE_EXTENSIONS: readonly string[] = ['.png', '.jpg', '.jpeg', '.webp'];
 export const IMAGE_MAX_FILES = 10;
-export const IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 export const NOVEL_EXTENSIONS: readonly string[] = ['.txt', '.md'];
 export const NOVEL_MAX_BYTES = 5 * 1024 * 1024;
 /** 原创文稿粘贴文字的字数上限，按最多 3 字节一个字计算也不超过 NOVEL_MAX_BYTES。 */
@@ -115,7 +115,7 @@ function readWorkKind(value: unknown, errors: FieldErrors): ProductionFormatType
 
 /** 读取灵感图片：至少 1 张、最多 10 张，按文件头识别 PNG、JPEG、WebP。 */
 function readImageSources(value: unknown, errors: FieldErrors): NewWorkSource[] {
-  const files = readUploadedFiles(value, IMAGE_FIELD_KEY, '灵感图片', IMAGE_MAX_BYTES, errors);
+  const files = readUploadedFiles(value, IMAGE_FIELD_KEY, '灵感图片', IMAGE_FILE_MAX_BYTES, errors);
   if (files === undefined) {
     return [];
   }
@@ -202,21 +202,6 @@ function decodeTextFile(files: readonly UploadedFile[], key: string, label: stri
     return [];
   }
   return [{ kind: 'novel_text', fileName: file.name, mime: extension === '.md' ? 'text/markdown' : 'text/plain', content }];
-}
-
-/** 按文件头识别图片格式，返回 MIME 类型；不是受支持的格式返回 null。 */
-export function detectImageMime(content: Uint8Array): string | null {
-  const startsWith = (offset: number, bytes: readonly number[]) => bytes.every((byte, index) => content[offset + index] === byte);
-  if (startsWith(0, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
-    return 'image/png';
-  }
-  if (startsWith(0, [0xff, 0xd8, 0xff])) {
-    return 'image/jpeg';
-  }
-  if (startsWith(0, [0x52, 0x49, 0x46, 0x46]) && startsWith(8, [0x57, 0x45, 0x42, 0x50])) {
-    return 'image/webp';
-  }
-  return null;
 }
 
 /** 严格按 UTF-8 解码；含非法字节时返回 undefined。 */

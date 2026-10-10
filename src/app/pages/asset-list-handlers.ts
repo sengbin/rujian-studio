@@ -7,9 +7,7 @@
 // 备注：一个页面绑定一种资产类型，请求不需要再带类型；新建、编辑表单由页面用表单请求在弹出页面中完成，删除确认在页面内对话框完成；版本列表、采用等请求直接交给资产生成服务。
 // ------------------------------------------------------------------------
 
-import { FORM_LEVEL_ERROR_KEY, NotFoundError, ValidationError } from '../../domain/errors';
-import { AssetFileSource, AssetKind, AssetListItem } from '../../domain/models/asset';
-import { checkGenerationAvailability, GenerationAvailability, hasUngeneratedChanges, isPromptOutdated } from '../../domain/rules/asset-generation-rules';
+import { AssetKind } from '../../domain/models/asset';
 import { readEntityId, readRecord } from '../../domain/rules/field-readers';
 import { MessageRouter } from '../messaging/message-router';
 import { AssetGenerationService } from '../services/asset-generation-service';
@@ -54,16 +52,6 @@ export interface AssetListRequest {
   readonly action?: AssetListAction;
 }
 
-/** 列表中的一行：资产加生成状态标记。 */
-export interface AssetListRow extends AssetListItem {
-  /** 提示词需更新：表单字段在提示词之后改过。 */
-  readonly isPromptOutdated: boolean;
-  /** 图片（音频）有改动未生成。 */
-  readonly hasUngeneratedChanges: boolean;
-  /** 能否提交图片（音频）生成及不能时的原因；有无可用模型按这一条资产（音频按其音频类型）计算。 */
-  readonly availability: GenerationAvailability;
-}
-
 /** 资产列表页需要外部提供的能力。 */
 export interface AssetListActions {
   /** 取走页面打开前登记的待处理请求；没有时返回 undefined，取走后不再返回。 */
@@ -93,13 +81,7 @@ export function registerAssetListHandlers(
   router.register(ASSET_LIST_REQUESTS.load, async () => {
     // 音频资产按各自的音频类型逐条判断有无可用模型，不能按资产大类一刀切。
     const hasUsableModel = await generation.createUsableModelCheck(kind);
-    const rows: AssetListRow[] = assets.listAssets(kind).map((asset) => ({
-      ...asset,
-      isPromptOutdated: isPromptOutdated(asset),
-      hasUngeneratedChanges: hasUngeneratedChanges(asset, asset.generation),
-      availability: checkGenerationAvailability(asset, asset.generation, hasUsableModel(asset))
-    }));
-    return { kind, assets: rows, categories: categories.listCategories(kind) };
+    return { kind, assets: assets.listAssetRows(kind, hasUsableModel), categories: categories.listCategories(kind) };
   });
 
   router.register(ASSET_LIST_REQUESTS.takePending, () => ({ request: actions.takePending() }));
@@ -114,11 +96,7 @@ export function registerAssetListHandlers(
 
   // 切换使用的文件来源：上传与生成的文件都保留，只改变资产对外使用哪一组。
   router.register(ASSET_LIST_REQUESTS.switchSource, (payload) => {
-    const source = readRecord(payload).source;
-    if (source !== 'upload' && source !== 'generated') {
-      throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: '文件来源无效。' });
-    }
-    assets.switchFileSource(readEntityId(payload, '资产'), source as AssetFileSource);
+    assets.switchFileSource(readEntityId(payload, '资产'), readRecord(payload).source);
     return { switched: true };
   });
 
@@ -140,18 +118,10 @@ export function registerAssetListHandlers(
   router.register(ASSET_LIST_REQUESTS.versions, (payload) => generation.listVersions(readAssetId(payload)));
   router.register(ASSET_LIST_REQUESTS.version, (payload) => generation.getVersion(readVersionId(payload)));
   router.register(ASSET_LIST_REQUESTS.fileData, (payload) => generation.getFileData(readEntityId({ id: readRecord(payload).fileId }, '文件')));
-  /** 取资产的第一个参考文件（图片或音频）的类型与 Base64 内容；没有时按 emptyMessage 报错。 */
-  const readFirstReferenceFile = (payload: unknown, emptyMessage: string) => {
-    const [file] = assets.getReferenceFiles(readEntityId(payload, '资产'));
-    if (file === undefined) {
-      throw new NotFoundError(emptyMessage);
-    }
-    return { mime: file.mime, data: file.content.toString('base64') };
-  };
   // 列表预览点击查看原图：取资产的第一张参考图，与缩略图显示的是同一张。
-  router.register(ASSET_LIST_REQUESTS.referenceImage, (payload) => readFirstReferenceFile(payload, '该资产没有参考图。'));
+  router.register(ASSET_LIST_REQUESTS.referenceImage, (payload) => assets.readReferenceImage(readEntityId(payload, '资产')));
   // 音频列表点击试听：取资产的参考音频。
-  router.register(ASSET_LIST_REQUESTS.referenceAudio, (payload) => readFirstReferenceFile(payload, '该资产还没有参考音频。'));
+  router.register(ASSET_LIST_REQUESTS.referenceAudio, (payload) => assets.readReferenceAudio(readEntityId(payload, '资产')));
   router.register(ASSET_LIST_REQUESTS.saveThumbnails, (payload) => {
     generation.saveThumbnails(payload);
     return { saved: true };

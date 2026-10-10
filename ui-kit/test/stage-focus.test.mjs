@@ -59,6 +59,7 @@ function makeView() {
     totalSeconds: 36,
     entities: [],
     firstFrameAssets: [],
+    limits: { maxSoundsPerShot: 20, firstFrameImageMaxBytes: 10 * 1024 * 1024 },
     stagingOptions: {
       x: [{ value: 'left', label: '画面左侧' }, { value: 'center', label: '画面中央' }, { value: 'right', label: '画面右侧' }],
       depth: [{ value: 'front', label: '前景' }, { value: 'middle', label: '中景' }, { value: 'back', label: '背景' }],
@@ -85,7 +86,7 @@ function setup() {
     },
     onEvent: () => undefined
   };
-  for (const file of ['shared/page-format.js', 'stage/stage.js', 'stage/stage-storyboard-panels.js', 'stage/stage-storyboard.js']) {
+  for (const file of ['shared/page-format.js', 'stage/stage-actions.js', 'stage/stage-header.js', 'stage/stage.js', 'stage/stage-editor-common.js', 'stage/stage-storyboard-panels.js', 'stage/stage-storyboard.js']) {
     window.eval(readFileSync(`${RESOURCES_ROOT}${file}`, 'utf8'));
   }
   return { window, doc: env.document, scrolled };

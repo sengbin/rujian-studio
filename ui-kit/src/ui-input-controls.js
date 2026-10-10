@@ -11,11 +11,7 @@
 
 (function () {
   const aiUi = window.aiUi;
-
-  /** 值统一转为文本，空值按空串。 */
-  function toText(value) {
-    return value === undefined || value === null ? '' : String(value);
-  }
+  const toText = aiUi.toText;
 
   /**
    * 创建单行输入框。

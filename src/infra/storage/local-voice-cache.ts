@@ -7,9 +7,11 @@
 // 备注：文件名为“键 + 扩展名”，键必须是 64 位十六进制哈希（不合法的键直接拒绝，不会越出目录）；读取时刷新修改时间，淘汰按修改时间从旧到新；先写临时文件再改名；缓存不在数据备份内，丢失后重新合成即可。
 // ------------------------------------------------------------------------
 
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, utimesSync } from 'node:fs';
 import * as path from 'node:path';
 import { VoiceCache, VoiceCacheEntry } from '../../domain/ports/voice-cache';
+import { writeFileAtomically } from './atomic-file';
+import { AUDIO_EXTENSION_BY_MIME, PARTIAL_SUFFIX } from './storage-file-types';
 
 /** 缓存在数据目录下的子目录名。 */
 export const VOICE_CACHE_DIRECTORY_NAME = 'voice-cache';
@@ -19,14 +21,6 @@ const DEFAULT_MAX_ENTRIES = 500;
 const DEFAULT_MAX_BYTES = 1024 * 1024 * 1024;
 
 const KEY_PATTERN = /^[0-9a-f]{64}$/;
-const PARTIAL_SUFFIX = '.part';
-
-/** 支持保存的音频类型与扩展名。 */
-const EXTENSION_BY_MIME: Readonly<Record<string, string>> = {
-  'audio/mpeg': '.mp3',
-  'audio/wav': '.wav',
-  'audio/mp4': '.m4a'
-};
 
 /** 缓存大小上限。 */
 export interface LocalVoiceCacheLimits {
@@ -55,7 +49,7 @@ export class LocalVoiceCache implements VoiceCache {
     if (!KEY_PATTERN.test(key)) {
       return undefined;
     }
-    for (const [mime, extension] of Object.entries(EXTENSION_BY_MIME)) {
+    for (const [mime, extension] of Object.entries(AUDIO_EXTENSION_BY_MIME)) {
       const filePath = path.join(this.rootDirectory, `${key}${extension}`);
       if (!existsSync(filePath)) {
         continue;
@@ -73,26 +67,19 @@ export class LocalVoiceCache implements VoiceCache {
   }
 
   put(key: string, mime: string, content: Buffer): void {
-    const extension = EXTENSION_BY_MIME[mime];
+    const extension = AUDIO_EXTENSION_BY_MIME[mime];
     if (!KEY_PATTERN.test(key) || extension === undefined) {
       throw new Error('不能缓存这条语音：键或类型不合法。');
     }
     mkdirSync(this.rootDirectory, { recursive: true });
     // 同一个键换了格式时，先清掉旧格式的文件，避免读到过期内容。
-    for (const other of Object.values(EXTENSION_BY_MIME)) {
+    for (const other of Object.values(AUDIO_EXTENSION_BY_MIME)) {
       if (other !== extension) {
         rmSync(path.join(this.rootDirectory, `${key}${other}`), { force: true });
       }
     }
     const filePath = path.join(this.rootDirectory, `${key}${extension}`);
-    const partialPath = `${filePath}${PARTIAL_SUFFIX}`;
-    try {
-      writeFileSync(partialPath, content);
-      renameSync(partialPath, filePath);
-    } catch (error) {
-      rmSync(partialPath, { force: true });
-      throw error;
-    }
+    writeFileAtomically(filePath, content);
     this.prune();
   }
 

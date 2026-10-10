@@ -32,7 +32,7 @@ CREATE TABLE works (
   project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   kind TEXT NOT NULL,
-  source_type TEXT CHECK (source_type IS NULL OR source_type IN ('text', 'image', 'novel', 'original')),
+  source_type TEXT NOT NULL CHECK (source_type IN ('text', 'image', 'novel', 'original')),
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   UNIQUE (project_id, name)

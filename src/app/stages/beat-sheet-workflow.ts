@@ -19,6 +19,7 @@ import { getBeatTemplate, getProductionProfile, listSupportedFormats } from '../
 import { WorkSourceType } from '../../domain/models/work';
 import { askModel, AskOptions } from './ask-model';
 import { createBeatSheetTool } from './output-tools/beat-sheet-output-tools';
+import { NOT_APPLICABLE } from './prompt-templates';
 import { isSameFingerprint } from './source-fingerprint';
 import { MaterialProgress, MaterialSourceType, loadSource, prepareMaterial, readMaterialProgress } from './source-material';
 import { StageContext, StageWorkflow } from './stage-workflow';
@@ -47,7 +48,6 @@ export const BEAT_SHEET_PROMPT_VARIABLES: Readonly<Record<string, readonly strin
 
 const FORMAT_TYPES: readonly ProductionFormatType[] = listSupportedFormats().map((profile) => profile.formatType);
 const SOURCE_TYPES: readonly WorkSourceType[] = ['text', 'image', 'novel', 'original'];
-const NOT_APPLICABLE = '（无）';
 
 /** 作品素材来源转为素材整理的来源：原创文稿的原稿与小说一样分段处理。 */
 function toMaterialSource(sourceType: WorkSourceType): MaterialSourceType {

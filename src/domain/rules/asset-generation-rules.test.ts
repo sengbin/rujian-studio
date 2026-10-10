@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：asset-generation-rules.test.ts
-// 说明：资产生成规则的自动化测试：修订号的计算、参考文件的比较、“需更新”“有改动未生成”的推算、能否生成的判断与使用集数的统计。
+// 说明：资产生成规则的自动化测试：修订号的计算、参考文件的比较、“需更新”“有改动未生成”的推算、能否生成的判断、使用集数的统计与图像、音频生成参数的范围校验。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
@@ -18,8 +18,12 @@ import {
   countUsedEpisodes,
   hasUngeneratedChanges,
   isPromptOutdated,
-  modelKindOfAsset
+  languageCodeOf,
+  modelKindOfAsset,
+  readAudioRunParams,
+  readImageRunParams
 } from './asset-generation-rules';
+import { FAKE_ASSET_IMAGE_CAPABILITY, FAKE_AUDIO_CAPABILITY } from '../ports/testing/fake-model-providers';
 
 function asset(overrides: Partial<AssetRecord> = {}): AssetRecord {
   return {
@@ -111,4 +115,49 @@ test('使用集数：绑定所在的集加镜头声音指定的集，同一集�
   assert.equal(countUsedEpisodes({ bindings: [binding(1, '林夏'), binding(1, '周远'), binding(2, '林夏')], soundEpisodes: [] }), 2);
   assert.equal(countUsedEpisodes({ bindings: [], soundEpisodes: [sound(3)] }), 1);
   assert.equal(countUsedEpisodes({ bindings: [binding(1, '林夏')], soundEpisodes: [sound(1), sound(2), sound(1, '作品乙')] }), 3);
+});
+
+const IMAGE_KEYS = { count: 'runCount', aspectRatio: 'ratio', resolution: 'runResolution' };
+const AUDIO_KEYS = { language: 'language', voice: 'runVoice' };
+
+test('图像生成参数：缺省数量为 1，空串的画幅与分辨率表示不指定', () => {
+  const errors: Record<string, string> = {};
+  assert.deepEqual(readImageRunParams({}, FAKE_ASSET_IMAGE_CAPABILITY, IMAGE_KEYS, errors), { count: 1, aspectRatio: null, resolution: null });
+  assert.deepEqual(readImageRunParams({ count: 4, aspectRatio: '16:9', resolution: '2K' }, FAKE_ASSET_IMAGE_CAPABILITY, IMAGE_KEYS, errors), { count: 4, aspectRatio: '16:9', resolution: '2K' });
+  assert.deepEqual(readImageRunParams({ aspectRatio: '', resolution: '' }, FAKE_ASSET_IMAGE_CAPABILITY, IMAGE_KEYS, errors), { count: 1, aspectRatio: null, resolution: null });
+  assert.deepEqual(errors, {});
+});
+
+test('图像生成参数：数量必须是 1 到单次上限的整数，画幅与分辨率必须在模型支持的取值中，错误按传入的键记录', () => {
+  const errors: Record<string, string> = {};
+  for (const count of [0, 5, 1.5, '2', Number.NaN]) {
+    const fresh: Record<string, string> = {};
+    readImageRunParams({ count }, FAKE_ASSET_IMAGE_CAPABILITY, IMAGE_KEYS, fresh);
+    assert.match(fresh.runCount ?? '', /1 到 4 之间的整数/, String(count));
+  }
+  readImageRunParams({ aspectRatio: '2:3', resolution: '8K' }, FAKE_ASSET_IMAGE_CAPABILITY, IMAGE_KEYS, errors);
+  assert.match(errors.ratio, /不支持画幅 2:3（支持：1:1、16:9）/);
+  assert.match(errors.runResolution, /分辨率不在/);
+
+  const noRatios: Record<string, string> = {};
+  readImageRunParams({ aspectRatio: '1:1' }, { ...FAKE_ASSET_IMAGE_CAPABILITY, aspectRatios: [] }, IMAGE_KEYS, noRatios);
+  assert.match(noRatios.ratio, /不支持指定画幅/);
+});
+
+test('音频生成参数：语言与预置音色必须在模型支持的取值中，空串表示不指定', () => {
+  const errors: Record<string, string> = {};
+  assert.deepEqual(readAudioRunParams({ language: 'zh', voice: '小红' }, FAKE_AUDIO_CAPABILITY, AUDIO_KEYS, errors), { language: 'zh', voice: '小红' });
+  assert.deepEqual(readAudioRunParams({ language: '', voice: '' }, FAKE_AUDIO_CAPABILITY, AUDIO_KEYS, errors), { language: null, voice: null });
+  assert.deepEqual(errors, {});
+  readAudioRunParams({ language: 'fr', voice: '小蓝' }, FAKE_AUDIO_CAPABILITY, AUDIO_KEYS, errors);
+  assert.match(errors.language, /语言不在/);
+  assert.match(errors.runVoice, /预置音色不在/);
+});
+
+test('语言代码：中文、英文有对应代码，其他或未设置没有', () => {
+  assert.equal(languageCodeOf('中文'), 'zh');
+  assert.equal(languageCodeOf('英文'), 'en');
+  assert.equal(languageCodeOf('其他'), undefined);
+  assert.equal(languageCodeOf(undefined), undefined);
+  assert.equal(languageCodeOf('toString'), undefined);
 });

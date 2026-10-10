@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { GeneratedOutputError } from '../errors';
 import { AssetRecord } from '../models/asset';
-import { assetToDraftValues, compileAssetPrompt, describeAssetDraft, parseAssetPrompts, promptFocus, promptKindLabel, resolveGenerationPrompt } from './asset-prompt-rules';
+import { assetToDraftValues, compileAssetPrompt, describeAssetDraft, parseAssetPrompts, promptFocus, promptKindLabel, readAudioKind, resolveGenerationPrompt } from './asset-prompt-rules';
 
 test('整理草稿：名称在前，空字段不列出，没有风格时不添加画面风格', () => {
   const draft = describeAssetDraft('character', { name: ' 林夏 ', appearance: '短发', clothing: '  ', composition: '半身像' });
@@ -55,7 +55,9 @@ test('已保存的资产转草稿：图像类用表单键，音频用界面文�
   assert.deepEqual(assetToDraftValues(music), { name: '林夏', extra: '', audioKind: '背景音乐', description: '紧张', language: '中文' });
   assert.equal(promptKindLabel(music), '背景音乐');
   assert.match(promptFocus(music), /背景音乐/);
-  assert.equal(promptKindLabel(record({ kind: 'audio', attributes: {} })), '音色参考');
+  assert.throws(() => promptKindLabel(record({ kind: 'audio', attributes: {} })), /audio_kind/);
+  assert.throws(() => readAudioKind({ audio_kind: 'toString' }), /audio_kind/);
+  assert.equal(readAudioKind({ audio_kind: 'sfx' }), 'sfx');
 });
 
 test('模板拼提示词（图像）：名称、描述字段、构图、背景、风格、补充要求、画幅按固定顺序，不含音色描述，末尾固定约束', () => {

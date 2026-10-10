@@ -50,11 +50,11 @@ export interface SnapshotParams {
   readonly resolution: string | null;
   readonly durationSeconds: number | null;
   readonly audioMode: VideoAudioMode | null;
-  /** 实际传给模型的声音内容（已去掉模型不支持的项）；声音模式不是原生生成时为 null。早期版本提交的快照没有这个键。 */
-  readonly audioElements?: readonly VideoAudioElement[] | null;
+  /** 实际传给模型的声音内容（已去掉模型不支持的项）；声音模式不是原生生成时为 null。 */
+  readonly audioElements: readonly VideoAudioElement[] | null;
   readonly seed: number | null;
-  /** 实际写在提示词末尾的负向清单原文（已去掉与正向重复的项）；没有时为 null。早期版本提交的快照没有这个键。 */
-  readonly negativeList?: string | null;
+  /** 实际写在提示词末尾的负向清单原文（已去掉与正向重复的项）；没有时为 null。 */
+  readonly negativeList: string | null;
   readonly extraParams: Readonly<Record<string, unknown>>;
 }
 
@@ -63,8 +63,8 @@ export interface JobSnapshot {
   readonly storyboardRunId: number;
   /** 本次生成包含的镜头，按序号排列。 */
   readonly shotIds: readonly number[];
-  /** 提示词格式版本：用于区分不同写法编译出的提示词；早期版本提交的快照没有这个键，视为 1。 */
-  readonly promptFormat?: number;
+  /** 提示词格式版本：用于区分不同写法编译出的提示词。 */
+  readonly promptFormat: number;
   readonly providerCode: string;
   readonly modelCode: string;
   /** 实际使用的提示词，已包含声音与参考素材的说明。 */
@@ -72,10 +72,10 @@ export interface JobSnapshot {
   readonly params: SnapshotParams;
   readonly referenceImageFileIds: readonly number[];
   readonly referenceAudioFileIds: readonly number[];
-  /** 指定资产参考图作首帧时使用的资产图片文件；没有指定、或早期版本提交的快照没有这个键。 */
-  readonly firstFrameFileId?: number | null;
-  /** 指定本地图片作首帧时使用的镜头首帧图片（shot_first_frames 标识）；没有指定、或早期版本提交的快照没有这个键。 */
-  readonly firstFrameImageId?: number | null;
+  /** 指定资产参考图作首帧时使用的资产图片文件；没有指定为 null。 */
+  readonly firstFrameFileId: number | null;
+  /** 指定本地图片作首帧时使用的镜头首帧图片（shot_first_frames 标识）；没有指定为 null。 */
+  readonly firstFrameImageId: number | null;
   /** 提交时给出的提醒（如参考图被截断），不阻断提交。 */
   readonly warnings: readonly string[];
 }

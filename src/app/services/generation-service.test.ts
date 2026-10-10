@@ -907,7 +907,7 @@ test('指定图片作首帧：镜头保存的本地图片进快照、不传参�
     const [job] = fixture.jobs.listJobsByGroups([groupId]);
     assert.deepEqual([job.status, job.prevJobId, job.firstFrameId], ['queued', null, null]);
     assert.equal(job.snapshot.firstFrameImageId, image.id);
-    assert.ok(!('firstFrameFileId' in job.snapshot));
+    assert.equal(job.snapshot.firstFrameFileId, null);
     assert.deepEqual([job.snapshot.referenceImageFileIds, job.snapshot.referenceAudioFileIds], [[], []]);
     assert.deepEqual(Array.from(fixture.jobs.readShotFirstFrame(image.id)?.data ?? []).slice(0, 4), [0x89, 0x50, 0x4e, 0x47]);
     const view = fixture.episode().groups[0].jobs[0];
@@ -964,7 +964,7 @@ test('提示词参数：负向清单与提示词改写按本组覆盖优先合�
     assert.equal(result.rejected.length, 0);
     const [job] = fixture.jobs.listJobsByGroups([groupId]);
     assert.deepEqual(job.snapshot.params.extraParams, { promptExtend: true });
-    assert.equal(job.snapshot.params.negativeList ?? null, null);
+    assert.equal(job.snapshot.params.negativeList, null);
   } finally {
     fixture.database.close();
   }

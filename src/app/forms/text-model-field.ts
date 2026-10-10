@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：text-model-field.ts
-// 说明：生成文本的表单共用的“文本模型”下拉字段：字段定义、初始值、字段值与模型键的互转，以及按作品保存所选模型后再启动生成。
+// 说明：生成文本的表单共用的“文本模型”下拉字段：字段定义、初始值，以及字段值与模型键的互转。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
@@ -80,26 +80,4 @@ export function readTextModelKey(state: WorkTextModelState, values: FormValues):
     throw new ValidationError({ [TEXT_MODEL_FIELD_KEY]: TEXT_MODEL_UNAVAILABLE_MESSAGE });
   }
   return chosen.key;
-}
-
-/**
- * 把所选文本模型保存为作品的文本模型后启动生成；没能启动时恢复作品原来的选择。
- * @param state 表单打开时的文本模型选择状态，用于恢复。
- * @param modelKey 本次选择的模型键；null 表示沿用默认。
- * @param start 启动生成，生成使用作品保存的文本模型。
- */
-export async function startWithWorkTextModel(
-  models: WorkTextModels,
-  workId: number,
-  state: WorkTextModelState,
-  modelKey: string | null,
-  start: () => Promise<void>
-): Promise<void> {
-  models.setWorkModel(workId, modelKey);
-  try {
-    await start();
-  } catch (error) {
-    models.setWorkModel(workId, state.selectedKey);
-    throw error;
-  }
 }

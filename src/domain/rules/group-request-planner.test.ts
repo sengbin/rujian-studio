@@ -1,33 +1,20 @@
 // ------------------------------------------------------------------------
-// 名称：generation-rules.test.ts
-// 说明：视频生成规则的自动化测试：提交请求的读取、组时长对齐、镜头组编译为带时间段的提示词与快照、失败原因说明。
+// 名称：group-request-planner.test.ts
+// 说明：镜头组请求编译的自动化测试：带时间段的分镜提示词、站位与镜头语言、风格、声音与参考素材、首帧、负向清单与请求快照。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
-// 日期：2026-10-02
+// 日期：2026-10-10
 // 备注：纯函数测试，使用假视频模型的能力。
 // ------------------------------------------------------------------------
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ValidationError } from '../errors';
 import { GenerationParams } from '../models/generation';
 import { VideoCapability } from '../models/model-capability';
 import { ShotRecord, SoundRecord } from '../models/storyboard';
 import { FAKE_VIDEO_CAPABILITY } from '../ports/testing/fake-model-providers';
-import {
-  EntityReferences,
-  PREVIOUS_GROUP_UNAVAILABLE_CODE,
-  TAIL_FRAME_UNAVAILABLE_CODE,
-  describeJobFailure,
-  fitGroupDuration,
-  formatTimestamp,
-  maxGroupSeconds,
-  planGroupRequest,
-  readSubmitInput,
-  readTailFrameFailure,
-  readTailFrameInput,
-  validateGroupParams
-} from './generation-rules';
+import { validateGroupParams } from './group-duration-rules';
+import { EntityReferences, formatTimestamp, planGroupRequest } from './group-request-planner';
 
 const PARAMS: GenerationParams = { modelId: 1, aspectRatio: '16:9', resolution: '720P', audioMode: null, audioElements: null, seed: null, durationSeconds: null, negativeList: null, promptExtend: null };
 
@@ -66,79 +53,6 @@ function planMany(shots: ShotRecord[], entities: EntityReferences[] = [], capabi
 }
 
 const GUARD: EntityReferences = { entityId: 1, name: '守夜人', kind: 'character', visualFileId: 101, voiceFileId: null };
-
-test('读取提交请求：去重镜头组，可选参数为空时取 null', () => {
-  const input = readSubmitInput({ workId: 1, episodeId: 2, groupIds: [5, 5, 6], params: { modelId: 3, aspectRatio: '', resolution: '720P' } });
-  assert.deepEqual(input, {
-    workId: 1,
-    episodeId: 2,
-    groupIds: [5, 6],
-    params: { modelId: 3, aspectRatio: null, resolution: '720P', audioMode: null, audioElements: null, seed: null, negativeList: null, promptExtend: null, durationSeconds: null }
-  });
-});
-
-test('读取提交请求：声音内容去重并按固定顺序排列，种子取整数；不合法时指出字段', () => {
-  const read = (params: Record<string, unknown>) => readSubmitInput({ workId: 1, episodeId: 2, groupIds: [5], params: { modelId: 3, ...params } }).params;
-  const parsed = read({ audioElements: ['sfx', 'dialogue', 'sfx'], seed: 0 });
-  assert.deepEqual(parsed.audioElements, ['dialogue', 'sfx']);
-  assert.equal(parsed.seed, 0);
-  const fieldOf = (params: Record<string, unknown>): string[] => {
-    try {
-      read(params);
-    } catch (error) {
-      if (error instanceof ValidationError) return Object.keys(error.fieldErrors);
-    }
-    return [];
-  };
-  assert.deepEqual(fieldOf({ audioElements: [] }), ['audioElements']);
-  assert.deepEqual(fieldOf({ audioElements: ['voice'] }), ['audioElements']);
-  assert.deepEqual(fieldOf({ seed: -1 }), ['seed']);
-  assert.deepEqual(fieldOf({ seed: 1.5 }), ['seed']);
-  assert.deepEqual(fieldOf({ seed: 2147483648 }), ['seed']);
-  assert.deepEqual(fieldOf({ seed: '7' }), ['seed']);
-});
-
-test('检查镜头组参数：模型不支持种子、指定时长小于镜头总时长或不在模型取值内时给出阻断问题', () => {
-  const withParams = (overrides: Partial<GenerationParams>): GenerationParams => ({ ...PARAMS, ...overrides });
-  assert.deepEqual(validateGroupParams(FAKE_VIDEO_CAPABILITY, withParams({ seed: 7, durationSeconds: 8 }), 6), []);
-  assert.deepEqual(validateGroupParams(FAKE_VIDEO_CAPABILITY, withParams({}), 6), []);
-  const noSeed = { ...FAKE_VIDEO_CAPABILITY, seed: false };
-  assert.match(validateGroupParams(noSeed, withParams({ seed: 7 }), 6).join(), /不支持随机种子/);
-  assert.match(validateGroupParams(FAKE_VIDEO_CAPABILITY, withParams({ durationSeconds: 5 }), 6).join(), /小于这一组镜头的总时长 6 秒/);
-  assert.match(validateGroupParams(FAKE_VIDEO_CAPABILITY, withParams({ durationSeconds: 11 }), 6).join(), /不在模型支持的取值内（2–10 秒/);
-  assert.match(validateGroupParams(FAKE_VIDEO_CAPABILITY, withParams({ durationSeconds: 7.5 }), 6).join(), /不在模型支持的取值内/);
-});
-
-test('读取提交请求：标识、镜头组数量、声音模式不合法时报错', () => {
-  const base = { workId: 1, episodeId: 2, groupIds: [5], params: { modelId: 3 } };
-  const rejected = (input: unknown) => assert.throws(() => readSubmitInput(input), ValidationError);
-  rejected(null);
-  rejected({ ...base, workId: 'x' });
-  rejected({ ...base, episodeId: 1.5 });
-  rejected({ ...base, groupIds: [] });
-  rejected({ ...base, groupIds: ['a'] });
-  rejected({ ...base, groupIds: Array.from({ length: 101 }, (_, index) => index) });
-  rejected({ ...base, params: {} });
-  rejected({ ...base, params: { modelId: 3, audioMode: 'invalid' } });
-  rejected({ ...base, params: { modelId: 3, resolution: 'x'.repeat(21) } });
-});
-
-test('组时长对齐：只向上取整（不截断镜头），不足最短时长时补到最短，超过最长时长时标记并返回最长值', () => {
-  assert.deepEqual(fitGroupDuration({ min: 2, max: 10, step: 1 }, 3.4), { seconds: 4, adjusted: true, exceedsMax: false });
-  assert.deepEqual(fitGroupDuration({ min: 2, max: 10, step: 1 }, 4), { seconds: 4, adjusted: false, exceedsMax: false });
-  assert.deepEqual(fitGroupDuration({ min: 2, max: 10, step: 1 }, 1), { seconds: 2, adjusted: true, exceedsMax: false });
-  assert.deepEqual(fitGroupDuration({ min: 2, max: 10, step: 1 }, 40), { seconds: 10, adjusted: true, exceedsMax: true });
-  assert.deepEqual(fitGroupDuration({ options: [10, 5] }, 7.4), { seconds: 10, adjusted: true, exceedsMax: false });
-  assert.deepEqual(fitGroupDuration({ options: [5, 10] }, 12), { seconds: 10, adjusted: true, exceedsMax: true });
-  assert.deepEqual(fitGroupDuration({ max: 8 }, 8.2), { seconds: 8, adjusted: true, exceedsMax: true });
-  assert.deepEqual(fitGroupDuration({ min: 2, max: 30, step: 1 }, 14.1 + 0.9), { seconds: 15, adjusted: false, exceedsMax: false }, '小数误差不会多加一秒');
-});
-
-test('模型单次最长时长：取可选值的最大值或范围上限，没有信息时为 null', () => {
-  assert.equal(maxGroupSeconds({ min: 2, max: 30, step: 1 }), 30);
-  assert.equal(maxGroupSeconds({ options: [5, 15, 10] }), 15);
-  assert.equal(maxGroupSeconds({ min: 2 }), null);
-});
 
 test('时间标注：分、秒各两位，小数秒保留 1 位', () => {
   assert.deepEqual([0, 5, 59, 75, 600].map(formatTimestamp), ['00:00', '00:05', '00:59', '01:15', '10:00']);
@@ -271,23 +185,6 @@ test('编译镜头组：提示词改写只在模型支持时写入快照的专�
   assert.deepEqual(validateGroupParams(extend, { ...PARAMS, promptExtend: true }, 3), []);
 });
 
-test('读取提交请求：负向清单与提示词改写可选，不合法时指出字段', () => {
-  const read = (params: Record<string, unknown>) => readSubmitInput({ workId: 1, episodeId: 2, groupIds: [5], params: { modelId: 3, ...params } }).params;
-  assert.deepEqual([read({ negativeList: ' 不要字幕 ', promptExtend: false }).negativeList, read({ negativeList: ' 不要字幕 ', promptExtend: false }).promptExtend], ['不要字幕', false]);
-  assert.equal(read({ negativeList: '' }).negativeList, '', '空串表示明确不要负向清单');
-  const fieldOf = (params: Record<string, unknown>): string[] => {
-    try {
-      read(params);
-    } catch (error) {
-      if (error instanceof ValidationError) return Object.keys(error.fieldErrors);
-    }
-    return [];
-  };
-  assert.deepEqual(fieldOf({ negativeList: 5 }), ['negativeList']);
-  assert.deepEqual(fieldOf({ negativeList: 'x'.repeat(301) }), ['negativeList']);
-  assert.deepEqual(fieldOf({ promptExtend: 'yes' }), ['promptExtend']);
-});
-
 test('编译镜头组：组内不同镜头的声音挂在各自的分镜里；参考图按组内实体统一编号，只列一次，对白说话人写成“图N的名字”', () => {
   const snapshot = planMany(
     [
@@ -338,35 +235,6 @@ test('编译镜头组：用上一组尾帧作首帧时不传参考图和音色�
   assert.ok(continued.prompt.includes('守夜人说：“要下雨了”'), '声音提示词仍然保留，没有参考图时说话人只写名字');
   assert.match(continued.warnings.join(), /尾帧作首帧.*不传参考素材/);
   assert.ok(!continued.warnings.join().includes('没有上一组可用'));
-});
-
-test('读取尾帧上传：类型、宽高、内容大小不合法时报错', () => {
-  const base = { resultId: 4, mimeType: 'image/jpeg', width: 640, height: 360, data: 'AAAA' };
-  assert.deepEqual(readTailFrameInput(base), { resultId: 4, mimeType: 'image/jpeg', width: 640, height: 360, dataBase64: 'AAAA' });
-  const rejected = (input: unknown) => assert.throws(() => readTailFrameInput(input), ValidationError);
-  rejected(null);
-  rejected({ ...base, resultId: 'x' });
-  rejected({ ...base, mimeType: 'image/gif' });
-  rejected({ ...base, width: 0 });
-  rejected({ ...base, height: 1.5 });
-  rejected({ ...base, width: 20000 });
-  rejected({ ...base, data: '' });
-  rejected({ ...base, data: 5 });
-  rejected({ ...base, data: 'A'.repeat(14 * 1024 * 1024) });
-});
-
-test('读取尾帧失败上报：原因去掉首尾空格并截断，缺省为空串', () => {
-  assert.deepEqual(readTailFrameFailure({ resultId: 2, reason: '  无法解码  ' }), { resultId: 2, reason: '无法解码' });
-  assert.equal(readTailFrameFailure({ resultId: 2 }).reason, '');
-  assert.equal(readTailFrameFailure({ resultId: 2, reason: 'x'.repeat(500) }).reason.length, 200);
-  assert.throws(() => readTailFrameFailure({ reason: 'x' }), ValidationError);
-});
-
-test('失败说明：应用自己产生的错误码有专门的说明，其他错误码按分类', () => {
-  const unavailable = describeJobFailure({ category: 'invalid_request', code: PREVIOUS_GROUP_UNAVAILABLE_CODE, message: 'x' });
-  assert.match(unavailable.label, /上一组/);
-  assert.match(describeJobFailure({ category: 'invalid_request', code: TAIL_FRAME_UNAVAILABLE_CODE, message: 'x' }).label, /尾帧/);
-  assert.equal(describeJobFailure({ category: 'server', code: 'constructor', message: 'x' }).label, '服务端错误');
 });
 
 test('编译镜头：使用画面描述、对齐时长，默认原生声音并记录快照', () => {
@@ -492,14 +360,14 @@ test('编译镜头组：镜头指定本地图片作首帧时记下图片标识�
     firstFrameSize: { width: 750, height: 1000 }
   });
   assert.equal(withImage.firstFrameImageId, 9);
-  assert.ok(!('firstFrameFileId' in withImage));
+  assert.equal(withImage.firstFrameFileId, null);
   assert.deepEqual([withImage.referenceImageFileIds, withImage.referenceAudioFileIds], [[], []]);
   assert.match(withImage.warnings.join(), /指定的图片作首帧.*不传参考素材/);
   assert.ok(!withImage.warnings.join().includes('已不可用'));
-  assert.ok(!('firstFrameImageId' in planMany([shot()])), '没有指定首帧图片时快照不带这个键');
+  assert.equal(planMany([shot()]).firstFrameImageId, null, '没有指定首帧图片时为 null');
 });
 
-test('编译镜头组：指定图片作首帧时记下首帧文件，不传参考图和音色参考，快照里没有这个键则表示未指定', () => {
+test('编译镜头组：指定图片作首帧时记下首帧文件，不传参考图和音色参考，没有指定时为 null', () => {
   const speaker: EntityReferences = { ...GUARD, voiceFileId: 201 };
   const dialogue = shot({ firstFrameMode: 'asset', firstFrameAssetId: 7, sounds: [sound({ speakerEntityId: 1, text: '要下雨了' })] });
   const capability = { ...FAKE_VIDEO_CAPABILITY, audioInputMax: { count: 1, maxSeconds: 10 } };
@@ -519,16 +387,5 @@ test('编译镜头组：指定图片作首帧时记下首帧文件，不传参�
   assert.match(withImage.warnings.join(), /指定的图片作首帧.*不传参考素材/);
   assert.ok(!withImage.warnings.join().includes('已不可用'));
 
-  assert.ok(!('firstFrameFileId' in planMany([shot()])), '没有指定首帧图片时快照不带这个键');
-});
-
-test('失败原因说明：每一类都有名称与处理建议，内容审核类指引修改镜头', () => {
-  const categories = ['auth', 'rate_limited', 'invalid_request', 'content_rejected', 'server', 'network'] as const;
-  for (const category of categories) {
-    const described = describeJobFailure({ category, code: null, message: 'm' });
-    assert.ok(described.label !== '' && described.hint !== '');
-  }
-  const rejected = describeJobFailure({ category: 'content_rejected', code: 'DataInspectionFailed', message: 'x' });
-  assert.equal(rejected.label, '内容审核未通过');
-  assert.match(rejected.hint, /编辑镜头/);
+  assert.equal(planMany([shot()]).firstFrameFileId, null, '没有指定首帧图片时为 null');
 });

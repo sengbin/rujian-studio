@@ -4,26 +4,29 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：一轮处理由 pump() 完成，定时器由 start() 启动（返回的停止函数会等正在进行的一轮处理结束，停止后不再开始新的一轮），测试直接调用 pump()。限流、服务端、网络类的提交失败自动重试，其余失败直接记为失败。等待前序的任务（上一组尾帧作首帧）在前序成功且尾帧入库后转为排队，前序失败或被取消时一并失败。
+// 备注：提交、轮询、重试、取消等公共流程在 BaseRemoteJobQueue；本文件只保留视频特有的部分：等待前序的任务（上一组尾帧作首帧）在前序成功且尾帧入库后转为排队，前序失败或被取消时一并失败；结果视频的下载与保存。超时先查询再判定。
 // ------------------------------------------------------------------------
 
-import { INTERRUPTED_MESSAGE, NotFoundError, ProviderError } from '../../domain/errors';
+import { ProviderError } from '../../domain/errors';
 import { JobFailure, VideoJobRecord } from '../../domain/models/generation';
 import { GenerationRepository, JobMediaReader, ResultStore } from '../../domain/ports/generation-repository';
-import { ResolvedVideoCall, VideoGenerationRequest } from '../../domain/ports/provider-adapters';
-import { PREVIOUS_GROUP_UNAVAILABLE_CODE } from '../../domain/rules/generation-rules';
+import { RemoteJobState, ResolvedVideoCall, VideoJobResult } from '../../domain/ports/provider-adapters';
+import { PREVIOUS_GROUP_UNAVAILABLE_CODE } from '../../domain/rules/generation-failure-copy';
+import { BaseRemoteJobQueue, PreparedSubmission, RemoteCancelResult, RemoteCanceller, RemoteJobQueueOptions, RemoteJobQueueProfile, createRemoteCanceller } from './base-remote-job-queue';
 import { buildVideoRequest } from './video-request';
 
-/** 同时处于生成中的任务数上限。 */
-const DEFAULT_MAX_CONCURRENT = 3;
-/** 可重试的提交失败最多尝试的次数。 */
-const DEFAULT_MAX_SUBMIT_ATTEMPTS = 3;
-/** 提交失败后再次尝试前的等待时间。 */
-const DEFAULT_SUBMIT_RETRY_DELAY_MS = 15_000;
-/** 轮询或下载连续出现暂时性失败的容忍次数。 */
-const DEFAULT_MAX_TRANSIENT_FAILURES = 5;
 /** 生成中的任务最长等待时间。 */
 const DEFAULT_MAX_RUNNING_MS = 60 * 60 * 1000;
+
+/** 视频队列的特征：默认超时与文案。 */
+const VIDEO_QUEUE_PROFILE: RemoteJobQueueProfile = {
+  defaultMaxRunningMs: DEFAULT_MAX_RUNNING_MS,
+  queueName: '生成队列',
+  subjectName: '任务',
+  notFoundMessage: '任务不存在或已经结束。',
+  missingResultMessage: '平台报告任务已完成，但没有返回结果视频，请重新生成。',
+  expiredMessage: '平台已不再保留这个任务（通常保留 24 小时），请重新生成。'
+};
 
 /** 任务变化通知。 */
 export interface JobChange {
@@ -34,11 +37,12 @@ export interface JobChange {
 }
 
 /** 取消任务的结果。 */
-export interface JobCancelResult {
-  /** 为 true 表示已通知服务商取消。 */
-  readonly remoteCanceled: boolean;
-  /** 通知服务商取消失败的原因；没有失败时缺省。此时本地取消仍然成功，但平台上的任务可能仍在继续并计费。 */
-  readonly remoteCancelError?: string;
+export type JobCancelResult = RemoteCancelResult;
+
+/** 提交后通知队列开始处理，以及取消任务；由 JobQueue 实现。 */
+export interface JobScheduler {
+  pump(): Promise<void>;
+  cancel(jobId: number): Promise<JobCancelResult>;
 }
 
 /** 解析视频模型的调用凭据。 */
@@ -48,157 +52,75 @@ export interface VideoCallResolver {
 }
 
 /** 生成队列的依赖与可调参数。 */
-export interface JobQueueDependencies {
+export interface JobQueueDependencies extends RemoteJobQueueOptions {
   readonly jobs: GenerationRepository;
   readonly media: JobMediaReader;
   readonly calls: VideoCallResolver;
   readonly results: ResultStore;
   readonly notify: (change: JobChange) => void;
-  /** 返回当前时间的函数，测试时可注入。 */
-  readonly now?: () => Date;
-  readonly maxConcurrent?: number;
-  readonly maxSubmitAttempts?: number;
-  readonly submitRetryDelayMs?: number;
-  readonly maxTransientFailures?: number;
-  readonly maxRunningMs?: number;
 }
 
 /** 视频生成队列。 */
-export class JobQueue {
-  private readonly now: () => Date;
-  private readonly maxConcurrent: number;
-  private readonly maxSubmitAttempts: number;
-  private readonly submitRetryDelayMs: number;
-  private readonly maxTransientFailures: number;
-  private readonly maxRunningMs: number;
-  /** 提交失败的次数与下次可尝试的时间。 */
-  private readonly submitRetries = new Map<number, { count: number; nextAt: number }>();
-  /** 轮询或下载连续失败的次数。 */
-  private readonly transientFailures = new Map<number, number>();
-  private pumping = false;
-  private pumpAgain = false;
-  /** 正在进行的一轮处理，停止定时处理时据此等待它结束。 */
-  private activePump: Promise<void> | undefined;
-  /** 已停止：为 true 时不再开始新的一轮处理，进行中的一轮在处理完当前任务后结束。 */
-  private stopped = false;
-
+export class JobQueue extends BaseRemoteJobQueue<VideoJobRecord, VideoJobResult> {
   constructor(private readonly dependencies: JobQueueDependencies) {
-    this.now = dependencies.now ?? (() => new Date());
-    this.maxConcurrent = dependencies.maxConcurrent ?? DEFAULT_MAX_CONCURRENT;
-    this.maxSubmitAttempts = dependencies.maxSubmitAttempts ?? DEFAULT_MAX_SUBMIT_ATTEMPTS;
-    this.submitRetryDelayMs = dependencies.submitRetryDelayMs ?? DEFAULT_SUBMIT_RETRY_DELAY_MS;
-    this.maxTransientFailures = dependencies.maxTransientFailures ?? DEFAULT_MAX_TRANSIENT_FAILURES;
-    this.maxRunningMs = dependencies.maxRunningMs ?? DEFAULT_MAX_RUNNING_MS;
+    super(dependencies, VIDEO_QUEUE_PROFILE);
   }
 
-  /**
-   * 应用启动时调用：生成中但没有远端标识的任务无法继续查询，记为失败；有远端标识的继续轮询，排队中的继续提交。
-   * @returns 被置为失败的任务数。
-   */
-  recover(): number {
-    let failed = 0;
-    for (const job of this.dependencies.jobs.listJobsByStatus(['running'])) {
-      if (job.remoteJobId === null && this.fail(job, { category: 'server', code: null, message: INTERRUPTED_MESSAGE })) {
-        failed += 1;
-      }
-    }
-    return failed;
+  protected listRunning(): readonly VideoJobRecord[] {
+    return this.dependencies.jobs.listJobsByStatus(['running']);
   }
 
-  /**
-   * 启动定时处理：立即处理一轮，之后每隔 intervalMs 处理一轮。
-   * @returns 停止函数：停止定时器、不再开始新的一轮处理，并等待正在进行的一轮处理结束。
-   */
-  start(intervalMs: number): () => Promise<void> {
-    this.stopped = false;
-    const run = (): void => {
-      this.pump().catch((error: unknown) => console.error('处理生成队列时出现未预期的错误：', error));
-    };
-    run();
-    const timer = setInterval(run, intervalMs);
-    return async () => {
-      this.stopped = true;
-      clearInterval(timer);
-      // 进行中的一轮出错时已由发起方记录日志，这里只等它结束。
-      await this.activePump?.then(undefined, () => undefined);
-    };
+  protected listQueued(): readonly VideoJobRecord[] {
+    return this.dependencies.jobs.listJobsByStatus(['queued']);
   }
 
-  /**
-   * 处理一轮：先轮询生成中的任务，再处理等待前序的任务，最后提交排队中的任务。正在处理时只登记再来一轮，不并发处理；已停止时什么也不做。
-   */
-  async pump(): Promise<void> {
-    if (this.stopped) {
-      return;
-    }
-    if (this.pumping) {
-      this.pumpAgain = true;
-      return;
-    }
-    this.pumping = true;
-    const round = this.runRounds();
-    this.activePump = round;
-    try {
-      await round;
-    } finally {
-      this.pumping = false;
-      this.activePump = undefined;
-    }
+  protected findCancelable(id: number): VideoJobRecord | undefined {
+    const job = this.dependencies.jobs.findJob(id);
+    return job !== undefined && (job.status === 'waiting' || job.status === 'queued' || job.status === 'running') ? job : undefined;
   }
 
-  /** 连续处理，直到没有人登记再来一轮或队列已停止。 */
-  private async runRounds(): Promise<void> {
-    do {
-      this.pumpAgain = false;
-      await this.pollRunning();
-      this.releaseWaiting();
-      await this.submitQueued();
-    } while (this.pumpAgain && !this.stopped);
+  protected isRunning(job: VideoJobRecord): boolean {
+    return job.status === 'running';
   }
 
-  /**
-   * 取消进行中的任务：生成中的任务若服务商支持取消则同时取消远端任务；不支持时只停止本地跟踪，远端任务可能仍会继续并计费。
-   * @returns remoteCanceled 为 true 表示已通知服务商取消；通知失败时本地取消仍然成功，失败原因放在 remoteCancelError 里。
-   * @throws NotFoundError 任务不存在，或已经结束。
-   */
-  async cancel(jobId: number): Promise<JobCancelResult> {
-    const { jobs, calls } = this.dependencies;
-    const job = jobs.findJob(jobId);
-    if (job === undefined || (job.status !== 'waiting' && job.status !== 'queued' && job.status !== 'running')) {
-      throw new NotFoundError('任务不存在或已经结束。');
-    }
-    let remoteCanceled = false;
-    let remoteCancelError: string | undefined;
-    if (job.status === 'running' && job.remoteJobId !== null) {
-      try {
-        const call = await calls.resolveVideoCall(job.modelId);
-        if (call.adapter.cancel !== undefined) {
-          await call.adapter.cancel({ modelCode: call.modelCode, remoteJobId: job.remoteJobId }, call.context);
-          remoteCanceled = true;
-        }
-      } catch (error) {
-        // 通知服务商取消失败不影响本地取消，但要把原因带给调用方，让用户知道平台上的任务可能仍在计费。
-        remoteCancelError = error instanceof Error ? error.message : String(error);
-      }
-    }
-    if (jobs.markCanceled(jobId, this.timestamp())) {
-      this.forget(jobId);
-      this.dependencies.notify({ jobId, groupId: job.groupId });
-    }
-    return remoteCancelError === undefined ? { remoteCanceled } : { remoteCanceled, remoteCancelError };
+  protected async resolveCanceller(job: VideoJobRecord): Promise<RemoteCanceller | undefined> {
+    return createRemoteCanceller(await this.dependencies.calls.resolveVideoCall(job.modelId));
   }
 
-  /** 轮询全部生成中的任务。 */
-  private async pollRunning(): Promise<void> {
-    for (const job of this.dependencies.jobs.listJobsByStatus(['running'])) {
-      if (this.stopped) return;
-      await this.pollOne(job);
+  protected async prepareSubmission(job: VideoJobRecord): Promise<PreparedSubmission> {
+    const call = await this.dependencies.calls.resolveVideoCall(job.modelId);
+    const request = buildVideoRequest(job.snapshot, job.firstFrameId, this.dependencies.media, call.modelCode);
+    const issues = call.adapter.validate(request);
+    if (issues.length > 0) {
+      throw new ProviderError('invalid_request', issues.join('；'));
     }
+    return { submit: () => call.adapter.submit(request, call.context), cancel: createRemoteCanceller(call) };
+  }
+
+  protected async queryRemote(job: VideoJobRecord, remoteJobId: string): Promise<RemoteJobState<VideoJobResult>> {
+    const call = await this.dependencies.calls.resolveVideoCall(job.modelId);
+    return call.adapter.query({ modelCode: call.modelCode, remoteJobId }, call.context);
+  }
+
+  protected markSubmitted(job: VideoJobRecord, remoteJobId: string, at: string): boolean {
+    return this.dependencies.jobs.markSubmitted(job.id, remoteJobId, at);
+  }
+
+  protected markCanceled(job: VideoJobRecord, at: string): boolean {
+    return this.dependencies.jobs.markCanceled(job.id, at);
+  }
+
+  protected markFailed(job: VideoJobRecord, failure: JobFailure, at: string): boolean {
+    return this.dependencies.jobs.markFailed(job.id, failure, at);
+  }
+
+  protected notifyChange(job: VideoJobRecord): void {
+    this.dependencies.notify({ jobId: job.id, groupId: job.groupId });
   }
 
   /** 处理等待前序的任务：前序成功且尾帧已入库则转为排队；前序仍在进行或尾帧还没截取则继续等；前序失败、被取消或已不存在则这些任务一并失败。 */
-  private releaseWaiting(): void {
-    const { jobs, notify } = this.dependencies;
+  protected override prepareQueued(): void {
+    const { jobs } = this.dependencies;
     for (const job of jobs.listJobsByStatus(['waiting'])) {
       const previous = job.prevJobId === null ? undefined : jobs.findJob(job.prevJobId);
       if (previous !== undefined && (previous.status === 'waiting' || previous.status === 'queued' || previous.status === 'running')) {
@@ -211,125 +133,13 @@ export class JobQueue {
       }
       const frameId = jobs.findResultFrameId(result.id);
       if (frameId !== undefined && jobs.releaseWaitingJob(job.id, frameId)) {
-        notify({ jobId: job.id, groupId: job.groupId });
+        this.notifyChange(job);
       }
-    }
-  }
-
-  /** 在并发上限内提交排队中的任务，先提交的先处理。 */
-  private async submitQueued(): Promise<void> {
-    const { jobs } = this.dependencies;
-    let running = jobs.listJobsByStatus(['running']).length;
-    for (const job of jobs.listJobsByStatus(['queued'])) {
-      if (running >= this.maxConcurrent || this.stopped) {
-        return;
-      }
-      const retry = this.submitRetries.get(job.id);
-      if (retry !== undefined && retry.nextAt > this.now().getTime()) {
-        continue;
-      }
-      if (await this.submitOne(job)) {
-        running += 1;
-      }
-    }
-  }
-
-  /** 提交一个任务；成功变为生成中并返回 true，可重试的失败保持排队，其他失败记为失败。 */
-  private async submitOne(job: VideoJobRecord): Promise<boolean> {
-    let call: ResolvedVideoCall;
-    let request: VideoGenerationRequest;
-    try {
-      call = await this.dependencies.calls.resolveVideoCall(job.modelId);
-      request = buildVideoRequest(job.snapshot, job.firstFrameId, this.dependencies.media, call.modelCode);
-      const issues = call.adapter.validate(request);
-      if (issues.length > 0) {
-        throw new ProviderError('invalid_request', issues.join('；'));
-      }
-    } catch (error) {
-      this.fail(job, toFailure(error));
-      return false;
-    }
-
-    try {
-      const ref = await call.adapter.submit(request, call.context);
-      if (this.dependencies.jobs.markSubmitted(job.id, ref.remoteJobId, this.timestamp())) {
-        this.submitRetries.delete(job.id);
-        this.dependencies.notify({ jobId: job.id, groupId: job.groupId });
-      } else {
-        // 提交期间任务已被取消或结束，平台上刚创建的任务没有人跟踪，必须取消以免继续计费。
-        await this.cancelUntracked(call, ref.remoteJobId);
-      }
-      return true;
-    } catch (error) {
-      const attempts = (this.submitRetries.get(job.id)?.count ?? 0) + 1;
-      if (error instanceof ProviderError && error.retryable && attempts < this.maxSubmitAttempts) {
-        this.submitRetries.set(job.id, { count: attempts, nextAt: this.now().getTime() + this.submitRetryDelayMs });
-        return false;
-      }
-      this.fail(job, toFailure(error));
-      return false;
-    }
-  }
-
-  /** 取消平台上已创建、本地却不再跟踪的任务；服务商不支持取消或取消失败时只能记录日志。 */
-  private async cancelUntracked(call: ResolvedVideoCall, remoteJobId: string): Promise<void> {
-    if (call.adapter.cancel === undefined) {
-      console.error(`任务在提交期间已被取消，但服务商不支持取消远端任务（${remoteJobId}），平台上的任务可能仍会计费。`);
-      return;
-    }
-    try {
-      await call.adapter.cancel({ modelCode: call.modelCode, remoteJobId }, call.context);
-    } catch (error) {
-      console.error(`任务在提交期间已被取消，取消远端任务（${remoteJobId}）失败，平台上的任务可能仍会计费：`, error);
-    }
-  }
-
-  /** 查询一个生成中的任务并处理结果。 */
-  private async pollOne(job: VideoJobRecord): Promise<void> {
-    if (job.remoteJobId === null) {
-      this.fail(job, { category: 'server', code: null, message: INTERRUPTED_MESSAGE });
-      return;
-    }
-    // 超时也要先查询：应用关闭期间平台可能已经生成完，只有查询后仍未结束才记为超时。
-    const timedOut = job.submittedAt !== null && this.now().getTime() - Date.parse(job.submittedAt) > this.maxRunningMs;
-
-    try {
-      const call = await this.dependencies.calls.resolveVideoCall(job.modelId);
-      const state = await call.adapter.query({ modelCode: call.modelCode, remoteJobId: job.remoteJobId }, call.context);
-      // 查询成功即清零；结果下载失败的次数要跨轮累计，所以成功态不在此清零
-      if (state.status !== 'succeeded') this.transientFailures.delete(job.id);
-      switch (state.status) {
-        case 'succeeded':
-          if (state.result === null) {
-            this.fail(job, { category: 'server', code: null, message: '平台报告任务已完成，但没有返回结果视频，请重新生成。' });
-          } else {
-            await this.saveResult(job, state.result.videoUrl, state.result.durationSeconds);
-          }
-          return;
-        case 'failed':
-          this.fail(job, {
-            category: state.errorCategory ?? 'server',
-            code: state.errorCode,
-            message: state.errorMessage ?? '平台没有返回失败原因。'
-          });
-          return;
-        case 'canceled':
-          if (this.dependencies.jobs.markCanceled(job.id, this.timestamp())) this.dependencies.notify({ jobId: job.id, groupId: job.groupId });
-          return;
-        case 'expired':
-          this.fail(job, { category: 'server', code: null, message: '平台已不再保留这个任务（通常保留 24 小时），请重新生成。' });
-          return;
-        default:
-          if (timedOut) this.fail(job, { category: 'server', code: null, message: '等待生成结果超时，请重新生成。' });
-          return;
-      }
-    } catch (error) {
-      this.handleTransient(job, error);
     }
   }
 
   /** 下载结果视频并保存；下载失败按暂时性失败处理。 */
-  private async saveResult(job: VideoJobRecord, videoUrl: string, durationSeconds: number | null): Promise<void> {
+  protected async saveResult(job: VideoJobRecord, result: VideoJobResult): Promise<void> {
     const { jobs, results } = this.dependencies;
     const location = jobs.getGroupLocation(job.groupId);
     if (location === undefined) {
@@ -337,57 +147,18 @@ export class JobQueue {
       return;
     }
     try {
-      const saved = await results.save(location, job.groupId, job.id, videoUrl);
-      const result = jobs.markSucceeded(
+      const saved = await results.save(location, job.groupId, job.id, result.videoUrl);
+      const record = jobs.markSucceeded(
         job.id,
-        { filePath: saved.filePath, remoteUrl: null, durationSeconds, width: null, height: null, sizeBytes: saved.sizeBytes, hasAudio: job.snapshot.params.audioMode === 'native' },
+        { filePath: saved.filePath, remoteUrl: null, durationSeconds: result.durationSeconds, width: null, height: null, sizeBytes: saved.sizeBytes, hasAudio: job.snapshot.params.audioMode === 'native' },
         this.timestamp()
       );
-      if (result !== undefined) {
+      if (record !== undefined) {
         this.forget(job.id);
-        this.dependencies.notify({ jobId: job.id, groupId: job.groupId });
+        this.notifyChange(job);
       }
     } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
-      this.handleTransient(job, new ProviderError('network', `保存结果视频失败：${detail}`, { cause: error }));
+      this.handleSaveFailure(job, error, '保存结果视频失败：');
     }
   }
-
-  /** 轮询或下载出错：可重试的分类在容忍次数内等下一轮，否则记为失败。 */
-  private handleTransient(job: VideoJobRecord, error: unknown): void {
-    const failures = (this.transientFailures.get(job.id) ?? 0) + 1;
-    if (error instanceof ProviderError && error.retryable && failures <= this.maxTransientFailures) {
-      this.transientFailures.set(job.id, failures);
-      return;
-    }
-    this.fail(job, toFailure(error));
-  }
-
-  /** 把任务记为失败并通知；返回是否真正写入（任务已被取消或结束时不覆盖）。 */
-  private fail(job: VideoJobRecord, failure: JobFailure): boolean {
-    const written = this.dependencies.jobs.markFailed(job.id, failure, this.timestamp());
-    this.forget(job.id);
-    if (written) {
-      this.dependencies.notify({ jobId: job.id, groupId: job.groupId });
-    }
-    return written;
-  }
-
-  private forget(jobId: number): void {
-    this.submitRetries.delete(jobId);
-    this.transientFailures.delete(jobId);
-  }
-
-  private timestamp(): string {
-    return this.now().toISOString();
-  }
-}
-
-/** 把任意错误转换为任务失败原因：服务商错误保留分类与错误码，其他错误按服务端错误记录。 */
-function toFailure(error: unknown): JobFailure {
-  if (error instanceof ProviderError) {
-    return { category: error.category, code: error.code, message: error.message };
-  }
-  const detail = error instanceof Error ? error.message : String(error);
-  return { category: 'server', code: null, message: `内部错误：${detail}` };
 }

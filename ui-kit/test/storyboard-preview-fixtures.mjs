@@ -26,20 +26,70 @@ export function loadScript(file, globals = {}) {
   return win;
 }
 
+/**
+ * 按顺序加载一组脚本，后一个脚本能看到前面脚本挂在 window 上的模块。
+ * @param {string[]} files 相对 resources 的路径，按依赖顺序排列。
+ * @param {Record<string, unknown>} [globals] 需要预先放进 window 的其他对象。
+ * @returns {Record<string, unknown>} 加载完成后的 window。
+ */
+export function loadScripts(files, globals = {}) {
+  return files.reduce((win, file) => loadScript(file, win), globals);
+}
+
+/** 时间线需要的脚本：关键词规则、编译、采样。 */
+export const TIMELINE_SCRIPTS = [
+  'stage/stage-storyboard-preview-rules.js',
+  'stage/stage-storyboard-preview-timeline.js',
+  'stage/stage-storyboard-preview-timeline-sample.js'
+];
+
+/** 绘制相关的脚本：基础绘制、插画（人形、道具表、特效表、背景、入口）、扩展道具与特效与背景、角色、动物与微生物、绘制、对照视图。 */
+export const RENDER_SCRIPTS = [
+  'stage/stage-storyboard-preview-draw.js',
+  'stage/stage-storyboard-preview-art-figure.js',
+  'stage/stage-storyboard-preview-art-props.js',
+  'stage/stage-storyboard-preview-art-effects.js',
+  'stage/stage-storyboard-preview-art-backdrops.js',
+  'stage/stage-storyboard-preview-art.js',
+  'stage/stage-storyboard-preview-props-home.js',
+  'stage/stage-storyboard-preview-props-items.js',
+  'stage/stage-storyboard-preview-props-effects.js',
+  'stage/stage-storyboard-preview-props-backdrops.js',
+  'stage/stage-storyboard-preview-creatures.js',
+  'stage/stage-storyboard-preview-bestiary.js',
+  'stage/stage-storyboard-preview-renderer.js',
+  'stage/stage-storyboard-preview-modes.js'
+];
+
+/** 预览页面的全部脚本，与 src/app/panels/page-resources.ts 的 STORYBOARD_PREVIEW_SCRIPTS 保持一致。 */
+export const PREVIEW_PAGE_SCRIPTS = [
+  ...TIMELINE_SCRIPTS,
+  'stage/stage-storyboard-preview-checks.js',
+  ...RENDER_SCRIPTS,
+  'stage/stage-storyboard-preview-player.js',
+  'stage/stage-storyboard-preview-voice.js',
+  'stage/stage-storyboard-preview-voice-draft.js',
+  'stage/stage-storyboard-preview-stage-view.js',
+  'stage/stage-storyboard-preview-controls.js',
+  'stage/stage-storyboard-preview-timeline-view.js',
+  'stage/stage-storyboard-preview-voice-panel.js',
+  'stage/stage-storyboard-preview-info-panel.js',
+  'stage/stage-storyboard-preview.js'
+];
+
+/** 加载时间线相关的全部脚本，返回 window（含 aiStoryboardRules 与 aiStoryboardTimeline）。 */
+export function loadTimelineWindow() {
+  return loadScripts(TIMELINE_SCRIPTS);
+}
+
 /** 加载时间线编译模块。 */
 export function loadTimeline() {
-  return loadScript('stage/stage-storyboard-preview-timeline.js').aiStoryboardTimeline;
+  return loadTimelineWindow().aiStoryboardTimeline;
 }
 
 /** 按依赖顺序加载绘制相关的全部脚本（时间线、插画、绘制、对照视图），返回各模块。 */
 export function loadRenderStack() {
-  const timelineWindow = loadScript('stage/stage-storyboard-preview-timeline.js');
-  const artWindow = loadScript('stage/stage-storyboard-preview-art.js', timelineWindow);
-  const propsWindow = loadScript('stage/stage-storyboard-preview-props.js', artWindow);
-  const creaturesWindow = loadScript('stage/stage-storyboard-preview-creatures.js', propsWindow);
-  const bestiaryWindow = loadScript('stage/stage-storyboard-preview-bestiary.js', creaturesWindow);
-  const rendererWindow = loadScript('stage/stage-storyboard-preview-renderer.js', bestiaryWindow);
-  const modesWindow = loadScript('stage/stage-storyboard-preview-modes.js', rendererWindow);
+  const modesWindow = loadScripts([...TIMELINE_SCRIPTS, ...RENDER_SCRIPTS]);
   return {
     timeline: modesWindow.aiStoryboardTimeline,
     art: modesWindow.aiStoryboardArt,
@@ -106,6 +156,7 @@ export function makeView(shots, overrides = {}) {
       { id: IDS.spark, kind: 'effect', kindLabel: '特效', name: '火花', isActive: true, hasVoice: false }
     ],
     firstFrameAssets: [],
+    limits: { maxSoundsPerShot: 20, firstFrameImageMaxBytes: 10 * 1024 * 1024 },
     stagingOptions: { x: [], depth: [], facing: [] },
     soundKinds: [],
     stale: false,

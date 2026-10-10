@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：asset-generation-rules.ts
-// 说明：资产生成的规则：修订号的维护、提示词“需更新”与图片“有改动未生成”的推算、能否提交生成的判断。
+// 说明：资产生成的规则：修订号的维护、提示词“需更新”与图片“有改动未生成”的推算、能否提交生成的判断、图像与音频生成参数在所选模型能力范围内的校验。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
@@ -8,8 +8,9 @@
 // ------------------------------------------------------------------------
 
 import { AssetContent, AssetGenerationSummary, AssetKind, AssetRecord, AssetUsageSummary } from '../models/asset';
-import { ModelKind } from '../models/model-capability';
+import { AudioCapability, ImageCapability, ModelKind } from '../models/model-capability';
 import { PromptSourceAsset, resolveGenerationPrompt } from './asset-prompt-rules';
+import { FieldErrors, isBlank } from './field-readers';
 
 /** 资产使用上传文件时不能生成提示词和图片（音频）的提示。 */
 export const UPLOAD_SOURCE_GENERATION_MESSAGE = '当前使用的是上传的文件，请先改用生成。';
@@ -148,4 +149,100 @@ export function checkGenerationAvailability(
     return { available: false, reason: `请先在“设置 > 模型”中启用${noun}模型并配置访问密钥。` };
   }
   return { available: true, reason: null };
+}
+
+/** 音频语言（界面文字）对应的语言代码。 */
+const LANGUAGE_CODES: Readonly<Record<string, string>> = { 中文: 'zh', 英文: 'en' };
+
+/**
+ * 把音频语言的界面文字转换为语言代码。
+ * @returns 语言代码；没有设置或为“其他”时为 undefined。
+ */
+export function languageCodeOf(label: string | undefined): string | undefined {
+  return label !== undefined && Object.hasOwn(LANGUAGE_CODES, label) ? LANGUAGE_CODES[label] : undefined;
+}
+
+/** 图像生成参数在不同入口的错误字段键：表单用表单字段键，生成请求用载荷键。 */
+export interface ImageRunParamKeys {
+  readonly count: string;
+  readonly aspectRatio: string;
+  readonly resolution: string;
+}
+
+/** 音频生成参数在不同入口的错误字段键。 */
+export interface AudioRunParamKeys {
+  readonly language: string;
+  readonly voice: string;
+}
+
+/** 图像生成请求中受模型能力限制的参数；不指定的画幅、分辨率为 null。 */
+export interface ImageRunParams {
+  readonly count: number;
+  readonly aspectRatio: string | null;
+  readonly resolution: string | null;
+}
+
+/** 音频生成请求中受模型能力限制的参数；不指定的语言、预置音色为 null。 */
+export interface AudioRunParams {
+  readonly language: string | null;
+  readonly voice: string | null;
+}
+
+/** 读取可选的下拉值：空串或未提供视为不指定；不在可选范围内时按 key 记录字段错误。 */
+function readRunOption(value: unknown, options: readonly string[], key: string, outOfRangeMessage: string, errors: FieldErrors): string | null {
+  if (isBlank(value)) {
+    return null;
+  }
+  if (typeof value !== 'string' || !options.includes(value)) {
+    errors[key] = outOfRangeMessage;
+    return null;
+  }
+  return value;
+}
+
+/** 画幅不在模型支持范围内的提示；模型没有画幅可选时提示不能指定。 */
+function aspectRatioMessage(value: unknown, options: readonly string[]): string {
+  return options.length === 0
+    ? '所选模型不支持指定画幅，请留空。'
+    : `所选模型不支持画幅 ${String(value)}（支持：${options.join('、')}），请换一个画幅或模型。`;
+}
+
+/**
+ * 校验图像生成参数是否在所选模型的能力范围内：数量是 1 到单次上限的整数，画幅、分辨率在模型支持的取值中。
+ * 表单与生成服务共用；不合法的项按 keys 记录到 errors，不抛出。
+ * @param input 数量、画幅、分辨率；数量缺省为 1，画幅与分辨率为空串或缺省表示不指定。
+ */
+export function readImageRunParams(
+  input: { readonly count?: unknown; readonly aspectRatio?: unknown; readonly resolution?: unknown },
+  capability: ImageCapability,
+  keys: ImageRunParamKeys,
+  errors: FieldErrors
+): ImageRunParams {
+  const count = input.count === undefined ? 1 : input.count;
+  const countValid = typeof count === 'number' && Number.isInteger(count) && count >= 1 && count <= capability.imagesPerRequestMax;
+  if (!countValid) {
+    errors[keys.count] = `生成数量必须是 1 到 ${capability.imagesPerRequestMax} 之间的整数。`;
+  }
+  return {
+    count: countValid ? count : 1,
+    aspectRatio: readRunOption(input.aspectRatio, capability.aspectRatios, keys.aspectRatio, aspectRatioMessage(input.aspectRatio, capability.aspectRatios), errors),
+    resolution: readRunOption(input.resolution, capability.resolutions, keys.resolution, '分辨率不在所选模型支持的范围内。', errors)
+  };
+}
+
+/**
+ * 校验音频生成参数是否在所选模型的能力范围内：语言、预置音色在模型支持的取值中。
+ * 表单与生成服务共用；不合法的项按 keys 记录到 errors，不抛出。
+ * @param input 语言代码与预置音色；空串或缺省表示不指定。
+ */
+export function readAudioRunParams(
+  input: { readonly language?: unknown; readonly voice?: unknown },
+  capability: AudioCapability,
+  keys: AudioRunParamKeys,
+  errors: FieldErrors
+): AudioRunParams {
+  return {
+    language: readRunOption(input.language, capability.languages, keys.language, '语言不在所选模型支持的范围内。', errors),
+    voice: readRunOption(input.voice, capability.voices, keys.voice, '预置音色不在所选模型支持的范围内。', errors)
+  };
 }

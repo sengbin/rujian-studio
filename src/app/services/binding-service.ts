@@ -20,8 +20,9 @@ import {
 import { ENTITY_KIND_LABELS, EntityKind } from '../../domain/models/screenplay';
 import { AssetRepository } from '../../domain/ports/asset-repository';
 import { BindingRepository } from '../../domain/ports/binding-repository';
-import { FieldErrors, assertNoFieldErrors, readRecord, readText } from '../../domain/rules/field-readers';
+import { FieldErrors, assertNoFieldErrors, isBlank, readRecord, readText } from '../../domain/rules/field-readers';
 import { ChangeNotifier } from './change-notifier';
+import { ReferenceFileData, readFirstReferenceFile } from './asset-reference-file';
 
 /** 绑定备注的长度上限。 */
 export const BINDING_NOTE_MAX_LENGTH = 200;
@@ -182,7 +183,7 @@ export class BindingService {
    * @throws NotFoundError 资产不存在，或还没有音频文件。
    * @throws ValidationError 资产不是“音色参考”类型的音频。
    */
-  readVoiceAudio(assetId: number): { readonly mime: string; readonly data: string } {
+  readVoiceAudio(assetId: number): ReferenceFileData {
     const asset = this.assets.findById(assetId);
     if (asset === undefined) {
       throw new NotFoundError(`资产 ${assetId} 不存在。`);
@@ -190,11 +191,7 @@ export class BindingService {
     if (asset.kind !== 'audio' || asset.attributes.audio_kind !== 'voice') {
       throw new ValidationError({ assetId: VOICE_ONLY_MESSAGE });
     }
-    const [file] = this.assets.listReferenceFiles(assetId);
-    if (file === undefined) {
-      throw new NotFoundError(NO_AUDIO_FILE_MESSAGE);
-    }
-    return { mime: file.mime, data: file.content.toString('base64') };
+    return readFirstReferenceFile(this.assets, assetId, NO_AUDIO_FILE_MESSAGE);
   }
 
   /**
@@ -203,7 +200,7 @@ export class BindingService {
    * @throws NotFoundError 资产不存在，或还没有图片文件。
    * @throws ValidationError 资产是音频，没有图片。
    */
-  readReferenceImage(assetId: number): { readonly mime: string; readonly data: string } {
+  readReferenceImage(assetId: number): ReferenceFileData {
     const asset = this.assets.findById(assetId);
     if (asset === undefined) {
       throw new NotFoundError(`资产 ${assetId} 不存在。`);
@@ -211,11 +208,7 @@ export class BindingService {
     if (asset.kind === 'audio') {
       throw new ValidationError({ assetId: IMAGE_ONLY_MESSAGE });
     }
-    const [file] = this.assets.listReferenceFiles(assetId);
-    if (file === undefined) {
-      throw new NotFoundError(NO_IMAGE_FILE_MESSAGE);
-    }
-    return { mime: file.mime, data: file.content.toString('base64') };
+    return readFirstReferenceFile(this.assets, assetId, NO_IMAGE_FILE_MESSAGE);
   }
 
   /**
@@ -325,7 +318,7 @@ function readId(value: unknown, key: string, label: string, errors: FieldErrors)
 
 /** 读取绑定用途：缺省为形象。 */
 function readPurpose(value: unknown, errors: FieldErrors): BindingPurpose {
-  if (value === undefined || value === null || value === '') {
+  if (isBlank(value)) {
     return 'visual';
   }
   if (typeof value !== 'string' || !BINDING_PURPOSES.includes(value as BindingPurpose)) {

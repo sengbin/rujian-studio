@@ -19,16 +19,19 @@ import {
   RemoteJobState
 } from '../../../domain/ports/provider-adapters';
 import { buildDeliveryInstruction, readDeliveryRates } from '../../../domain/rules/voice-delivery-rules';
+import { findModelByCode } from '../shared/provider-model-lookup';
 import { validateExtraParams } from '../shared/provider-payload';
 import { SyncResultStore } from '../shared/sync-result-store';
 import { FetchFunction } from './volcengine-api-client';
 import {
   VOLCENGINE_AUDIO_MODELS,
+  VOLCENGINE_DEFAULT_VOICE,
   VOLCENGINE_SPEECH_FORMAT,
   VOLCENGINE_SPEECH_MIME_TYPE,
   VOLCENGINE_SPEECH_RESOURCE_ID,
   VOLCENGINE_SPEECH_SAMPLE_RATE,
-  VOLCENGINE_VOICES
+  VOLCENGINE_VOICES,
+  VolcengineVoice
 } from './volcengine-audio-catalog';
 import { VOLCENGINE_SPEECH_PROVIDER, VOLCENGINE_SPEECH_PROVIDER_NAME } from './volcengine-catalog';
 import { VolcengineSpeechClient } from './volcengine-speech-client';
@@ -58,7 +61,7 @@ export class VolcengineAudioProvider implements AudioModelProvider {
   }
 
   getCapability(modelCode: string): AudioCapability | undefined {
-    return findModel(modelCode)?.capability;
+    return findModelByCode(VOLCENGINE_AUDIO_MODELS, modelCode)?.capability;
   }
 
   validate(request: AudioGenerationRequest): readonly string[] {
@@ -92,10 +95,6 @@ export class VolcengineAudioProvider implements AudioModelProvider {
   }
 }
 
-function findModel(modelCode: string): ModelDescriptor<'audio'> | undefined {
-  return VOLCENGINE_AUDIO_MODELS.find((model) => model.code === modelCode);
-}
-
 /** 校验音频类型、要朗读的文字、语言、音色、时长和参考音频。 */
 function validateContent(request: AudioGenerationRequest, capability: AudioCapability): string[] {
   const issues: string[] = [];
@@ -123,9 +122,21 @@ function validateContent(request: AudioGenerationRequest, capability: AudioCapab
   return issues;
 }
 
-/** 构造请求体：音色按显示名称换算成平台的音色标识，未指定时用第一个音色；说话方式换成语音指令（情绪、语气）与语速、音量数值。 */
+/** 按显示名称取音色；未指定（null）用默认音色，指定了却不在目录里则报错（校验阶段已拦截）。 */
+function resolveVoice(label: string | null): VolcengineVoice {
+  if (label === null) {
+    return VOLCENGINE_DEFAULT_VOICE;
+  }
+  const found = VOLCENGINE_VOICES.find((candidate) => candidate.label === label);
+  if (found === undefined) {
+    throw new ProviderError('invalid_request', `该模型不支持预置音色 ${label}。`);
+  }
+  return found;
+}
+
+/** 构造请求体：音色按显示名称换算成平台的音色标识，未指定时用默认音色；说话方式换成语音指令（情绪、语气）与语速、音量数值。 */
 function buildRequestBody(text: string, voiceLabel: string | null, delivery: string): Record<string, unknown> {
-  const voice = VOLCENGINE_VOICES.find((candidate) => candidate.label === voiceLabel) ?? VOLCENGINE_VOICES[0];
+  const voice = resolveVoice(voiceLabel);
   const { speechRate, loudnessRate } = readDeliveryRates(delivery);
   const instruction = buildDeliveryInstruction(delivery);
   return {

@@ -17,7 +17,7 @@ import { ChapterRepository } from '../../domain/ports/chapter-repository';
 import { ScreenplayRepository } from '../../domain/ports/screenplay-repository';
 import { StageRunRepository } from '../../domain/ports/stage-run-repository';
 import { readBeatSheetSnapshot } from '../../domain/rules/beat-sheet-rules';
-import { countWords, normalizeChapterEdit, normalizeCreativeParams } from '../../domain/rules/creative-rules';
+import { assertBeatReferenceReady, countWords, normalizeChapterEdit, normalizeCreativeParams } from '../../domain/rules/creative-rules';
 import {
   canApprove,
   canCancel,
@@ -32,6 +32,7 @@ import { ApprovedBeatSheetReader } from '../stages/approved-beat-sheet';
 import { StageRunner } from '../stages/stage-runner';
 import { OriginalImporter } from '../stages/original-importer';
 import { ChangeNotifier } from './change-notifier';
+import { readRunParams } from './stage-run-params';
 import { WorkService } from './work-service';
 
 /** 阶段数据变化的载荷：哪个作品的哪条记录变了。 */
@@ -178,14 +179,10 @@ export class StageService {
    * @throws ValidationError 参数不合法，或参考节拍表但节拍表尚未确认。
    */
   private readBeatReference(workId: number, rawParams: unknown): { readonly beatSheet?: BeatSheet } {
-    if (normalizeCreativeParams(rawParams).beatReferenceMode !== 'reference') {
-      return {};
-    }
-    const beatSheet = this.dependencies.approvedBeatSheet(workId);
-    if (beatSheet === undefined) {
-      throw new ValidationError({ beatReferenceMode: '参考节拍表需要先确认节拍表。' });
-    }
-    return { beatSheet };
+    const mode = normalizeCreativeParams(rawParams).beatReferenceMode;
+    const beatSheet = mode === 'reference' ? this.dependencies.approvedBeatSheet(workId) : undefined;
+    assertBeatReferenceReady(mode, beatSheet);
+    return beatSheet === undefined ? {} : { beatSheet };
   }
 
   /**
@@ -210,7 +207,7 @@ export class StageService {
    */
   getLastCreativeParams(workId: number): CreativeParams | undefined {
     const [latest] = this.dependencies.runs.listVersions(creativeTarget(workId));
-    return latest === undefined ? undefined : (readParams(latest) ?? undefined);
+    return latest === undefined ? undefined : (readRunParams<CreativeParams>(latest) ?? undefined);
   }
 
   /**
@@ -231,7 +228,7 @@ export class StageService {
       throw new NotFoundError('版本不存在。');
     }
 
-    const params = readParams(run);
+    const params = readRunParams<CreativeParams>(run);
     const beatSheet = readBeatSheetSnapshot((run.input as { beatSheet?: unknown }).beatSheet);
     const chapters = this.dependencies.chapters.list(run.id).map((chapter) => toChapterView(chapter, params, beatSheet));
     return {
@@ -392,12 +389,6 @@ export class StageService {
 /** 作品创意阶段的目标。 */
 function creativeTarget(workId: number): StageTarget {
   return { workId, stage: 'creative', episodeId: null };
-}
-
-/** 从记录的输入快照中取出创意参数；快照结构不符时返回 null。 */
-function readParams(run: StageRun): CreativeParams | null {
-  const params = (run.input as { params?: unknown }).params;
-  return typeof params === 'object' && params !== null ? (params as CreativeParams) : null;
 }
 
 /** 版本下拉列表中的一项。 */

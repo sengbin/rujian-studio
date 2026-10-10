@@ -22,40 +22,23 @@
 
   const PAGE_TITLE = '所有项目';
   const UNSET_TEXT = '未设置';
-  const GENERIC_ERROR_TEXT = '操作失败，请重试。';
 
-  const { formatRelativeTime } = window.pageFormat;
+  const { formatRelativeTime, formatDateTime, createActionRunner, createFormOpener } = window.pageFormat;
 
   const root = document.getElementById('app');
   let projects = [];
   let loadError = '';
   let isLoading = true;
-  let isFormOpen = false;
   let filterText = '';
   let contentElement = null;
-  let messageElement = null;
-
-  /** 在操作结果区显示文字；空串表示清除。 */
-  function showMessage(text, isError) {
-    messageElement.textContent = text;
-    messageElement.className = isError ? 'ui-message status-error' : 'ui-message status-success';
-    messageElement.hidden = text === '';
-  }
+  /** 操作结果提示区。 */
+  const message = aiUi.message();
+  const runAction = createActionRunner(message);
+  const forms = createFormOpener(aiForm);
 
   /** 处理宿主带来的请求：目前只有弹出“新建项目”表单。 */
   function handleRequest(request) {
     if (request && request.action === ACTION_CREATE) openCreateForm();
-  }
-
-  /** 发起请求，失败时在操作结果区显示原因；成功返回响应数据，失败返回 undefined。 */
-  async function runAction(name, payload) {
-    showMessage('', false);
-    try {
-      return await window.hostBridge.request(name, payload);
-    } catch (error) {
-      showMessage((error && error.message) || GENERIC_ERROR_TEXT, true);
-      return undefined;
-    }
   }
 
   /** 加载请求的序号，只采纳最后一次请求的响应。 */
@@ -84,25 +67,14 @@
     renderContent();
   }
 
-  /** 弹出表单；已有表单打开时忽略，避免重复点击叠出多个。 */
-  async function showForm(options) {
-    if (isFormOpen) return;
-    isFormOpen = true;
-    try {
-      await aiForm.open(options);
-    } finally {
-      isFormOpen = false;
-    }
-  }
-
   /** 在页内弹出“新建项目”表单。 */
   function openCreateForm() {
-    void showForm({ form: FORM_CREATE });
+    void forms.open({ form: FORM_CREATE });
   }
 
   /** 在页内弹出“编辑项目”表单。 */
   function openEditForm(project) {
-    void showForm({ form: FORM_EDIT, params: { id: project.id } });
+    void forms.open({ form: FORM_EDIT, params: { id: project.id } });
   }
 
   /** 删除项目：先取影响范围，再用页内删除对话框要求输入项目名称，最后请求删除。 */
@@ -120,7 +92,7 @@
     if (!confirmed) return;
 
     const result = await runAction(REQUEST_DELETE, { id: project.id, confirmName: impact.name });
-    if (result) showMessage(`已删除项目“${result.name}”。`, false);
+    if (result) message.show(`已删除项目“${result.name}”。`, false);
   }
 
   /** 项目表格的列：数量为 0 时淡化，操作列放修改与删除按钮。 */
@@ -145,7 +117,7 @@
       nowrap: true,
       muted: true,
       render: (project) => formatRelativeTime(project.updatedAt),
-      tooltip: (project) => new Date(project.updatedAt).toLocaleString('zh-CN')
+      tooltip: (project) => formatDateTime(project.updatedAt)
     },
     {
       title: '操作',
@@ -172,32 +144,25 @@
     return aiUi.table({ columns: PROJECT_COLUMNS, rows: visibleProjects, ariaLabel: PAGE_TITLE }).element;
   }
 
-  /** 空状态、加载中和错误状态。 */
-  function renderState(text, button) {
-    return aiUi.h('div', { class: 'ui-state' }, aiUi.h('p', { class: 'description', text }), button && button.element);
-  }
-
   /** 按当前状态刷新内容区。 */
   function renderContent() {
     contentElement.textContent = '';
     if (isLoading) {
-      contentElement.append(renderState('加载中…'));
+      contentElement.append(aiUi.state({ text: '加载中…' }));
       return;
     }
     if (loadError) {
-      contentElement.append(renderState(loadError, aiUi.button({ text: '重试', onClick: () => void loadProjects() })));
+      contentElement.append(aiUi.state({ text: loadError, button: aiUi.button({ text: '重试', onClick: () => void loadProjects() }) }));
       return;
     }
     if (projects.length === 0) {
-      contentElement.append(
-        renderState('还没有项目。', aiUi.button({ text: '创建项目', kind: 'add', onClick: openCreateForm }))
-      );
+      contentElement.append(aiUi.state({ text: '还没有项目。', button: aiUi.button({ text: '创建项目', kind: 'add', onClick: openCreateForm }) }));
       return;
     }
 
     const keyword = filterText.trim().toLowerCase();
     const visibleProjects = projects.filter((project) => project.name.toLowerCase().includes(keyword));
-    contentElement.append(visibleProjects.length === 0 ? renderState('没有匹配的项目。') : renderTable(visibleProjects));
+    contentElement.append(visibleProjects.length === 0 ? aiUi.state({ text: '没有匹配的项目。' }) : renderTable(visibleProjects));
   }
 
   /** 渲染页面骨架。 */
@@ -212,11 +177,10 @@
       }
     });
     const toolbar = document.getElementById('page-toolbar');
-    toolbar.append(aiUi.h('div', { class: 'list-search' }, search.element));
+    toolbar.append(aiUi.h('div', { class: 'page-search' }, search.element));
 
-    messageElement = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
     contentElement = aiUi.h('div');
-    root.append(messageElement, contentElement);
+    root.append(message.element, contentElement);
   }
 
   renderPage();

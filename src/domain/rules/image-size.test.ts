@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：image-size.test.ts
-// 说明：图片尺寸读取的自动化测试：PNG、JPEG、WebP（有损、无损、扩展）从文件头读出宽高，不完整或类型不支持时返回 null。
+// 说明：图片文件头处理的自动化测试：按文件头识别格式，PNG、JPEG、WebP（有损、无损、扩展）读出宽高，不完整或类型不支持时返回 null。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
@@ -9,7 +9,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { readImageSize } from './image-size';
+import { detectImageMime, readImageSize } from './image-size';
 
 /** 只含签名与 IHDR 的 PNG 文件头。 */
 function png(width: number, height: number): Buffer {
@@ -76,4 +76,11 @@ test('WebP：扩展、无损、有损三种布局都能读出宽高', () => {
 
 test('不支持的类型返回 null', () => {
   assert.equal(readImageSize(png(10, 10), 'image/gif'), null);
+});
+
+test('按文件头识别 PNG、JPEG、WebP，其他内容返回 null', () => {
+  assert.equal(detectImageMime(png(10, 10)), 'image/png');
+  assert.equal(detectImageMime(jpeg(10, 10)), 'image/jpeg');
+  assert.equal(detectImageMime(webp('VP8X', 30)), 'image/webp');
+  assert.equal(detectImageMime(Uint8Array.from([1, 2, 3])), null);
 });

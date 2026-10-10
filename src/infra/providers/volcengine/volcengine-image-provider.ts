@@ -18,7 +18,9 @@ import {
   RemoteJobRef,
   RemoteJobState
 } from '../../../domain/ports/provider-adapters';
-import { ExtraParamSpec, mapExtraParams, readObject, toDataUri, validateExtraParams, validateMediaFiles } from '../shared/provider-payload';
+import { toPixelSize } from '../shared/image-pixel-size';
+import { findDescribedModelByCode } from '../shared/provider-model-lookup';
+import { ExtraParamSpec, mapExtraParams, parseJson, readObject, toDataUri, validateExtraParams, validateMediaFiles } from '../shared/provider-payload';
 import { FetchFunction, VolcengineApiClient, classifyArkErrorCode } from './volcengine-api-client';
 import { VOLCENGINE_PROVIDER, VOLCENGINE_PROVIDER_NAME } from './volcengine-catalog';
 import {
@@ -57,11 +59,11 @@ export class VolcengineImageProvider implements ImageModelProvider {
   }
 
   getCapability(modelCode: string): ImageCapability | undefined {
-    return findModel(modelCode)?.descriptor.capability;
+    return findDescribedModelByCode(VOLCENGINE_IMAGE_MODELS, modelCode)?.descriptor.capability;
   }
 
   validate(request: ImageGenerationRequest): readonly string[] {
-    const model = findModel(request.modelCode);
+    const model = findDescribedModelByCode(VOLCENGINE_IMAGE_MODELS, request.modelCode);
     if (model === undefined) {
       return [`${VOLCENGINE_PROVIDER_NAME}没有模型 ${request.modelCode}。`];
     }
@@ -74,7 +76,7 @@ export class VolcengineImageProvider implements ImageModelProvider {
       throw new ProviderError('invalid_request', issues.join('；'));
     }
     // 校验已确认模型存在。
-    const model = findModel(request.modelCode) as VolcengineImageModel;
+    const model = findDescribedModelByCode(VOLCENGINE_IMAGE_MODELS, request.modelCode) as VolcengineImageModel;
     const body = buildRequestBody(request, model);
     const outcomes = await Promise.allSettled(Array.from({ length: request.count }, () => this.generateOne(context, body)));
 
@@ -109,10 +111,6 @@ export class VolcengineImageProvider implements ImageModelProvider {
     const message = typeof error.message === 'string' ? `：${error.message}` : '';
     throw new ProviderError(classifyArkErrorCode(code) ?? 'server', `${VOLCENGINE_PROVIDER_NAME}没有返回图片地址${message}`, { code });
   }
-}
-
-function findModel(modelCode: string): VolcengineImageModel | undefined {
-  return VOLCENGINE_IMAGE_MODELS.find((model) => model.descriptor.code === modelCode);
 }
 
 /** 校验提示词、反向提示词和参考图。 */
@@ -153,22 +151,13 @@ function validateParameters(request: ImageGenerationRequest, model: VolcengineIm
   }
   if (issues.length === 0 && request.aspectRatio !== null) {
     const tier = request.resolution ?? SEEDREAM_DEFAULT_TIER;
-    const { width, height } = toPixelSize(request.aspectRatio, SEEDREAM_TIER_PIXELS[tier]);
+    const { width, height } = toPixelSize(request.aspectRatio, SEEDREAM_TIER_PIXELS[tier], SEEDREAM_SIZE_STEP);
     const pixels = width * height;
     if (pixels < model.pixelRange.min || pixels > model.pixelRange.max) {
       issues.push(`画幅 ${request.aspectRatio} 与分辨率 ${tier} 换算出的尺寸 ${width}x${height} 不在模型支持的像素范围内，请换一个分辨率。`);
     }
   }
   return issues;
-}
-
-/** 按画幅和总像素数计算宽高，宽高取 SEEDREAM_SIZE_STEP 的整数倍并向下取整，保证总像素不超过档位。 */
-function toPixelSize(aspectRatio: string, totalPixels: number): { width: number; height: number } {
-  const [ratioWidth, ratioHeight] = aspectRatio.split(':').map(Number);
-  return {
-    width: Math.floor(Math.sqrt((totalPixels * ratioWidth) / ratioHeight) / SEEDREAM_SIZE_STEP) * SEEDREAM_SIZE_STEP,
-    height: Math.floor(Math.sqrt((totalPixels * ratioHeight) / ratioWidth) / SEEDREAM_SIZE_STEP) * SEEDREAM_SIZE_STEP
-  };
 }
 
 /**
@@ -179,7 +168,7 @@ function resolveSize(request: ImageGenerationRequest): string | undefined {
   if (request.aspectRatio === null) {
     return request.resolution ?? undefined;
   }
-  const { width, height } = toPixelSize(request.aspectRatio, SEEDREAM_TIER_PIXELS[request.resolution ?? SEEDREAM_DEFAULT_TIER]);
+  const { width, height } = toPixelSize(request.aspectRatio, SEEDREAM_TIER_PIXELS[request.resolution ?? SEEDREAM_DEFAULT_TIER], SEEDREAM_SIZE_STEP);
   return `${width}x${height}`;
 }
 
@@ -193,13 +182,4 @@ function buildRequestBody(request: ImageGenerationRequest, model: VolcengineImag
   else if (images.length > 1) body.image = images;
   Object.assign(body, mapExtraParams(request.extraParams, EXTRA_PARAMETER_SPECS));
   return body;
-}
-
-/** 解析 JSON；不合法时返回 undefined，由调用方按任务引用损坏处理。 */
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return undefined;
-  }
 }

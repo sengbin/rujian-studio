@@ -23,6 +23,7 @@ import {
 import { AssetFileStore } from '../../domain/ports/asset-file-store';
 import { AssetVersionRepository, VersionThumbnailUpdate } from '../../domain/ports/asset-version-repository';
 import { collectVersionFilePaths, removeUnreferencedFiles } from './asset-file-cleanup';
+import { placeholders } from './sql-placeholders';
 import { runInTransaction } from './transaction';
 
 /** asset_versions 加模型名称的一行。 */
@@ -144,9 +145,8 @@ export class SqliteAssetVersionRepository implements AssetVersionRepository {
   }
 
   listByStatus(statuses: readonly AssetVersionStatus[]): AssetVersionRecord[] {
-    const marks = statuses.map(() => '?').join(', ');
     const rows = this.database
-      .prepare(`${VERSION_SELECT} WHERE v.status IN (${marks}) ORDER BY v.id`)
+      .prepare(`${VERSION_SELECT} WHERE v.status IN (${placeholders(statuses.length)}) ORDER BY v.id`)
       .all(...statuses) as unknown as VersionRow[];
     return rows.map(toVersion);
   }

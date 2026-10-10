@@ -8,12 +8,13 @@
 // ------------------------------------------------------------------------
 
 import { MediaDownloader } from '../../domain/ports/media-downloader';
+import { BASE64_BODY } from '../../domain/rules/base64-pattern';
 
 /** 超过大小上限时的错误说明。 */
 const TOO_LARGE_MESSAGE = '文件超过大小上限。';
 
 /** 适配器内联音频内容的 data 地址：只接受音频类型的 Base64 内容。 */
-const AUDIO_DATA_URL_PATTERN = /^data:audio\/[a-z0-9.+-]+;base64,([A-Za-z0-9+/]*={0,2})$/;
+const AUDIO_DATA_URL_PATTERN = new RegExp(`^data:audio\\/[a-z0-9.+-]+;base64,(${BASE64_BODY})$`);
 
 /** Base64 每 4 个字符还原为 3 个字节。 */
 const BASE64_BYTES_PER_GROUP = 3;

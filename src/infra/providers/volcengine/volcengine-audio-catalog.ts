@@ -56,6 +56,9 @@ export const VOLCENGINE_VOICES: readonly VolcengineVoice[] = [
   { label: 'Stokie（英文女声）', speaker: 'en_female_stokie_uranus_bigtts' }
 ];
 
+/** 请求没有指定音色时使用的默认音色：音色目录里的第一个。 */
+export const VOLCENGINE_DEFAULT_VOICE: VolcengineVoice = VOLCENGINE_VOICES[0];
+
 /** 语音合成 2.0：只生成语音，文字内容决定时长，不支持参考音频；音色自带 30 多种语种识别，语言选项仅作标注。 */
 const SPEECH_CAPABILITY: AudioCapability = {
   audioKinds: ['voice'],

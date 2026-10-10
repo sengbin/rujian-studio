@@ -156,7 +156,7 @@ test('提交：尺寸换算——都不指定时不传 size；只指定分辨率
   await provider.submit(request({ modelCode: 'wan2.7-image', resolution: '1K' }), CONTEXT);
   await provider.submit(request({ modelCode: 'wan2.7-image', aspectRatio: '9:16' }), CONTEXT);
 
-  const sizes = calls.map((call) => (call.body?.parameters as Record<string, unknown>).size);
+  const sizes = calls.map((call) => (call.body!.parameters as Record<string, unknown>).size);
   assert.deepEqual(sizes, [undefined, '1024*1024', '1K', '1536*2720']);
 });
 

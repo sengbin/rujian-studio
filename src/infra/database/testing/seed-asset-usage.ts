@@ -37,7 +37,7 @@ export interface AssetUsageSeed {
  */
 export function seedAssetUsage(database: DatabaseSync, projectId: number, episodeCount = 2): AssetUsageSeed {
   const insert = (sql: string, ...params: Array<string | number>): number => Number(database.prepare(sql).run(...params).lastInsertRowid);
-  const workId = insert("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (?, '作品甲', 'short_drama', 't', 't')", projectId);
+  const workId = insert("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (?, '作品甲', 'short_drama', 'text', 't', 't')", projectId);
   const episodeIds = Array.from({ length: episodeCount }, (_, index) =>
     insert("INSERT INTO episodes (work_id, seq, title, created_at, updated_at) VALUES (?, ?, ?, 't', 't')", workId, index + 1, `第${index + 1}集标题`)
   );

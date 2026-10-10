@@ -12,14 +12,13 @@ import { test } from 'node:test';
 import { ValidationError } from '../errors';
 import {
   IMAGE_FIELD_KEY,
-  IMAGE_MAX_BYTES,
   IMAGE_MAX_FILES,
   NOVEL_FIELD_KEY,
   NOVEL_MAX_BYTES,
   WORK_NAME_MAX_LENGTH,
-  detectImageMime,
   normalizeWorkCreation
 } from './work-rules';
+import { IMAGE_FILE_MAX_BYTES } from './image-size';
 
 const PNG_HEADER = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
 const JPEG_HEADER = [0xff, 0xd8, 0xff, 0xe0];
@@ -77,7 +76,6 @@ test('灵感图片：按文件头识别 PNG、JPEG、WebP，保持上传顺序',
       ['image', 'c.webp', 'image/webp']
     ]
   );
-  assert.equal(detectImageMime(Uint8Array.from([1, 2, 3])), null);
 });
 
 test('灵感图片：至少 1 张、最多 10 张，内容不是图片、路径名只取文件名', () => {
@@ -97,7 +95,7 @@ test('灵感图片：至少 1 张、最多 10 张，内容不是图片、路径�
 
 test('灵感图片：超过大小上限的文件被拒绝，空文件被拒绝', () => {
   const base = { workName: '甲', kind: '单个短视频' };
-  const big = Buffer.alloc(IMAGE_MAX_BYTES + 1);
+  const big = Buffer.alloc(IMAGE_FILE_MAX_BYTES + 1);
   PNG_HEADER.forEach((byte, index) => (big[index] = byte));
   assert.match(fieldErrorsOf(() => normalizeWorkCreation({ ...base, [IMAGE_FIELD_KEY]: files(fileItem('big.png', big)) }, 'image'))[IMAGE_FIELD_KEY], /超过 10 MB/);
   assert.match(fieldErrorsOf(() => normalizeWorkCreation({ ...base, [IMAGE_FIELD_KEY]: files(fileItem('empty.png', [])) }, 'image'))[IMAGE_FIELD_KEY], /空文件/);

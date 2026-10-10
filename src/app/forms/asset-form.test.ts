@@ -15,7 +15,9 @@ import { SqliteAssetCategoryRepository } from '../../infra/database/sqlite-asset
 import { SqliteAssetRepository } from '../../infra/database/sqlite-asset-repository';
 import { SqliteBindingRepository } from '../../infra/database/sqlite-binding-repository';
 import { SqliteProjectRepository } from '../../infra/database/sqlite-project-repository';
+import { SqliteUnitOfWork } from '../../infra/database/sqlite-unit-of-work';
 import { AssetCategoryService } from '../services/asset-category-service';
+import { AssetCreationService, AssetRunSubmitter } from '../services/asset-creation-service';
 import { GenerationModelOption } from '../services/asset-generation-service';
 import { AssetPromptService } from '../services/asset-prompt-service';
 import { AssetService, DUPLICATE_ASSET_NAME_MESSAGE } from '../services/asset-service';
@@ -23,6 +25,7 @@ import { BindingService } from '../services/binding-service';
 import { ProjectService } from '../services/project-service';
 import { FILE_PROMPTS, ScriptedText } from '../stages/testing/scripted-text';
 import { ASSET_FORM_NAMES, AssetRunSource, createAssetFormCatalog } from './asset-form';
+import { readRunRequest } from './asset-generation-fields';
 import { FormDefinition } from './form-definition';
 import { TextModelStates } from './text-model-field';
 import { DEFAULT_TEXT_MODEL_OPTION, createFakeTextModels } from './testing/fake-text-models';
@@ -51,7 +54,9 @@ function createRunStub() {
   const state = { image: [IMAGE_MODEL] as GenerationModelOption[], audio: [AUDIO_MODEL] as GenerationModelOption[], failure: null as Error | null };
   const submitted: Array<Record<string, unknown>> = [];
   const source: AssetRunSource = {
-    listModelOptions: async (kind) => (kind === 'audio' ? state.audio : state.image),
+    listModelOptions: async (kind) => (kind === 'audio' ? state.audio : state.image)
+  };
+  const submitter: AssetRunSubmitter = {
     submit: async (rawInput) => {
       if (state.failure !== null) {
         throw state.failure;
@@ -60,7 +65,7 @@ function createRunStub() {
       return {};
     }
   };
-  return { state, submitted, source };
+  return { state, submitted, source, submitter };
 }
 
 function createFixture(projectNames: readonly string[] = ['项目甲', '项目乙'], responder?: () => unknown, options: { noTextModels?: boolean } = {}) {
@@ -88,6 +93,7 @@ function createFixture(projectNames: readonly string[] = ['项目甲', '项目�
     prompts,
     textModels: options.noTextModels === true ? NO_TEXT_MODELS : textModels,
     generation: run.source,
+    creations: new AssetCreationService({ assets, bindings, prompts, generation: run.submitter, transaction: new SqliteUnitOfWork(database) }),
     entities: bindings
   });
   const open = async (name: string, params: unknown): Promise<FormDefinition> => {
@@ -358,7 +364,7 @@ test('编辑音频：生成来源初始值使用界面文字、没有文件字�
   }
 });
 
-test('提交按钮：新建与编辑表单各有两个按钮，主按钮继续生成；编辑的主按钮要求覆盖确认；表单里没有字段动作', async () => {
+test('提交按钮：新建与编辑表单各有两个按钮，主按钮继续生成；编辑的主按钮要求覆盖确认', async () => {
   const { database, assets, open } = createFixture();
   try {
     const form = await open(ASSET_FORM_NAMES.create, { kind: 'character' });
@@ -366,8 +372,6 @@ test('提交按钮：新建与编辑表单各有两个按钮，主按钮继续�
       { key: 'create', label: '仅创建' },
       { key: 'createAndRun', label: '创建并生成', primary: true }
     ]);
-    assert.equal(form.actions, undefined);
-    assert.equal(form.schema.actions, undefined);
 
     const asset = assets.createAsset('character', { name: '林夏' });
     const edit = await open(ASSET_FORM_NAMES.edit, { assetId: asset.id });
@@ -622,7 +626,7 @@ test('文本模型：提示词表单重新生成时使用所选模型，保存�
 /** 在项目甲下写入作品、集和一个带设定的角色实体。 */
 function seedEntity(database: ReturnType<typeof openDatabase>, projectId: number) {
   const insert = (sql: string, ...params: Array<string | number>) => Number(database.prepare(sql).run(...params).lastInsertRowid);
-  const work = insert("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (?, '作品甲', 'short_video', 't', 't')", projectId);
+  const work = insert("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (?, '作品甲', 'short_video', 'text', 't', 't')", projectId);
   const episode = insert("INSERT INTO episodes (work_id, seq, title, created_at, updated_at) VALUES (?, 1, '第一集', 't', 't')", work);
   const entity = insert(
     `INSERT INTO script_entities (work_id, kind, name, description, attributes_json, created_at, updated_at)
@@ -747,6 +751,14 @@ test('生成方式字段：三种方式、默认直接出图；模型与出图�
   } finally {
     database.close();
   }
+});
+
+test('出图参数解析：音频类型无效时报错，不按音色参考处理', () => {
+  const state = { models: [AUDIO_MODEL], textModel: { choices: [], defaultLabel: null, selectedKey: null, unavailableHint: null } };
+  const values = { audioKind: '', runModel: AUDIO_MODEL.label };
+  assert.throws(() => readRunRequest('audio', values, state), (error: unknown) => error instanceof ValidationError && error.fieldErrors.audioKind !== undefined);
+  assert.throws(() => readRunRequest('audio', { ...values, audioKind: '不存在' }, state), ValidationError);
+  assert.deepEqual(readRunRequest('audio', { ...values, audioKind: '音色参考' }, state), { modelId: 8, language: '', voice: '' });
 });
 
 test('直接出图：创建资产后立即提交生成，不调用文本模型；画幅取参考图画幅，数量与分辨率取表单，不选时用默认', async () => {

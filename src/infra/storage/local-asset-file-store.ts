@@ -8,28 +8,15 @@
 // ------------------------------------------------------------------------
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import * as path from 'node:path';
 import { AssetFileStore } from '../../domain/ports/asset-file-store';
+import { writeFileAtomically } from './atomic-file';
 import { resolveInsideRoot } from './relative-path';
+import { EXTENSION_BY_MIME, PARTIAL_SUFFIX } from './storage-file-types';
 
 /** 本地文件在存储根目录下的子目录名；数据备份页据此告知用户这些文件不在数据库备份内。 */
 export const ASSET_FILE_DIRECTORY_NAME = 'asset-files';
-
-/** 写入中的临时文件后缀。 */
-const PARTIAL_SUFFIX = '.part';
-
-/** 各文件类型的扩展名：资产与首帧、尾帧的图片和音频，以及小说、原创文稿的文本。 */
-const EXTENSION_BY_MIME: Readonly<Record<string, string>> = {
-  'image/png': '.png',
-  'image/jpeg': '.jpg',
-  'image/webp': '.webp',
-  'audio/mpeg': '.mp3',
-  'audio/wav': '.wav',
-  'audio/mp4': '.m4a',
-  'text/plain': '.txt',
-  'text/markdown': '.md'
-};
 
 /** 子目录取哈希的前几位。 */
 const SHARD_LENGTH = 2;
@@ -54,14 +41,7 @@ export class LocalAssetFileStore implements AssetFileStore {
       return filePath;
     }
     mkdirSync(path.dirname(absolutePath), { recursive: true });
-    const partialPath = `${absolutePath}${PARTIAL_SUFFIX}`;
-    try {
-      writeFileSync(partialPath, content);
-      renameSync(partialPath, absolutePath);
-    } catch (error) {
-      rmSync(partialPath, { force: true });
-      throw error;
-    }
+    writeFileAtomically(absolutePath, content);
     return filePath;
   }
 

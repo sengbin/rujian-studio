@@ -126,7 +126,7 @@ test('项目列表按更新时间倒序，并带作品数', () => {
     service.createProject({ name: '乙' });
     service.updateProject(first.id, { name: '甲' });
     database
-      .prepare("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (?, '作品', 'short_video', 't', 't')")
+      .prepare("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (?, '作品', 'short_video', 'text', 't', 't')")
       .run(first.id);
 
     const summaries = service.listProjects();
@@ -168,7 +168,7 @@ test('删除影响统计包含作品和视频结果，删除后级联清除，�
     const project = service.createProject({ name: '甲' });
     const timestamp = 't';
     database
-      .prepare("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (?, '作品', 'short_drama', ?, ?)")
+      .prepare("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (?, '作品', 'short_drama', 'text', ?, ?)")
       .run(project.id, timestamp, timestamp);
     database
       .prepare("INSERT INTO episodes (work_id, seq, title, created_at, updated_at) VALUES (1, 1, '第一集', ?, ?)")

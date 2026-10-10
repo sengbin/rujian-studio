@@ -65,7 +65,7 @@ test('导出快照：内容与版本一致，之后的改动不影响快照，�
     assert.equal(inspection.schemaVersion, MIGRATIONS.length);
     assert.equal(inspection.integrity, INTEGRITY_OK);
     assert.ok(BACKUP_REQUIRED_TABLES.every((table) => inspection.tableNames.includes(table)));
-    assert.equal(existsSync(`${target}.partial`), false);
+    assert.equal(existsSync(`${target}.part`), false);
   } finally {
     fixture.cleanup();
   }
@@ -77,7 +77,7 @@ test('导出快照失败：抛出错误，不留下目标文件和临时文件',
     const target = join(fixture.directory, '不存在的目录', 'snapshot.sqlite');
     assert.throws(() => fixture.storage.exportSnapshot(target));
     assert.equal(existsSync(target), false);
-    assert.equal(existsSync(`${target}.partial`), false);
+    assert.equal(existsSync(`${target}.part`), false);
   } finally {
     fixture.cleanup();
   }
@@ -294,7 +294,7 @@ test('备份资产文件：备份位置在资产文件目录之内时拒绝，�
   }
 });
 
-test('检查备份的资产文件：备份文件夹或当前资产目录里能找到就算可用，资产文件表没有路径列的备份视为没有资产文件', () => {
+test('检查备份的资产文件：备份文件夹或当前资产目录里能找到就算可用', () => {
   const fixture = createBackupFixture();
   try {
     const first = seedAssetFile(fixture, '灯塔', Buffer.from('lighthouse'));
@@ -309,11 +309,6 @@ test('检查备份的资产文件：备份文件夹或当前资产目录里能�
     assert.equal(fixture.storage.inspectAssetFiles(target)?.availableCount, 2, '当前资产目录里还有');
     rmSync(join(fixture.assetDirectory, ...first.split('/')));
     assert.equal(fixture.storage.inspectAssetFiles(target)?.availableCount, 1);
-
-    const legacy = new DatabaseSync(join(fixture.directory, 'legacy.sqlite'));
-    legacy.exec('CREATE TABLE asset_files (id INTEGER PRIMARY KEY, asset_id INTEGER NOT NULL)');
-    legacy.close();
-    assert.equal(fixture.storage.inspectAssetFiles(join(fixture.directory, 'legacy.sqlite')), undefined);
   } finally {
     fixture.cleanup();
   }

@@ -11,17 +11,17 @@ import { ProviderError } from '../../../domain/errors';
 import { VideoCapability } from '../../../domain/models/model-capability';
 import { ModelDescriptor, ProviderDescriptor } from '../../../domain/models/model-provider';
 import {
-  MediaInput,
   ProviderCallContext,
   RemoteJobRef,
   RemoteJobState,
-  RemoteJobStatus,
   VideoGenerationRequest,
   VideoJobResult,
   VideoModelProvider
 } from '../../../domain/ports/provider-adapters';
-import { isDurationAllowed } from '../../../domain/rules/model-capability-rules';
-import { ExtraParamSpec, mapExtraParams, readObject, toDataUri, validateExtraParams, validateMediaFiles } from '../shared/provider-payload';
+import { findModelByCode } from '../shared/provider-model-lookup';
+import { ExtraParamSpec, mapExtraParams, readObject, validateExtraParams } from '../shared/provider-payload';
+import { VIDEO_TASK_STATUSES, buildVideoContent } from '../shared/video-task-content';
+import { VideoMediaRules, VideoParameterRules, validateVideoMediaCombination, validateVideoParameters } from '../shared/video-request-validation';
 import { FetchFunction, MinimaxApiClient, classifyMinimaxErrorCode } from './minimax-api-client';
 import { MINIMAX_PROVIDER, MINIMAX_PROVIDER_NAME } from './minimax-catalog';
 import {
@@ -42,25 +42,24 @@ const CONNECTION_PROBE_TASK_ID = '0';
 /** 提交视频任务的总超时（毫秒）：素材以 Base64 内联上传，可能接近 64 MB。 */
 const SUBMIT_TIMEOUT_MS = 180_000;
 
-/** 素材在请求中的角色（content[].role）。 */
-const ROLE_FIRST_FRAME = 'first_frame';
-const ROLE_LAST_FRAME = 'last_frame';
-const ROLE_REFERENCE_IMAGE = 'reference_image';
-const ROLE_REFERENCE_AUDIO = 'reference_audio';
-
 /** 画幅取值 adaptive：由输入素材决定，有首帧或尾帧时只能用它。 */
 const RATIO_ADAPTIVE = 'adaptive';
 
-/** Base64 编码后体积约为原文件的 4/3。 */
-const BASE64_EXPANSION = 4 / 3;
+/** 素材校验规则：提示词必填，尾帧可以单独使用，首尾帧、参考图与参考音频的格式与大小有限制，并受请求体上限约束。 */
+const MEDIA_RULES: VideoMediaRules = {
+  promptRequired: true,
+  lastFrameRequiresFirst: false,
+  audioRequiresReferenceImage: false,
+  image: { maxBytes: MINIMAX_VIDEO_IMAGE_MAX_BYTES, formats: { mimeTypes: MINIMAX_VIDEO_IMAGE_MIME_TYPES, label: 'JPG、PNG、WEBP、HEIC、HEIF' } },
+  audio: { maxBytes: MINIMAX_VIDEO_AUDIO_MAX_BYTES, formats: { mimeTypes: MINIMAX_VIDEO_AUDIO_MIME_TYPES, label: 'WAV、MP3' } },
+  requestMaxBytes: MINIMAX_VIDEO_REQUEST_MAX_BYTES
+};
 
-/** 任务状态与统一状态的对应。 */
-const TASK_STATUSES: Readonly<Record<string, RemoteJobStatus>> = {
-  queued: 'pending',
-  running: 'running',
-  succeeded: 'succeeded',
-  failed: 'failed',
-  cancelled: 'canceled'
+/** 参数校验规则：时长必填，视频始终带原生声音，不支持随机种子。 */
+const PARAMETER_RULES: VideoParameterRules = {
+  durationRequired: true,
+  audioModeMessage: '该模型的视频始终带原生声音，不支持所选的声音模式。',
+  seedUnsupported: true
 };
 
 /** 模型专有参数：键与请求体中键的对应，取值都是开或关。 */
@@ -86,16 +85,16 @@ export class MinimaxVideoProvider implements VideoModelProvider {
   }
 
   getCapability(modelCode: string): VideoCapability | undefined {
-    return findModel(modelCode)?.capability;
+    return findModelByCode(MINIMAX_VIDEO_MODELS, modelCode)?.capability;
   }
 
   validate(request: VideoGenerationRequest): readonly string[] {
-    const model = findModel(request.modelCode);
+    const model = findModelByCode(MINIMAX_VIDEO_MODELS, request.modelCode);
     if (model === undefined) {
       return [`${MINIMAX_PROVIDER_NAME}没有模型 ${request.modelCode}。`];
     }
     return [
-      ...validateMediaCombination(request, model.capability),
+      ...validateVideoMediaCombination(request, model.capability, MEDIA_RULES),
       ...validateParameters(request, model.capability),
       ...validateExtraParams(request.extraParams, EXTRA_PARAMETER_SPECS)
     ];
@@ -121,7 +120,7 @@ export class MinimaxVideoProvider implements VideoModelProvider {
   async query(ref: RemoteJobRef, context: ProviderCallContext): Promise<RemoteJobState<VideoJobResult>> {
     const response = await this.client.getJson(context, `${MINIMAX_VIDEO_QUERY_PATH}/${encodeURIComponent(ref.remoteJobId)}`);
     const task = readObject(response.task);
-    const status = typeof task.status === 'string' ? TASK_STATUSES[task.status] : undefined;
+    const status = typeof task.status === 'string' ? VIDEO_TASK_STATUSES[task.status] : undefined;
     if (status === undefined) {
       throw new ProviderError('server', `${MINIMAX_PROVIDER_NAME}返回了无法识别的任务状态：${String(task.status)}。`);
     }
@@ -152,99 +151,13 @@ export class MinimaxVideoProvider implements VideoModelProvider {
   }
 }
 
-function findModel(modelCode: string): ModelDescriptor<'video'> | undefined {
-  return MINIMAX_VIDEO_MODELS.find((model) => model.code === modelCode);
-}
-
-/** 校验素材组合与素材本身：提示词必填、首尾帧与参考素材互斥、数量、格式与大小。 */
-function validateMediaCombination(request: VideoGenerationRequest, capability: VideoCapability): string[] {
-  const issues: string[] = [];
-  const hasFrames = request.firstFrame !== null || request.lastFrame !== null;
-  const hasReferences = request.referenceImages.length > 0 || request.referenceAudios.length > 0;
-
-  if (request.prompt.trim() === '') {
-    issues.push('提示词不能为空，该模型每次请求都必须有文字描述。');
-  }
-  if (request.prompt.length > capability.promptMaxLength) {
-    issues.push(`提示词不能超过 ${capability.promptMaxLength} 字（当前 ${request.prompt.length} 字）。`);
-  }
-  if (hasFrames && hasReferences) {
-    issues.push('首帧、尾帧不能与参考图、参考音频同时使用。');
-  }
-
-  const images = [request.firstFrame, request.lastFrame, ...request.referenceImages].filter((media): media is MediaInput => media !== null);
-  issues.push(...validateMediaFiles(images, 'image/', '图片', MINIMAX_VIDEO_IMAGE_MAX_BYTES));
-  if (images.some((image) => image.mimeType.startsWith('image/') && !MINIMAX_VIDEO_IMAGE_MIME_TYPES.includes(image.mimeType))) {
-    issues.push('图片素材只支持 JPG、PNG、WEBP、HEIC、HEIF 格式。');
-  }
-  if (request.referenceImages.length > capability.referenceImagesMax) {
-    issues.push(`参考图最多 ${capability.referenceImagesMax} 张（当前 ${request.referenceImages.length} 张）。`);
-  }
-
-  issues.push(...validateReferenceAudios(request, capability));
-
-  const inlineBytes = [...images, ...request.referenceAudios].reduce((total, media) => total + media.data.byteLength, 0);
-  if (inlineBytes * BASE64_EXPANSION > MINIMAX_VIDEO_REQUEST_MAX_BYTES) {
-    issues.push(`素材合计超过请求体上限 ${MINIMAX_VIDEO_REQUEST_MAX_BYTES / 1024 / 1024} MB，请减少或压缩素材。`);
-  }
-  return issues;
-}
-
-/** 校验参考音频：数量、格式、大小。 */
-function validateReferenceAudios(request: VideoGenerationRequest, capability: VideoCapability): string[] {
-  const audios = request.referenceAudios;
-  const limit = capability.audioInputMax;
-  if (audios.length === 0) {
-    return [];
-  }
-  if (limit === null) {
-    return ['该模型不支持参考音频。'];
-  }
-  const issues = validateMediaFiles(audios, 'audio/', '音频', MINIMAX_VIDEO_AUDIO_MAX_BYTES);
-  if (audios.some((audio) => !MINIMAX_VIDEO_AUDIO_MIME_TYPES.includes(audio.mimeType))) {
-    issues.push('参考音频只支持 WAV、MP3 格式。');
-  }
-  if (audios.length > limit.count) {
-    issues.push(`参考音频最多 ${limit.count} 段（当前 ${audios.length} 段）。`);
-  }
-  return issues;
-}
-
-/** 校验画幅、分辨率、时长、声音模式和随机种子是否在模型能力范围内；时长必填，没有首尾帧和参考素材时画幅必填。 */
+/** 校验参数是否在模型能力范围内；时长必填，没有首尾帧和参考素材时画幅必填。 */
 function validateParameters(request: VideoGenerationRequest, capability: VideoCapability): string[] {
-  const issues: string[] = [];
-  if (request.aspectRatio !== null && !capability.aspectRatios.includes(request.aspectRatio)) {
-    issues.push(`画幅 ${request.aspectRatio} 不在模型支持的范围内：${capability.aspectRatios.join('、')}。`);
-  }
-  if (request.resolution !== null && !capability.resolutions.includes(request.resolution)) {
-    issues.push(`分辨率 ${request.resolution} 不在模型支持的范围内：${capability.resolutions.join('、')}。`);
-  }
-  if (request.durationSeconds === null) {
-    issues.push('该模型必须指定视频时长。');
-  } else if (!isDurationAllowed(capability.duration, request.durationSeconds)) {
-    issues.push(`时长 ${request.durationSeconds} 秒不在模型支持的范围内。`);
-  }
-  if (request.audioMode !== null && !capability.audioModes.includes(request.audioMode)) {
-    issues.push('该模型的视频始终带原生声音，不支持所选的声音模式。');
-  }
-  if (request.seed !== null) {
-    issues.push('该模型不支持随机种子。');
-  }
+  const issues = validateVideoParameters(request, capability, PARAMETER_RULES);
   if (request.aspectRatio === null && request.firstFrame === null && request.lastFrame === null && request.referenceImages.length === 0 && request.referenceAudios.length === 0) {
     issues.push('纯文字生成视频必须指定画幅。');
   }
   return issues;
-}
-
-/** 按素材组合构造 content：文本在前，素材按角色标注；首尾帧与参考素材已由校验保证互斥。 */
-function buildContent(request: VideoGenerationRequest): Array<Record<string, unknown>> {
-  const content: Array<Record<string, unknown>> = [{ type: 'text', text: request.prompt }];
-  const image = (media: MediaInput, role: string): Record<string, unknown> => ({ type: 'image_url', image_url: { url: toDataUri(media) }, role });
-  if (request.firstFrame !== null) content.push(image(request.firstFrame, ROLE_FIRST_FRAME));
-  if (request.lastFrame !== null) content.push(image(request.lastFrame, ROLE_LAST_FRAME));
-  for (const reference of request.referenceImages) content.push(image(reference, ROLE_REFERENCE_IMAGE));
-  for (const audio of request.referenceAudios) content.push({ type: 'audio_url', audio_url: { url: toDataUri(audio) }, role: ROLE_REFERENCE_AUDIO });
-  return content;
 }
 
 /** 构造创建任务的请求体：分辨率没指定时用默认档位，画幅在有首尾帧或没指定时用 adaptive；水印默认关闭。 */
@@ -252,7 +165,7 @@ function buildRequestBody(request: VideoGenerationRequest): Record<string, unkno
   const hasFrames = request.firstFrame !== null || request.lastFrame !== null;
   const body: Record<string, unknown> = {
     model: request.modelCode,
-    content: buildContent(request),
+    content: buildVideoContent(request),
     resolution: request.resolution ?? MINIMAX_DEFAULT_VIDEO_RESOLUTION,
     duration: request.durationSeconds,
     ratio: hasFrames ? RATIO_ADAPTIVE : (request.aspectRatio ?? RATIO_ADAPTIVE),

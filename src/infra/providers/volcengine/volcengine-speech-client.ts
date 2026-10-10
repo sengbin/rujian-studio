@@ -10,6 +10,7 @@
 import { randomUUID } from 'node:crypto';
 import { ProviderError, ProviderFailure } from '../../../domain/errors';
 import { ProviderCallContext } from '../../../domain/ports/provider-adapters';
+import { classifyHttpStatus } from '../shared/base-provider-api-client';
 import { requireSecureEndpoint } from '../shared/provider-endpoint';
 import { FetchFunction, HttpTimeouts, ProviderHttpTransport } from '../shared/provider-http-transport';
 import { readObject } from '../shared/provider-payload';
@@ -109,13 +110,6 @@ function buildHttpError(status: number, payload: Record<string, unknown>): Provi
   const code = typeof source.code === 'number' ? source.code : null;
   const message = typeof source.message === 'string' && source.message !== '' ? source.message : `HTTP ${status}`;
   const codeText = code === null ? null : String(code);
-  const category = classifyStatus(status);
+  const category = classifyHttpStatus(status);
   return new ProviderError(category, `${SPEECH_NAME}返回错误${code === null ? '' : `（${code}）`}：${message}`, { code: codeText });
-}
-
-/** 按 HTTP 状态判断失败分类。 */
-function classifyStatus(status: number): ProviderFailure {
-  if (status === 401 || status === 403) return 'auth';
-  if (status === 429) return 'rate_limited';
-  return status >= 500 ? 'server' : 'invalid_request';
 }

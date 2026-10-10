@@ -19,8 +19,8 @@
     delete: { variant: 'danger', text: '删除', icon: 'trash' }
   };
 
-  const POSITION_START = 'start';
-  const POSITION_END = 'end';
+  const POSITION_START = aiUi.iconPosition.start;
+  const POSITION_END = aiUi.iconPosition.end;
 
   /**
    * 创建按钮。

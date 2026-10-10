@@ -9,7 +9,7 @@
 
 import { FORM_LEVEL_ERROR_KEY, GeneratedOutputError, ValidationError } from '../errors';
 import { SEGMENT_KIND_LABELS, SegmentKind, TextSegment } from '../models/screenplay';
-import { readRecord } from './field-readers';
+import { isRecord, readRecord } from './field-readers';
 
 /** 说话人名称的长度上限，与实体名称一致。 */
 export const SPEAKER_NAME_MAX_LENGTH = 50;
@@ -23,11 +23,6 @@ const SEGMENT_KINDS = Object.keys(SEGMENT_KIND_LABELS) as SegmentKind[];
 export interface KnownCharacter {
   readonly name: string;
   readonly aliases: readonly string[];
-}
-
-/** 判断值是否为普通对象。 */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /** 把说话人名称对到已知角色的正式名称；对不上返回 null。 */

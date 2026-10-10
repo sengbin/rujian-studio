@@ -14,7 +14,7 @@ import { JobSnapshot } from '../../domain/models/generation';
 import { ResultStore } from '../../domain/ports/generation-repository';
 import { ProviderCallContext, RemoteJobRef, RemoteJobState, VideoGenerationRequest, VideoJobResult } from '../../domain/ports/provider-adapters';
 import { FAKE_CALL_CONTEXT, FakeVideoProvider } from '../../domain/ports/testing/fake-model-providers';
-import { PREVIOUS_GROUP_UNAVAILABLE_CODE } from '../../domain/rules/generation-rules';
+import { PREVIOUS_GROUP_UNAVAILABLE_CODE } from '../../domain/rules/generation-failure-copy';
 import { IN_MEMORY_DATABASE_PATH, openDatabase } from '../../infra/database/database-connection';
 import { SqliteGenerationRepository } from '../../infra/database/sqlite-generation-repository';
 import { seedGeneration } from '../../infra/database/testing/seed-generation';
@@ -27,9 +27,12 @@ const SNAPSHOT: JobSnapshot = {
   providerCode: 'fake',
   modelCode: 'fake-video',
   prompt: '提示词',
-  params: { aspectRatio: '16:9', resolution: '720P', durationSeconds: 4, audioMode: 'native', seed: null, extraParams: {} },
+  promptFormat: 3,
+  params: { aspectRatio: '16:9', resolution: '720P', durationSeconds: 4, audioMode: 'native', audioElements: null, seed: null, negativeList: null, extraParams: {} },
   referenceImageFileIds: [],
   referenceAudioFileIds: [],
+  firstFrameFileId: null,
+  firstFrameImageId: null,
   warnings: []
 };
 

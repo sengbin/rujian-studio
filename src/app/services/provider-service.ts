@@ -32,7 +32,7 @@ import {
 import { ProviderRegistry } from '../../domain/ports/provider-registry';
 import { ProviderRepository } from '../../domain/ports/provider-repository';
 import { SecretStore } from '../../domain/ports/secret-store';
-import { describeJobFailure } from '../../domain/rules/generation-rules';
+import { describeJobFailure } from '../../domain/rules/generation-failure-copy';
 import { summarizeCapability } from '../../domain/rules/model-capability-rules';
 import {
   normalizeProviderSettings,

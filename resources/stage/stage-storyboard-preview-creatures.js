@@ -4,43 +4,14 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
-// 备注：种类由 stage-storyboard-preview-timeline.js 的 classifyCharacter 判断；人形的奇幻角色在小人基础上换肤色并加装饰，动物按种类的参数表画侧视图；颜色沿用角色的识别色；有资产图时头部换成圆形头像；尺寸单位 u 为“画面高度的 1% × 纵深缩放”；通过 window.aiStoryboardCreatures 暴露。
+// 备注：依赖 stage-storyboard-preview-draw.js 与 stage-storyboard-preview-art.js；种类由 stage-storyboard-preview-rules.js 的 classifyCharacterDetail 判断；人形的奇幻角色在小人基础上换肤色并加装饰，动物按种类的参数表画侧视图；颜色沿用角色的识别色；有资产图时头部换成圆形头像；尺寸单位 u 为“画面高度的 1% × 纵深缩放”；通过 window.aiStoryboardCreatures 暴露，扫展种类由 stage-storyboard-preview-bestiary.js 经 register 登记。
 // ------------------------------------------------------------------------
 
 'use strict';
 
 (function () {
   const art = window.aiStoryboardArt;
-  const { shade, circle, roundedRect, drawAvatar, TAU } = art;
-  const WALK_SPEED = 9;
-  const MOUTH_SPEED = 14;
-  const SHADOW = 'rgba(0, 0, 0, 0.28)';
-  const DARK = '#1A1A1A';
-
-  function ellipse(ctx, x, y, rx, ry, fill, rotation) {
-    ctx.fillStyle = fill;
-    ctx.beginPath();
-    ctx.ellipse(x, y, rx, ry, rotation || 0, 0, TAU);
-    ctx.fill();
-  }
-
-  function polygon(ctx, points, fill) {
-    ctx.fillStyle = fill;
-    ctx.beginPath();
-    points.forEach(([px, py], index) => (index === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)));
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  function line(ctx, x0, y0, x1, y1, color, width) {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = width;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.stroke();
-  }
+  const { TAU, SHADOW, DARK, WALK_SPEED, MOUTH_SPEED, shade, circle, ellipse, polygon, line, roundedRect, drawAvatar } = window.aiStoryboardDraw;
 
   /** 张嘴程度（0 到 1）：说话时随时间开合。 */
   function mouthOpen(spec) {
@@ -65,6 +36,32 @@
     roundedRect(ctx, spec.x - halfWidth * u, spec.y - height * u - 0.6 * u, halfWidth * 2 * u, height * u + 1.2 * u, 3 * u);
     ctx.stroke();
     ctx.restore();
+  }
+
+  /** 没有摆放站位时加虚线轮廓，并把头部位置与图形总高度（单位 u）一起返回。 */
+  function finish(ctx, spec, height, halfWidth, info) {
+    outlineIfUnplaced(ctx, spec, height, halfWidth);
+    return { ...info, height };
+  }
+
+  /** 圆脸的比例（都乘脸的半径）：眼睛离中线、眼白、瞳孔、嘴的偏移、嘴离脸中心的距离与宽度。 */
+  const FACE_CUTE = { eyeX: 0.42, eyeR: 0.28, pupilR: 0.14, mouthShift: 0.12, mouthY: 0.5, mouthW: 0.34 };
+  const FACE_THING = { eyeX: 0.45, eyeR: 0.3, pupilR: 0.15, mouthShift: 0.15, mouthY: 0.52, mouthW: 0.36 };
+
+  /** 圆脸：两只大眼睛（瞳孔朝向前进方向）和会开合的嘴；背对镜头时不画。shape 为 FACE_CUTE 或 FACE_THING。 */
+  function roundFace(ctx, spec, cx, cy, r, shape) {
+    if (spec.facing === 'away') return;
+    const look = spec.facing === 'left' ? -1 : spec.facing === 'right' ? 1 : 0;
+    for (const side of [-1, 1]) {
+      circle(ctx, cx + side * r * shape.eyeX, cy - r * 0.1, r * shape.eyeR, '#FFFFFF');
+      circle(ctx, cx + side * r * shape.eyeX + look * r * 0.1, cy - r * 0.08, r * shape.pupilR, DARK);
+    }
+    ellipse(ctx, cx + look * r * shape.mouthShift, cy + r * shape.mouthY, r * shape.mouthW, r * (0.08 + 0.3 * mouthOpen(spec)), '#5A2A2A');
+  }
+
+  /** 小动物与微生物用的圆脸。 */
+  function cuteFace(ctx, spec, cx, cy, r) {
+    roundFace(ctx, spec, cx, cy, r, FACE_CUTE);
   }
 
   // ---------- 四足动物 ----------
@@ -107,6 +104,7 @@
     unicorn: { bodyW: 15, bodyH: 7.5, legH: 10, headR: 3.4, neck: 9, ears: 'pointy', tail: 'thin', snout: 4.8, horn: 'forehead', body: '#F5F0FA', height: 36 }
   };
 
+  /** 画四足动物的尾巴：蓬松、细、短、长、穗状或粗大。 */
   function drawTail(ctx, cfg, spec, side, bodyCx, bodyCy) {
     const { unit: u, color } = spec;
     const baseX = bodyCx - side * cfg.bodyW * 0.48 * u;
@@ -138,6 +136,7 @@
     }
   }
 
+  /** 画四足动物的耳朵：尖、圆、长、垂、大垂耳或顶上的眼睛（蛙）。 */
   function drawEars(ctx, cfg, spec, side, headX, headY) {
     const { unit: u, color } = spec;
     const r = cfg.headR * u;
@@ -148,9 +147,8 @@
       ellipse(ctx, headX - side * r * 0.45, headY + r * 0.15, r * 0.85, r * 1.25, shade(color, 0.85), side * 0.15);
       return;
     }
-    for (const [k, offset] of [[0.55, -0.15], [1, 0.4]]) {
+    for (const [scale, offset] of [[0.55, -0.15], [1, 0.4]]) {
       const ex = headX + side * offset * r;
-      const scale = k;
       if (kind === 0) polygon(ctx, [[ex - 0.4 * r * scale, headY - r * 0.7], [ex, headY - r * 1.65 * scale], [ex + 0.5 * r * scale, headY - r * 0.6]], tone);
       else if (kind === 1) circle(ctx, ex, headY - r * 0.85, r * 0.4 * (cfg.earScale || 1) * scale, tone);
       else if (kind === 2) ellipse(ctx, ex - side * r * 0.2, headY - r * 1.55, r * 0.28 * scale, r * 1.05 * scale, tone, -side * 0.25);
@@ -277,12 +275,12 @@
         }
       }
     }
-    outlineIfUnplaced(ctx, spec, cfg.height, cfg.bodyW * 0.7 + 3);
-    return { headX, headY, headR: (spec.image ? 1.35 : 1) * cfg.headR * u, height: cfg.height };
+    return finish(ctx, spec, cfg.height, cfg.bodyW * 0.7 + 3, { headX, headY, headR: (spec.image ? 1.35 : 1) * cfg.headR * u });
   }
 
   // ---------- 其他动物 ----------
 
+  /** 鸟（通用小鸟）：身体、翅膀、尾巴、腿、头和嘴，行走时跳动。 */
   function drawBird(ctx, spec) {
     const { x, y, unit: u, color } = spec;
     const side = sideOf(spec);
@@ -306,10 +304,10 @@
       if (open > 0) polygon(ctx, [[headX + side * 2.2 * u, headY + 0.7 * u], [headX + side * 4 * u, headY + 0.5 * u + open], [headX + side * 2.2 * u, headY + 1.4 * u + open]], '#E58F2A');
       circle(ctx, headX + side * 0.7 * u, headY - 0.5 * u, 0.55 * u, DARK);
     }
-    outlineIfUnplaced(ctx, spec, 14, 7);
-    return { headX, headY, headR: (spec.image ? 3.4 : 2.5) * u, height: 14 };
+    return finish(ctx, spec, 14, 7, { headX, headY, headR: (spec.image ? 3.4 : 2.5) * u });
   }
 
+  /** 蝙蝠：张开的翅膀随时间扇动，悬空浮动。 */
   function drawBat(ctx, spec) {
     const { x, y, unit: u, color } = spec;
     const flap = Math.sin(spec.phase * (spec.walking ? 11 : 5));
@@ -333,10 +331,10 @@
       ellipse(ctx, x, headY + 1.1 * u, 0.9 * u, (0.25 + open * 0.8) * u, '#4A1D1D');
       if (open > 0.3) for (const side of [-1, 1]) polygon(ctx, [[x + side * 0.5 * u, headY + 1 * u], [x + side * 0.9 * u, headY + 2 * u], [x + side * 0.9 * u, headY + 1 * u]], '#FFFFFF');
     }
-    outlineIfUnplaced(ctx, spec, 20, 12);
-    return { headX: x, headY, headR: (spec.image ? 3.4 : 2.3) * u, height: 20 };
+    return finish(ctx, spec, 20, 12, { headX: x, headY, headR: (spec.image ? 3.4 : 2.3) * u });
   }
 
+  /** 鱼：侧视图，尾鳍摆动，嘴边冒气泡。 */
   function drawFish(ctx, spec) {
     const { x, y, unit: u, color } = spec;
     const side = sideOf(spec);
@@ -357,10 +355,10 @@
     }
     const bubbleY = cy - 6 * u - ((spec.phase * 2) % 1) * 3 * u;
     circle(ctx, headX + side * 2 * u, bubbleY, 0.7 * u, 'rgba(255, 255, 255, 0.6)');
-    outlineIfUnplaced(ctx, spec, 14, 10);
-    return { headX, headY: cy, headR: (spec.image ? 3.2 : 3.8) * u, height: 14 };
+    return finish(ctx, spec, 14, 10, { headX, headY: cy, headR: (spec.image ? 3.2 : 3.8) * u });
   }
 
+  /** 蛇：起伏的身体带花纹，头抬起吐舌头。 */
   function drawSnake(ctx, spec) {
     const { x, y, unit: u, color } = spec;
     const side = sideOf(spec);
@@ -394,10 +392,10 @@
       circle(ctx, headX + side * 0.8 * u, headY - 0.7 * u, 0.5 * u, '#FFE24A');
       if (Math.sin(spec.phase * 8) > 0 || spec.speaking) line(ctx, headX + side * 2.2 * u, headY + 0.4 * u, headX + side * 4.4 * u, headY + 0.4 * u, '#D33A4A', 0.5 * u);
     }
-    outlineIfUnplaced(ctx, spec, 11, 10);
-    return { headX, headY, headR: (spec.image ? 3.2 : 2.4) * u, height: 11 };
+    return finish(ctx, spec, 11, 10, { headX, headY, headR: (spec.image ? 3.2 : 2.4) * u });
   }
 
+  /** 昆虫（通用飞虫）：两对翅膀、触角与头，悬空浮动。 */
   function drawInsect(ctx, spec) {
     const { x, y, unit: u, color } = spec;
     const cy = y - 10 * u + Math.sin(spec.phase * 4) * 1 * u;
@@ -409,20 +407,20 @@
       line(ctx, x + side * 0.4 * u, cy - 4.6 * u, x + side * 2 * u, cy - 7 * u, shade(color, 0.5), 0.4 * u);
     }
     ellipse(ctx, x, cy, 0.9 * u, 3 * u, shade(color, 0.45));
-    let headY = cy - 3.6 * u;
-    if (spec.image) drawAvatar(ctx, spec.image, x, cy - 4.6 * u, 3 * u, 0.5 * u);
+    const headY = spec.image ? cy - 4.6 * u : cy - 3.6 * u;
+    if (spec.image) drawAvatar(ctx, spec.image, x, headY, 3 * u, 0.5 * u);
     else circle(ctx, x, headY, 1.2 * u, shade(color, 0.45));
-    if (spec.image) headY = cy - 4.6 * u;
-    outlineIfUnplaced(ctx, spec, 14, 7);
-    return { headX: x, headY, headR: (spec.image ? 3 : 1.2) * u, height: 14 };
+    return finish(ctx, spec, 14, 7, { headX: x, headY, headR: (spec.image ? 3 : 1.2) * u });
   }
 
   // ---------- 奇幻角色（人形） ----------
 
+  /** 奈幻角色用的小人：在默认小人基础上用 overrides 覆盖肤色、发色等参数。 */
   function figure(ctx, spec, overrides) {
     return art.drawFigure(ctx, { ...spec, ...overrides });
   }
 
+  /** 僵尸：绿肤、双臂向前平举、破烂的衣角与伤痕。 */
   function drawZombie(ctx, spec) {
     const { x, y, unit: u } = spec;
     const info = figure(ctx, spec, { skin: '#8DB57B', hair: '#46503A', armsUp: true });
@@ -435,6 +433,7 @@
     return info;
   }
 
+  /** 神仙：白发、飘动的长袍、头顶光环与身后的光晕，略微悬空。 */
   function drawDeity(ctx, spec) {
     const { x, y, unit: u, color } = spec;
     const lift = 2.5 * u;
@@ -453,10 +452,10 @@
     ctx.beginPath();
     ctx.ellipse(x, info.headY - info.headR - 1.8 * u, 4.8 * u, 1.3 * u, 0, 0, TAU);
     ctx.stroke();
-    outlineIfUnplaced(ctx, spec, 34, 8);
-    return { ...info, height: 34 };
+    return finish(ctx, spec, 34, 8, { ...info });
   }
 
+  /** 精灵：略小的小人、尖耳朵、透明的翅膀与闪烁的光点。 */
   function drawElf(ctx, spec) {
     const k = 0.85;
     const { x, y, unit: u, color } = spec;
@@ -479,6 +478,7 @@
     return { ...info, height: info.height * k };
   }
 
+  /** 怪物：较高大的绿皮小人、独角、红眼与尖牙。 */
   function drawMonster(ctx, spec) {
     const k = 1.3;
     const { x, unit: u } = spec;
@@ -497,6 +497,7 @@
     return { ...info, height: info.height * k + 2 };
   }
 
+  /** 恶魔：红皮小人、黑色的角、蝙蝠翅膀与尾巴。 */
   function drawDemon(ctx, spec) {
     const { x, y, unit: u } = spec;
     const flap = Math.sin(spec.phase * (spec.walking ? 10 : 4));
@@ -519,6 +520,7 @@
     return { ...info, height: info.height + 3 };
   }
 
+  /** 机器人：金属色小人，方头带天线，眼睛说话时闪烁。 */
   function drawRobot(ctx, spec) {
     const { x, unit: u } = spec;
     const info = figure(ctx, spec, { skin: '#8C97A3', noHead: true });
@@ -542,6 +544,7 @@
     return info;
   }
 
+  /** 邪灵（幽灵）：半透明的布单状身体、下摆波浪，上下浮动。 */
   function drawGhost(ctx, spec) {
     const { x, y, unit: u, color } = spec;
     const bob = Math.sin(spec.phase * 2) * 0.9 * u;
@@ -573,8 +576,7 @@
       for (const side of [-1, 1]) ellipse(ctx, gx + side * 2.4 * u, headY, 1.1 * u, 1.7 * u, '#2A2438');
       ellipse(ctx, gx, headY + 3.2 * u, 1.2 * u, (0.8 + mouthOpen(spec) * 1.4) * u, '#2A2438');
     }
-    outlineIfUnplaced(ctx, spec, 27, 8);
-    return { headX: gx, headY, headR: 6.5 * u, height: 27 };
+    return finish(ctx, spec, 27, 8, { headX: gx, headY, headR: 6.5 * u });
   }
 
   // ---------- 人（性别与年龄） ----------
@@ -625,23 +627,16 @@
 
   // ---------- 会说话的物品、植物与无法形容的生物 ----------
 
-  /** 脸：两只大眼睛（瞳孔朝向前进方向）和会开合的嘴；背对镜头时不画。 */
+  /** 物品与植物的圆脸。 */
   function drawThingFace(ctx, cx, cy, r, spec) {
-    if (spec.facing === 'away') return;
-    const look = spec.facing === 'left' ? -1 : spec.facing === 'right' ? 1 : 0;
-    for (const side of [-1, 1]) {
-      circle(ctx, cx + side * r * 0.45, cy - r * 0.1, r * 0.3, '#FFFFFF');
-      circle(ctx, cx + side * r * 0.45 + look * r * 0.1, cy - r * 0.08, r * 0.15, DARK);
-    }
-    ellipse(ctx, cx + look * r * 0.15, cy + r * 0.52, r * 0.36, r * (0.08 + 0.3 * mouthOpen(spec)), '#5A2A2A');
+    roundFace(ctx, spec, cx, cy, r, FACE_THING);
   }
 
   /** 物品或植物当角色：在原来的图形下加两条小短腿，放大后在图形上画脸；绑定了资产图时脸换成头像。 */
   function drawThing(ctx, spec) {
     const { x, y, unit: u } = spec;
-    const glyph = art.PROP_HEIGHT[spec.glyph] ? spec.glyph : 'generic';
-    const height = art.PROP_HEIGHT[glyph];
-    const face = art.PROP_FACE[glyph];
+    const glyph = art.PROPS[spec.glyph] ? spec.glyph : 'generic';
+    const { height, face } = art.PROPS[glyph];
     const scale = Math.min(3.4, Math.max(1, 17 / height));
     const lift = 3 * u;
     const gu = u * scale;
@@ -680,8 +675,7 @@
     const fy = cy - 0.4 * u;
     if (spec.image) drawAvatar(ctx, spec.image, x, fy, 5.4 * u, 0.5 * u);
     else drawThingFace(ctx, x, fy, 4.4 * u, spec);
-    outlineIfUnplaced(ctx, spec, 13, 10);
-    return { headX: x, headY: fy, headR: 5.4 * u, height: 13 };
+    return finish(ctx, spec, 13, 10, { headX: x, headY: fy, headR: 5.4 * u });
   }
 
   const PAINTERS = {
@@ -724,5 +718,5 @@
     return art.drawFigure(ctx, spec);
   }
 
-  window.aiStoryboardCreatures = { drawCharacter, SPECIES, register, toolkit: { ellipse, polygon, line, circle, shade, sideOf, mouthOpen, drawAvatar, outlineIfUnplaced, DARK, SHADOW, WALK_SPEED, MOUTH_SPEED, TAU } };
+  window.aiStoryboardCreatures = { drawCharacter, SPECIES, register, toolkit: { sideOf, mouthOpen, outlineIfUnplaced, finish, cuteFace } };
 })();

@@ -14,12 +14,9 @@
   const FIRST_FRAME_PREV_TAIL = 'prev_tail';
   const FIRST_FRAME_ASSET = 'asset';
   const FIRST_FRAME_IMAGE = 'image';
-  /** 首帧图片支持的扩展名与单张大小上限，与宿主校验一致。 */
+  /** 首帧图片支持的扩展名；单张大小上限来自视图的 limits，与宿主校验一致。 */
   const FIRST_FRAME_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp'];
-  const FIRST_FRAME_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
   const SOUND_DIALOGUE = 'dialogue';
-  /** 一个镜头最多的声音条目数。 */
-  const MAX_SOUNDS = 20;
   /** 画面描述、连续性要求按内容增高，最多长到这个行数再滚动。 */
   const PROMPT_MAX_ROWS = 6;
   const NOTE_MAX_ROWS = 3;
@@ -113,7 +110,7 @@
     const imageNote = aiUi.h('p', { class: 'storyboard-help', hidden: true, attrs: { role: 'status' } });
     const picker = aiUi.filePicker({
       accept: FIRST_FRAME_IMAGE_EXTENSIONS,
-      maxFileBytes: FIRST_FRAME_IMAGE_MAX_BYTES,
+      maxFileBytes: view.limits.firstFrameImageMaxBytes,
       preview: 'image',
       buttonText: '选择图片',
       emptyText: '尚未选择首帧图片',
@@ -321,7 +318,7 @@
       compact: true,
       disabled: !canEdit,
       onClick: () => {
-        if (rows.length >= MAX_SOUNDS) return;
+        if (rows.length >= view.limits.maxSoundsPerShot) return;
         const blank = { kind: view.soundKinds[0].kind, speakerEntityId: null, text: '', delivery: '', startOffsetSeconds: null, durationSeconds: null, isEnabled: true };
         rows.push(createSoundRow(view, blank, canEdit, markDirty, actions));
         renderRows();
@@ -337,7 +334,7 @@
         row.moveDown.setDisabled(!canEdit || index === rows.length - 1);
         listElement.append(row.element);
       });
-      addButton.setDisabled(!canEdit || rows.length >= MAX_SOUNDS);
+      addButton.setDisabled(!canEdit || rows.length >= view.limits.maxSoundsPerShot);
     }
     for (const sound of shot.sounds) rows.push(createSoundRow(view, sound, canEdit, markDirty, actions));
     renderRows();

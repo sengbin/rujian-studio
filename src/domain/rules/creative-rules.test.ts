@@ -115,22 +115,21 @@ test('生成参数：文本超长和非法数字都会报错', () => {
   assert.match(errors.maxChapters, /必须是整数/);
 });
 
-test('大纲：接受 chapters 对象或直接的数组，序号按顺序从 1 分配', () => {
+test('大纲：按 chapters 对象解析，序号按顺序从 1 分配；直接的数组不接受', () => {
   const chapters = [
     { title: ' 开端 ', summary: '守夜人上岗' },
     { title: '转折', summary: '收到信号' }
   ];
-  const fromObject = parseOutline({ chapters }, PARAMS);
-  assert.deepEqual(fromObject, [
+  assert.deepEqual(parseOutline({ chapters }, PARAMS), [
     { seq: 1, title: '开端', summary: '守夜人上岗', sources: [] },
     { seq: 2, title: '转折', summary: '收到信号', sources: [] }
   ]);
-  assert.deepEqual(parseOutline(chapters, PARAMS), fromObject);
+  assert.match(captureIssues(() => parseOutline(chapters, PARAMS)).join('；'), /chapters 数组/);
 });
 
 test('大纲：章数超过上限、为空或字段缺失时给出逐条问题', () => {
   const tooMany = Array.from({ length: 4 }, (_, index) => ({ title: `第${index}章`, summary: '梗概' }));
-  assert.match(captureIssues(() => parseOutline(tooMany, PARAMS)).join('；'), /超过上限 3 章/);
+  assert.match(captureIssues(() => parseOutline({ chapters: tooMany }, PARAMS)).join('；'), /超过上限 3 章/);
   assert.match(captureIssues(() => parseOutline({ chapters: [] }, PARAMS)).join('；'), /至少需要 1 章/);
   const issues = captureIssues(() => parseOutline({ chapters: [{ title: '', summary: '梗概' }, { title: '标题' }] }, PARAMS));
   assert.equal(issues.length, 2);

@@ -66,6 +66,12 @@ function readEpisodeId(payload: unknown): number {
   return readEntityId({ id: readRecord(payload ?? {}).episodeId }, '集');
 }
 
+/** 读取请求载荷中可选的版本标识：没有传（键缺失或为 null）表示读取当前版本；传了就必须是整数。 */
+function readOptionalRunId(payload: unknown): number | undefined {
+  const runId = readRecord(payload ?? {}).id;
+  return runId === undefined || runId === null ? undefined : readEntityId({ id: runId }, '版本');
+}
+
 /**
  * 在路由器上注册阶段产出的请求处理函数。
  * @param router 面板的请求路由器。
@@ -95,8 +101,7 @@ export function registerStageHandlers(
   router.register(STAGE_REQUESTS.load, (payload) => {
     const stage = readStage(payload);
     const workId = resolveWorkId(payload);
-    const runId = readRecord(payload ?? {}).id;
-    const id = typeof runId === 'number' ? runId : undefined;
+    const id = readOptionalRunId(payload);
     if (stage === 'storyboard_script') {
       return storyboards.getView(workId, readEpisodeId(payload), id, { withImages: readRecord(payload ?? {}).withImages === true });
     }

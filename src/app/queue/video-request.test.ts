@@ -31,9 +31,12 @@ function snapshot(overrides: Partial<JobSnapshot['params']> = {}, referenceImage
     providerCode: 'fake',
     modelCode: 'fake-video',
     prompt: '提示词',
-    params: { aspectRatio: '16:9', resolution: '720P', durationSeconds: 8, audioMode: 'native', audioElements: ['dialogue'], seed: 42, extraParams: {}, ...overrides },
+    promptFormat: 3,
+    params: { aspectRatio: '16:9', resolution: '720P', durationSeconds: 8, audioMode: 'native', audioElements: ['dialogue'], seed: 42, negativeList: null, extraParams: {}, ...overrides },
     referenceImageFileIds,
     referenceAudioFileIds: [],
+    firstFrameFileId: null,
+    firstFrameImageId: null,
     warnings: []
   };
 }

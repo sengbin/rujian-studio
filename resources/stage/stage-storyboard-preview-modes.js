@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
-// 备注：只接收画布上下文与 stage-storyboard-preview-timeline.js 产出的数据，不读取视图、不依赖页面；颜色固定，不随主题变化；通过 window.aiStoryboardModes 暴露，依赖 stage-storyboard-preview-renderer.js。
+// 备注：只接收画布上下文与 stage-storyboard-preview-timeline.js 产出的数据，不读取视图、不依赖页面；颜色固定，不随主题变化；通过 window.aiStoryboardModes 暴露，依赖 stage-storyboard-preview-renderer.js 与 stage-storyboard-preview-draw.js。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -12,6 +12,7 @@
 (function () {
   const renderer = window.aiStoryboardRenderer;
   const timelineApi = window.aiStoryboardTimeline;
+  const { arrowHead } = window.aiStoryboardDraw;
 
   /** 镜头对照：相邻画面之间的间距占总宽度的比例。 */
   const COMPARE_GAP = 0.012;
@@ -111,12 +112,7 @@
     ctx.stroke();
     ctx.setLineDash([]);
     if (arrow) {
-      ctx.beginPath();
-      ctx.moveTo(toX, toY);
-      ctx.lineTo(toX - Math.cos(angle - 0.45) * size, toY - Math.sin(angle - 0.45) * size);
-      ctx.lineTo(toX - Math.cos(angle + 0.45) * size, toY - Math.sin(angle + 0.45) * size);
-      ctx.closePath();
-      ctx.fill();
+      arrowHead(ctx, toX, toY, angle, size);
     }
     ctx.restore();
   }

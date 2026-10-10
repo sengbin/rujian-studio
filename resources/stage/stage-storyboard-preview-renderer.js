@@ -66,10 +66,55 @@
   const GRID_ROWS = [['back', '背景'], ['middle', '中景'], ['front', '前景']];
   /** 横向线的文字距画面左边的比例：留出运镜放大时被裁掉的边缘。 */
   const GRID_LABEL_INSET = 0.075;
+  const GRID_DASH = [6, 6];
+
+  /** 单位长度 u 占画面高度的比例；角色名在头顶之上、道具名在脚下的间距（占画面高度）。 */
+  const UNIT_RATIO = 0.01;
+  const CHARACTER_NAME_GAP = 0.008;
+  const PROP_NAME_GAP = 0.006;
+
+  /** 场景资产图铺满时四周多出的比例，以及压暗的颜色。 */
+  const BACKGROUND_BLEED = 0.06;
+  const BACKGROUND_DIM = 'rgba(0, 0, 0, 0.2)';
+
+  /** 走位轨迹：箭头大小（占画面高度）、透明度、线宽、虚线与起点圆圈占箭头的比例。 */
+  const TRAIL_SIZE = 0.016;
+  const TRAIL_ALPHA = 0.9;
+  const TRAIL_LINE = 2;
+  const TRAIL_DASH = [6, 5];
+  const TRAIL_START_RATIO = 0.45;
+
+  /** 说话光环：线宽、随时间扩大的比例、静止时的进度与透明度、半径相对头半径的倍数。 */
+  const RING_LINE = 3;
+  const RING_GROW = 0.35;
+  const RING_STILL_PHASE = 0.3;
+  const RING_STILL_ALPHA = 0.8;
+  const RING_HEAD_SCALE = 1.5;
+
+  /** 动作气泡：内边距与高度（占字号）、靠左靠右的分界（占画面宽度）、离头部的距离、尖角位置、圆角、逐级上移的步长与次数。 */
+  const BUBBLE_PADDING = 0.6;
+  const BUBBLE_HEIGHT = 1.7;
+  const BUBBLE_SIDE_SPLIT = 0.55;
+  const BUBBLE_GAP = 1.95;
+  const BUBBLE_TIP_GAP = 1.2;
+  const BUBBLE_RADIUS = 0.4;
+  const BUBBLE_TIP_TOP = 0.3;
+  const BUBBLE_TIP_BOTTOM = 0.7;
+  const BUBBLE_LIFT_STEP = 1.15;
+  const BUBBLE_LIFTS = [0, 1, 2, 3];
+
+  /** 底部描述条：宽度（占画面宽度）、横向与纵向内边距、行高（占字号）、圆角与底色。 */
+  const DESCRIPTION_WIDTH = 0.94;
+  const DESCRIPTION_PADDING_X = 0.7;
+  const DESCRIPTION_PADDING_Y = 0.3;
+  const DESCRIPTION_LINE = 1.35;
+  const DESCRIPTION_RADIUS = 0.4;
+  const DESCRIPTION_FILL = 'rgba(0, 0, 0, 0.55)';
 
   const timelineApi = window.aiStoryboardTimeline;
   const art = window.aiStoryboardArt;
   const creatures = window.aiStoryboardCreatures;
+  const { roundedRect, drawCover, arrowHead } = window.aiStoryboardDraw;
 
   function setFont(ctx, pixels, bold) {
     ctx.font = `${bold ? 'bold ' : ''}${Math.round(pixels)}px ${FONT_FAMILY}`;
@@ -132,7 +177,7 @@
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.fillStyle = COLOR_BAR;
-    art.roundedRect(ctx, x, y, pillWidth, pillHeight, pillHeight / 2);
+    roundedRect(ctx, x, y, pillWidth, pillHeight, pillHeight / 2);
     ctx.fill();
     ctx.fillStyle = color;
     ctx.fillText(text, x + padding, y + pillHeight / 2);
@@ -150,15 +195,15 @@
     }
     ctx.fillStyle = scene.wall;
     ctx.fillRect(-width, -height, width * 3, height * 3);
-    art.drawCover(ctx, image, -width * 0.06, -height * 0.06, width * 1.12, height * 1.12);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+    drawCover(ctx, image, -width * BACKGROUND_BLEED, -height * BACKGROUND_BLEED, width * (1 + 2 * BACKGROUND_BLEED), height * (1 + 2 * BACKGROUND_BLEED));
+    ctx.fillStyle = BACKGROUND_DIM;
     ctx.fillRect(-width, -height, width * 3, height * 3);
   }
 
   /** 站位网格：三条纵向线（左、中、右）和三条横向线（背景、中景、前景），带文字标注。 */
   function drawGrid(ctx, width, height) {
     ctx.save();
-    ctx.setLineDash([6, 6]);
+    ctx.setLineDash(GRID_DASH);
     ctx.strokeStyle = COLOR_GRID;
     ctx.lineWidth = 1;
     setFont(ctx, Math.max(MIN_ACTION_FONT, height * ACTION_FONT), false);
@@ -213,40 +258,35 @@
     const startY = fromY * height;
     const endX = toX * width;
     const endY = toY * height;
-    const size = height * 0.016;
+    const size = height * TRAIL_SIZE;
     const angle = Math.atan2(endY - startY, endX - startX);
     ctx.save();
     ctx.strokeStyle = actor.color;
     ctx.fillStyle = actor.color;
-    ctx.globalAlpha = 0.9;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([6, 5]);
+    ctx.globalAlpha = TRAIL_ALPHA;
+    ctx.lineWidth = TRAIL_LINE;
+    ctx.setLineDash(TRAIL_DASH);
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX - Math.cos(angle) * size, endY - Math.sin(angle) * size);
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.beginPath();
-    ctx.arc(startX, startY, size * 0.45, 0, Math.PI * 2);
+    ctx.arc(startX, startY, size * TRAIL_START_RATIO, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(endX, endY);
-    ctx.lineTo(endX - Math.cos(angle - 0.45) * size, endY - Math.sin(angle - 0.45) * size);
-    ctx.lineTo(endX - Math.cos(angle + 0.45) * size, endY - Math.sin(angle + 0.45) * size);
-    ctx.closePath();
-    ctx.fill();
+    arrowHead(ctx, endX, endY, angle, size);
     ctx.restore();
   }
 
   /** 说话光环：脉动的圆环；减少动态效果时为静止的圆环。 */
   function drawSpeakingRing(ctx, cx, cy, radius, env) {
-    const phase = env.reducedMotion ? 0.3 : (env.time % SPEAKING_PERIOD) / SPEAKING_PERIOD;
+    const phase = env.reducedMotion ? RING_STILL_PHASE : (env.time % SPEAKING_PERIOD) / SPEAKING_PERIOD;
     ctx.save();
-    ctx.globalAlpha = env.reducedMotion ? 0.8 : 1 - phase;
+    ctx.globalAlpha = env.reducedMotion ? RING_STILL_ALPHA : 1 - phase;
     ctx.strokeStyle = COLOR_TEXT;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = RING_LINE;
     ctx.beginPath();
-    ctx.arc(cx, cy, radius * (1 + 0.35 * phase), 0, Math.PI * 2);
+    ctx.arc(cx, cy, radius * (1 + RING_GROW * phase), 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
   }
@@ -254,7 +294,7 @@
   /** 角色：小人（或资产头像）、名字，说话时放大并有光环，他人说话时变淡；返回动作气泡所需的位置。 */
   function drawCharacter(ctx, actor, frame, env) {
     const { width, height, display } = env;
-    const unit = height * 0.01 * actor.scale * (actor.isSpeaking ? SPEAKER_BOOST : 1);
+    const unit = height * UNIT_RATIO * actor.scale * (actor.isSpeaking ? SPEAKER_BOOST : 1);
     const x = actor.x * width;
     const y = actor.y * height;
     const image = env.images ? env.images.get(actor.entityId) : undefined;
@@ -277,13 +317,13 @@
       glyph: actor.glyph,
       seed: actor.entityId
     });
-    if (actor.isSpeaking) drawSpeakingRing(ctx, info.headX, info.headY, info.headR * 1.5, env);
+    if (actor.isSpeaking) drawSpeakingRing(ctx, info.headX, info.headY, info.headR * RING_HEAD_SCALE, env);
     if (display.names) {
       setFont(ctx, Math.max(MIN_NAME_FONT, height * NAME_FONT), actor.isSpeaking);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       const label = `${truncate(actor.name, NAME_MAX_CHARS)}${actor.isPlaced ? '' : '（未设站位）'}`;
-      outlineText(ctx, label, info.headX, y - info.height * unit - height * 0.008, COLOR_TEXT);
+      outlineText(ctx, label, info.headX, y - info.height * unit - height * CHARACTER_NAME_GAP, COLOR_TEXT);
     }
     ctx.restore();
     return display.actions && actor.actionText ? { text: truncate(actor.actionText, ACTION_MAX_CHARS), x: info.headX, headY: info.headY, headR: info.headR } : null;
@@ -297,15 +337,15 @@
   function drawActionBubble(ctx, bubble, width, height, placed) {
     const fontPixels = Math.max(MIN_ACTION_FONT, height * ACTION_FONT);
     setFont(ctx, fontPixels, false);
-    const padding = fontPixels * 0.6;
+    const padding = fontPixels * BUBBLE_PADDING;
     const bubbleWidth = ctx.measureText(bubble.text).width + padding * 2;
-    const bubbleHeight = fontPixels * 1.7;
-    const preferred = bubble.x < width * 0.55 ? 1 : -1;
+    const bubbleHeight = fontPixels * BUBBLE_HEIGHT;
+    const preferred = bubble.x < width * BUBBLE_SIDE_SPLIT ? 1 : -1;
     let chosen = null;
-    for (const lift of [0, 1, 2, 3]) {
+    for (const lift of BUBBLE_LIFTS) {
       for (const side of [preferred, -preferred]) {
-        const near = bubble.x + side * bubble.headR * 1.95;
-        const rect = { side, near, left: side > 0 ? near : near - bubbleWidth, top: bubble.headY - bubbleHeight / 2 - lift * bubbleHeight * 1.15, width: bubbleWidth, height: bubbleHeight };
+        const near = bubble.x + side * bubble.headR * BUBBLE_GAP;
+        const rect = { side, near, left: side > 0 ? near : near - bubbleWidth, top: bubble.headY - bubbleHeight / 2 - lift * bubbleHeight * BUBBLE_LIFT_STEP, width: bubbleWidth, height: bubbleHeight };
         chosen = rect;
         if (!placed.some((other) => rectsOverlap(rect, other))) break;
         chosen = null;
@@ -313,19 +353,19 @@
       if (chosen) break;
     }
     if (!chosen) {
-      const near = bubble.x + preferred * bubble.headR * 1.95;
+      const near = bubble.x + preferred * bubble.headR * BUBBLE_GAP;
       chosen = { side: preferred, near, left: preferred > 0 ? near : near - bubbleWidth, top: bubble.headY - bubbleHeight / 2, width: bubbleWidth, height: bubbleHeight };
     }
     placed.push(chosen);
     const { side, near, left, top } = chosen;
     ctx.save();
     ctx.fillStyle = COLOR_BUBBLE;
-    art.roundedRect(ctx, left, top, bubbleWidth, bubbleHeight, bubbleHeight * 0.4);
+    roundedRect(ctx, left, top, bubbleWidth, bubbleHeight, bubbleHeight * BUBBLE_RADIUS);
     ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(near, top + bubbleHeight * 0.3);
-    ctx.lineTo(near, top + bubbleHeight * 0.7);
-    ctx.lineTo(bubble.x + side * bubble.headR * 1.2, bubble.headY);
+    ctx.moveTo(near, top + bubbleHeight * BUBBLE_TIP_TOP);
+    ctx.lineTo(near, top + bubbleHeight * BUBBLE_TIP_BOTTOM);
+    ctx.lineTo(bubble.x + side * bubble.headR * BUBBLE_TIP_GAP, bubble.headY);
     ctx.closePath();
     ctx.fill();
     ctx.fillStyle = COLOR_BUBBLE_TEXT;
@@ -338,7 +378,7 @@
   /** 道具：有资产图时画图片方块，否则按类别画矢量图形，名称在下方。 */
   function drawProp(ctx, actor, env) {
     const { width, height, display } = env;
-    const unit = height * 0.01 * actor.scale;
+    const unit = height * UNIT_RATIO * actor.scale;
     const x = actor.x * width;
     const y = actor.y * height;
     const image = env.images ? env.images.get(actor.entityId) : undefined;
@@ -348,7 +388,7 @@
     setFont(ctx, Math.max(MIN_ACTION_FONT, height * ACTION_FONT * Math.sqrt(actor.scale)), false);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    outlineText(ctx, truncate(actor.name, NAME_MAX_CHARS), x, y + height * 0.006, COLOR_TEXT);
+    outlineText(ctx, truncate(actor.name, NAME_MAX_CHARS), x, y + height * PROP_NAME_GAP, COLOR_TEXT);
   }
 
   /** 特效前进的方向（弧度，0 朝右）：有走位时取起点到终点的方向（发射、射箭等沿它飞行），否则按朝向，缺省朝右。 */
@@ -375,7 +415,7 @@
       setFont(ctx, Math.max(MIN_ACTION_FONT, height * ACTION_FONT), false);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      outlineText(ctx, truncate(actor.name, NAME_MAX_CHARS), x, y + height * 0.006, COLOR_TEXT);
+      outlineText(ctx, truncate(actor.name, NAME_MAX_CHARS), x, y + height * PROP_NAME_GAP, COLOR_TEXT);
     }
   }
 
@@ -448,19 +488,19 @@
     if (!display.description || !prompt) return 0;
     const fontPixels = Math.max(MIN_ACTION_FONT, height * DESCRIPTION_FONT);
     setFont(ctx, fontPixels, false);
-    const barWidth = width * 0.94;
-    const lines = wrapLines(ctx, `画面：${prompt}`, barWidth - fontPixels * 1.4, 2);
-    const lineHeight = fontPixels * 1.35;
-    const barHeight = lines.length * lineHeight + fontPixels * 0.6;
+    const barWidth = width * DESCRIPTION_WIDTH;
+    const lines = wrapLines(ctx, `画面：${prompt}`, barWidth - fontPixels * DESCRIPTION_PADDING_X * 2, 2);
+    const lineHeight = fontPixels * DESCRIPTION_LINE;
+    const barHeight = lines.length * lineHeight + fontPixels * DESCRIPTION_PADDING_Y * 2;
     const bottom = height * ROW_GAP;
     const top = height - bottom - barHeight;
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-    art.roundedRect(ctx, (width - barWidth) / 2, top, barWidth, barHeight, fontPixels * 0.4);
+    ctx.fillStyle = DESCRIPTION_FILL;
+    roundedRect(ctx, (width - barWidth) / 2, top, barWidth, barHeight, fontPixels * DESCRIPTION_RADIUS);
     ctx.fill();
     ctx.fillStyle = COLOR_DESCRIPTION;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    lines.forEach((line, index) => ctx.fillText(line, (width - barWidth) / 2 + fontPixels * 0.7, top + fontPixels * 0.3 + index * lineHeight + (lineHeight - fontPixels) / 2));
+    lines.forEach((line, index) => ctx.fillText(line, (width - barWidth) / 2 + fontPixels * DESCRIPTION_PADDING_X, top + fontPixels * DESCRIPTION_PADDING_Y + index * lineHeight + (lineHeight - fontPixels) / 2));
     return bottom + barHeight;
   }
 
@@ -485,7 +525,7 @@
       const blockHeight = entry.lines.length * lineHeight;
       const textWidth = Math.max(...entry.lines.map((line) => ctx.measureText(line).width));
       ctx.fillStyle = COLOR_BAR;
-      art.roundedRect(ctx, (width - textWidth) / 2 - fontPixels / 2, top, textWidth + fontPixels, blockHeight, fontPixels * 0.3);
+      roundedRect(ctx, (width - textWidth) / 2 - fontPixels / 2, top, textWidth + fontPixels, blockHeight, fontPixels * 0.3);
       ctx.fill();
       ctx.fillStyle = entry.color;
       entry.lines.forEach((line, index) => ctx.fillText(line, width / 2, top + index * lineHeight + (lineHeight - fontPixels) / 2));

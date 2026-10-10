@@ -9,6 +9,7 @@
 
 import { StageKind } from '../../domain/models/stage-run';
 import { readEntityId, readRecord } from '../../domain/rules/field-readers';
+import { WorkListView } from '../../domain/rules/work-list-rules';
 import { createBeatSheetFormCatalog } from '../forms/beat-sheet-form';
 import { registerFormHandlers } from '../forms/form-handlers';
 import { createScreenplayFormCatalog } from '../forms/screenplay-form';
@@ -24,15 +25,17 @@ import { ProjectService } from '../services/project-service';
 import { ProviderService } from '../services/provider-service';
 import { ScreenplayService } from '../services/screenplay-service';
 import { StageService } from '../services/stage-service';
+import { StageStartService } from '../services/stage-start-service';
 import { StoryboardService } from '../services/storyboard-service';
 import { TextSettingsService } from '../services/text-settings-service';
 import { VoiceDraftService } from '../services/voice-draft-service';
 import { VoicePreviewService } from '../services/voice-preview-service';
+import { WorkCreationService } from '../services/work-creation-service';
 import { WorkService } from '../services/work-service';
 import { STAGE_EVENTS } from './stage-handlers';
 import { watchModelChanges } from './model-events';
 import { registerVoicePreviewHandlers } from './voice-preview-handlers';
-import { WORK_LIST_EVENTS, WorkListRequest, WorkListView, registerWorkListHandlers } from './work-list-handlers';
+import { WORK_LIST_EVENTS, WorkListRequest, registerWorkListHandlers } from './work-list-handlers';
 
 /** 各视图的页面标题，与侧栏“创作”“脚本”分区的条目名称一致。 */
 const WORK_LIST_TITLES: Readonly<Record<WorkListView, string>> = {
@@ -82,6 +85,8 @@ export class WorkListPages {
       readonly profiles: GenerationProfileService;
       readonly providers: ProviderService;
       readonly textModels: TextSettingsService;
+      readonly creations: WorkCreationService;
+      readonly starts: StageStartService;
       readonly voices: VoicePreviewService;
       readonly voiceDrafts: VoiceDraftService;
     },
@@ -103,7 +108,7 @@ export class WorkListPages {
       return;
     }
 
-    const { projects, works, beatSheets, stages, screenplays, storyboards, profiles, providers, textModels, voices, voiceDrafts } = this.services;
+    const { projects, works, beatSheets, stages, screenplays, storyboards, profiles, providers, textModels, creations, starts, voices, voiceDrafts } = this.services;
     const entry: OpenedWorkList = { panel: undefined, pending: request };
     const router = new MessageRouter();
     registerWorkListHandlers(router, view, this.services, {
@@ -120,13 +125,14 @@ export class WorkListPages {
     registerFormHandlers(
       router,
       new Map([
-        ...createWorkFormCatalog({ projects, works, stages, beatSheets, textModels, onStarted: (workId) => openStage(workId, 'creative') }),
-        ...createBeatSheetFormCatalog({ works, beatSheets, stages, textModels, onStarted: (workId) => openStage(workId, 'beat_sheet') }),
+        ...createWorkFormCatalog({ projects, works, stages, beatSheets, textModels, creations, starts, onStarted: (workId) => openStage(workId, 'creative') }),
+        ...createBeatSheetFormCatalog({ works, beatSheets, stages, textModels, starts, onStarted: (workId) => openStage(workId, 'beat_sheet') }),
         ...createScreenplayFormCatalog({
           projects,
           works,
           screenplays,
           textModels,
+          starts,
           onStarted: (workId) => openStage(workId, 'screenplay'),
           onPicked: (workId) => entry.panel?.postEvent(WORK_LIST_EVENTS.startScreenplay, { workId })
         }),
@@ -135,6 +141,7 @@ export class WorkListPages {
           works,
           storyboards,
           textModels,
+          starts,
           profiles,
           providers,
           onStarted: (workId, episodeIds) =>

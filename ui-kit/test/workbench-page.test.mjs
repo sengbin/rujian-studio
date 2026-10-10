@@ -22,6 +22,12 @@ const PAGE_SCRIPTS = [
   'workbench/profile.js',
   'workbench/submit-panel.js',
   'workbench/versions.js',
+  'workbench/job-display.js',
+  'workbench/context-bar.js',
+  'workbench/groups-panel.js',
+  'workbench/detail-panel.js',
+  'workbench/queue-panel.js',
+  'workbench/job-actions.js',
   'workbench/workbench.js'
 ];
 const WAIT_STEP_MS = 10;

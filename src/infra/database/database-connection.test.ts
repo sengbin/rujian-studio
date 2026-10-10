@@ -42,7 +42,7 @@ function countRows(database: DatabaseSync, table: string): number {
 function seedWorkWithEpisode(database: DatabaseSync): { projectId: number; workId: number; episodeId: number } {
   database.prepare('INSERT INTO projects (name, created_at, updated_at) VALUES (?, ?, ?)').run('项目甲', NOW, NOW);
   database
-    .prepare('INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (1, ?, ?, ?, ?)')
+    .prepare("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (1, ?, ?, 'text', ?, ?)")
     .run('作品甲', 'short_drama', NOW, NOW);
   database
     .prepare('INSERT INTO episodes (work_id, seq, title, created_at, updated_at) VALUES (1, 1, ?, ?, ?)')
@@ -83,9 +83,22 @@ test('外键生效：作品不能引用不存在的项目', () => {
   try {
     assert.throws(() =>
       database
-        .prepare('INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (99, ?, ?, ?, ?)')
+        .prepare("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (99, ?, ?, 'text', ?, ?)")
         .run('孤儿', 'short_video', NOW, NOW)
     );
+  } finally {
+    database.close();
+  }
+});
+
+test('作品必须有素材来源，且只能是已知的来源', () => {
+  const database = openDatabase(IN_MEMORY_DATABASE_PATH);
+  try {
+    database.prepare('INSERT INTO projects (name, created_at, updated_at) VALUES (?, ?, ?)').run('项目甲', NOW, NOW);
+    const insert = database.prepare('INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (1, ?, ?, ?, ?, ?)');
+    assert.throws(() => insert.run('没有来源', 'short_video', null, NOW, NOW), /NOT NULL/);
+    assert.throws(() => insert.run('未知来源', 'short_video', 'unknown', NOW, NOW), /CHECK/);
+    insert.run('文字灵感', 'short_video', 'text', NOW, NOW);
   } finally {
     database.close();
   }
@@ -97,7 +110,7 @@ test('同一项目内作品名称唯一', () => {
     seedWorkWithEpisode(database);
     assert.throws(() =>
       database
-        .prepare('INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (1, ?, ?, ?, ?)')
+        .prepare("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (1, ?, ?, 'text', ?, ?)")
         .run('作品甲', 'short_video', NOW, NOW)
     );
   } finally {
@@ -469,6 +482,40 @@ test('事务：成功提交，异常回滚', () => {
       })
     );
     assert.equal(countRows(database, 'projects'), 1);
+  } finally {
+    database.close();
+  }
+});
+
+test('事务可嵌套：内层失败只撤销内层，外层失败连同已并入的内层一起撤销', () => {
+  const database = openDatabase(IN_MEMORY_DATABASE_PATH);
+  try {
+    const insert = (name: string): void => {
+      database.prepare('INSERT INTO projects (name, created_at, updated_at) VALUES (?, ?, ?)').run(name, NOW, NOW);
+    };
+    runInTransaction(database, () => {
+      insert('外层');
+      assert.throws(() =>
+        runInTransaction(database, () => {
+          insert('内层回滚');
+          throw new Error('内层失败');
+        })
+      );
+      runInTransaction(database, () => insert('内层保留'));
+    });
+    assert.equal(countRows(database, 'projects'), 2);
+
+    assert.throws(() =>
+      runInTransaction(database, () => {
+        runInTransaction(database, () => insert('已并入外层'));
+        throw new Error('外层失败');
+      })
+    );
+    assert.equal(countRows(database, 'projects'), 2);
+
+    // 失败后嵌套深度已复位，可以重新开启事务。
+    runInTransaction(database, () => insert('之后'));
+    assert.equal(countRows(database, 'projects'), 3);
   } finally {
     database.close();
   }

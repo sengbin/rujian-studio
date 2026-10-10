@@ -24,6 +24,7 @@ import { createServiceFixture } from '../services/testing/service-fixture';
 import { FormDefinition } from './form-definition';
 import { STORYBOARD_FORM_NAMES, createStoryboardFormCatalog } from './storyboard-form';
 import { DEFAULT_TEXT_MODEL_OPTION, createFakeTextModels } from './testing/fake-text-models';
+import { createTestStageStarts } from './testing/stage-starts';
 
 const CREATIVE_PARAMS = { chapterMinWords: 100, chapterMaxWords: 200, maxChapters: 3 };
 const SCREENPLAY_PARAMS = { maxEpisodeDurationSeconds: '60', maxEpisodes: '3' };
@@ -70,6 +71,7 @@ async function createFixture(kind: '单个短视频' | '多集短片', approveSc
     works: fixture.works,
     storyboards: fixture.storyboards,
     textModels,
+    starts: createTestStageStarts(fixture, textModels, profiles),
     profiles,
     providers,
     onStarted: (workId, episodeIds) => started.push([workId, episodeIds]),
@@ -149,6 +151,13 @@ test('提交：为所选集各启动一份并通知页面；至少选一集；�
       Promise.resolve(form.submit({ ...form.initialValues, episodes: '[]' })),
       (error) => error instanceof ValidationError && error.fieldErrors.episodes !== undefined
     );
+    for (const episodes of ['不是 JSON', '{"a":1}', '[1]']) {
+      await assert.rejects(
+        Promise.resolve(form.submit({ ...form.initialValues, episodes })),
+        (error) => error instanceof ValidationError && /格式不正确/.test(error.fieldErrors.episodes ?? ''),
+        episodes
+      );
+    }
     await assert.rejects(
       Promise.resolve(form.submit({ ...form.initialValues, maxShots: '0', minShotSeconds: 'x' })),
       (error) => error instanceof ValidationError && error.fieldErrors.maxShots !== undefined && error.fieldErrors.minShotSeconds !== undefined
@@ -194,6 +203,7 @@ test('选择作品：只列剧本已确认的作品，标签为“项目 › 作
     assert.deepEqual(picked, [work.id]);
 
     await assert.rejects(open({ projectId: other.id }, STORYBOARD_FORM_NAMES.pick), ValidationError);
+    await assert.rejects(open({ projectId: 'x' }, STORYBOARD_FORM_NAMES.pick), (error) => error instanceof ValidationError && /项目标识无效/.test(error.message));
   } finally {
     database.close();
   }

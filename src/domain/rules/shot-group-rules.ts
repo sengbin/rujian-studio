@@ -19,8 +19,8 @@ export const GROUP_SECONDS_MAX = 120;
 /** 在场次或景别、机位变化处断开时，断开前的部分至少要占上限的比例，避免为了对齐切点产生过短的组。 */
 const MIN_SCENE_SPLIT_RATIO = 0.5;
 
-/** 比较时长的误差，避免小数累加造成 15.000000001 > 15。 */
-const EPSILON = 1e-6;
+/** 比较时长（秒）的误差，避免小数累加造成 15.000000001 > 15；镜头分组与视频生成时长对齐共用。 */
+export const SECONDS_EPSILON = 1e-6;
 
 /** 参与分组的镜头信息。 */
 export interface GroupableShot {
@@ -77,7 +77,7 @@ export function packShots(shots: readonly GroupableShot[], maxSeconds: number, o
   };
 
   for (const shot of shots) {
-    if (used + shot.durationSeconds > maxSeconds + EPSILON && (current.length > 0 || joinsOpen)) {
+    if (used + shot.durationSeconds > maxSeconds + SECONDS_EPSILON && (current.length > 0 || joinsOpen)) {
       let carried: GroupableShot[] = [];
       // 直接断开处不是剪辑切换时，从后往前找最近的切换处断开：把它之后已进入当前组的镜头移到下一组，前提是下一组放得下，且前面的部分不太短。
       const previous = current[current.length - 1];
@@ -86,7 +86,7 @@ export function packShots(shots: readonly GroupableShot[], maxSeconds: number, o
           if (!isEffectiveCut(current[boundary - 1], current[boundary])) continue;
           const kept = current.slice(0, boundary);
           const moved = current.slice(boundary);
-          if (sumSeconds(kept) >= maxSeconds * MIN_SCENE_SPLIT_RATIO && sumSeconds(moved) + shot.durationSeconds <= maxSeconds + EPSILON) {
+          if (sumSeconds(kept) >= maxSeconds * MIN_SCENE_SPLIT_RATIO && sumSeconds(moved) + shot.durationSeconds <= maxSeconds + SECONDS_EPSILON) {
             current = kept;
             carried = moved;
           }

@@ -329,9 +329,10 @@ test('托底：全部场景类型、全部道具与物品图形、全部特效�
     renderer.draw(ctx, { ...frame, scene: { ...frame.scene, setting, time: 'day' } }, { ...SIZE });
     assert.ok(ctx.calls.length > 20, `场景 ${setting}`);
   }
-  const glyphs = [...Object.keys(art.PROP_HEIGHT), '表里没有的图形'];
-  assert.ok(Object.keys(art.PROP_HEIGHT).length >= 90);
-  assert.deepEqual(Object.keys(art.PROP_HEIGHT).sort(), Object.keys(art.PROP_FACE).sort(), '每种图形都有脸的位置');
+  const glyphs = [...Object.keys(art.PROPS), '表里没有的图形'];
+  assert.ok(Object.keys(art.PROPS).length >= 90);
+  const incomplete = Object.entries(art.PROPS).filter(([, def]) => typeof def.paint !== 'function' || !(def.height > 0) || !(def.face && def.face.r > 0 && def.face.cy > 0)).map(([glyph]) => glyph);
+  assert.deepEqual(incomplete, [], '每种图形都有绘制函数、高度和脸的位置');
   const prop = frame.actors.find((actor) => actor.kind === 'prop');
   const base = { x: 400, y: 300, unit: 4, color: '#8B6B4A', facing: 'right', walking: false, speaking: false, placed: true, phase: 0.5, image: null, seed: 1 };
   for (const glyph of glyphs) {
@@ -382,7 +383,7 @@ test('透明度：背景、道具、特效、角色在调用方设置的透明�
       check(`背景 ${setting}/${time}`, (ctx) => art.drawBackdrop(ctx, { ...scene, setting, time }, 800, 450));
     }
   }
-  for (const glyph of Object.keys(art.PROP_HEIGHT)) check(`道具 ${glyph}`, (ctx) => art.drawProp(ctx, glyph, 400, 300, 4, '#CC8844', false));
+  for (const glyph of Object.keys(art.PROPS)) check(`道具 ${glyph}`, (ctx) => art.drawProp(ctx, glyph, 400, 300, 4, '#CC8844', false));
   for (const glyph of ['fire', 'smoke', 'rain', 'snow', 'light', 'lightning', 'magic', 'heart', 'notes', 'wind', 'bubbles', 'leaves', 'dark', 'shockwave', 'explosion', 'fireworks', 'projectile', 'beam', 'laser', 'shadow', 'splash', 'slash', 'unknown']) {
     check(`特效 ${glyph}`, (ctx) => art.drawEffect(ctx, glyph, 400, 300, 40, '#CC8844', 0.35, false, { angle: 0.3 }));
   }

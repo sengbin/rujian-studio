@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：请求名称与 src/app/pages/binding-handlers.ts 一致；必须先于 workbench.js 加载；对外只有 window.aiBindings.create()，返回面板元素与 setEpisode、setEntities、refresh。
+// 备注：请求名称与 src/app/pages/binding-handlers.ts 一致；依赖 shared/page-format.js（pageFormat）；必须先于 workbench.js 加载；对外只有 window.aiBindings.create()，返回面板元素与 setEpisode、setEntities、refresh。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -18,65 +18,49 @@
   const REQUEST_VOICE_AUDIO = 'bindings.voiceAudio';
   const REQUEST_REFERENCE_IMAGE = 'bindings.referenceImage';
 
-  const GENERIC_ERROR_TEXT = '操作失败，请重试。';
   const MAX_SUGGESTION_LINES = 12;
   const PURPOSE_VISUAL = 'visual';
   const PURPOSE_VOICE = 'voice';
   const KIND_LABELS = { character: '角色', scene: '场景', prop: '道具', effect: '特效' };
 
+  const { requestAction, errorText } = window.pageFormat;
+
   /** 当前的绑定面板会话；只有一个。 */
   let session = null;
 
-  /** 取错误载荷中的说明文字：有字段错误时列出各项，否则用错误说明。 */
-  function errorText(error) {
-    const fields = error && error.fieldErrors ? Object.values(error.fieldErrors) : [];
-    if (fields.length > 0) return fields.join('\n');
-    return (error && error.message) || GENERIC_ERROR_TEXT;
-  }
-
-  /** 在给定的提示区显示文字；空串表示清除。 */
-  function setMessage(element, text, isError) {
-    element.textContent = text;
-    element.className = isError ? 'ui-message status-error' : 'ui-message status-success';
-    element.hidden = text === '';
-  }
-
-  /** 发起请求；失败时在提示区显示原因并返回 undefined。 */
-  async function request(name, payload, messageElement) {
-    setMessage(messageElement, '', false);
-    try {
-      return await window.hostBridge.request(name, payload);
-    } catch (error) {
-      setMessage(messageElement, errorText(error), true);
-      return undefined;
-    }
+  /** 发起请求；先清除提示区，失败时在提示区（aiUi.message 返回的对象）显示原因并返回 undefined。 */
+  function request(name, payload, message) {
+    message.show('', false);
+    return requestAction(
+      () => window.hostBridge.request(name, payload),
+      (text) => message.show(text, true)
+    );
   }
 
   /** 资产缩略图：点击弹出原图；音频显示“音频”，没有图显示“无图”。message 为失败提示的显示位置，默认随弹出页。 */
   function renderThumb(item, message) {
-    if (item.thumbnail) {
-      const name = item.assetName || item.name;
-      return aiUi.h(
-        'button',
-        { class: 'wb-bind-thumb wb-bind-thumb--button', attrs: { type: 'button', title: '查看原图', 'aria-label': `查看原图：${name}` }, on: { click: () => void viewOriginal(item.assetId, name, message) } },
-        aiUi.h('img', { class: 'ui-image ui-image--cover', attrs: { src: `data:${item.thumbnail.mime};base64,${item.thumbnail.data}`, alt: name } })
-      );
-    }
-    return aiUi.h('div', { class: 'wb-bind-thumb wb-bind-thumb--empty', text: item.durationSeconds === null ? '无图' : '音频' });
+    const name = item.assetName || item.name;
+    if (!item.thumbnail) return aiUi.thumb({ className: 'wb-bind-thumb', text: item.durationSeconds === null ? '无图' : '音频' });
+    return aiUi.thumb({
+      className: 'wb-bind-thumb',
+      src: `data:${item.thumbnail.mime};base64,${item.thumbnail.data}`,
+      alt: name,
+      title: '查看原图',
+      ariaLabel: `查看原图：${name}`,
+      onClick: () => void viewOriginal(item.assetId, name, message)
+    });
   }
 
   /** 向宿主取资产的原图并弹出页查看；原图按页面大小缩放，过大时在页内滚动。 */
   async function viewOriginal(assetId, name, message) {
     const data = await request(REQUEST_REFERENCE_IMAGE, { assetId }, message || messageTarget());
-    if (!data) return;
-    const image = aiUi.h('img', { class: 'ui-image ui-image--contain', attrs: { src: `data:${data.mime};base64,${data.data}`, alt: name } });
-    aiUi.openPage({ title: name, content: aiUi.h('div', { class: 'ui-image-viewer' }, image), width: 640, height: 520, minWidth: 320, minHeight: 240, buttons: [{ id: 'close', text: '关闭', isCancel: true }] });
+    if (data) aiUi.viewImage({ title: name, src: `data:${data.mime};base64,${data.data}` });
   }
 
   /** 选择资产的弹出页：可按名称搜索，点“选择”后调用 onPick，返回 true 才关闭。 */
   function openPicker(options) {
     const { title, assets, emptyText, onPick, withPreview } = options;
-    const message = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
+    const message = aiUi.message();
     let keyword = '';
     const pick = async (asset) => {
       if (await onPick(asset, message)) page.close('api');
@@ -99,7 +83,7 @@
         table.setRows(assets.filter((asset) => asset.name.includes(keyword)));
       }
     });
-    const content = aiUi.h('div', { class: 'wb-bind-picker' }, aiUi.h('div', { class: 'wb-bind-picker__search' }, search.element), message, empty, assets.length > 0 ? table.element : null);
+    const content = aiUi.h('div', { class: 'wb-bind-picker' }, aiUi.h('div', { class: 'wb-bind-picker__search' }, search.element), message.element, empty, assets.length > 0 ? table.element : null);
     const page = aiUi.openPage({ title, content, width: 520, height: 460, minWidth: 360, minHeight: 280, buttons: [{ id: 'cancel', text: '取消', isCancel: true }] });
   }
 
@@ -232,11 +216,11 @@
   function openEntityDialog(entityId) {
     const entity = session.view && session.view.entities.find((item) => item.entityId === entityId);
     if (!entity || session.dialog) return;
-    const message = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
+    const message = aiUi.message();
     const body = aiUi.h('div', { class: 'wb-bind-dialog' });
     const handle = aiUi.openPage({
       title: `绑定资产：${entity.name}（${entity.kindLabel}）`,
-      content: aiUi.h('div', {}, message, body),
+      content: aiUi.h('div', {}, message.element, body),
       width: 460,
       height: 420,
       minWidth: 340,
@@ -334,7 +318,7 @@
       if (!result) failed += 1;
     }
     await refresh();
-    if (failed > 0 && session) setMessage(session.message, `有 ${failed} 个绑定没有建立成功，请手动处理。`, true);
+    if (failed > 0 && session) session.message.show(`有 ${failed} 个绑定没有建立成功，请手动处理。`, true);
   }
 
   /** 顶部汇总：当前显示的实体里已绑定的数量与进度条；有未绑定的用警告色并写明数量。 */
@@ -376,7 +360,7 @@
       renderDialog();
     } catch (error) {
       if (session !== current) return;
-      setMessage(current.message, errorText(error), true);
+      current.message.show(errorText(error), true);
     }
   }
 
@@ -403,7 +387,7 @@
    * @returns {{ element: HTMLElement, setEpisode: (episodeId: number|null) => void, setEntities: (entityIds: number[]|null) => void, refresh: () => Promise<void> }}
    */
   function create() {
-    const message = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
+    const message = aiUi.message();
     const summary = aiUi.h('span', { class: 'description', text: '请先选择一个有分镜脚本的集。' });
     const progressValue = aiUi.h('div', { class: 'wb-progress__value' });
     const progress = aiUi.h('div', { class: 'wb-progress', hidden: true, attrs: { role: 'progressbar', 'aria-label': '素材绑定进度', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': 0 } }, progressValue);
@@ -417,7 +401,7 @@
       progress,
       aiUi.h('p', { class: 'description', text: '先按名称自动匹配已有资产，剩余项逐个选择。未绑定的实体仍可生成，但只能按文字描述。' }),
       aiUi.h('div', { class: 'wb-bind__actions' }, matchButton.element),
-      message,
+      message.element,
       heading,
       listElement
     );

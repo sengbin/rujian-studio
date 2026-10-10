@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：请求名称与 src/app/pages/asset-list-handlers.ts 一致；字段随所选模型联动，因此不走表单引擎；必须先于 asset-list.js 加载；对外是 window.aiAssetGenerate.open；收到 models.changed 事件时重新读取模型清单并刷新模型下拉。
+// 备注：请求名称与 src/app/pages/asset-list-handlers.ts 一致；字段随所选模型联动，因此不走表单引擎；必须先于 asset-list.js 加载；依赖 shared/page-format.js（pageFormat）；对外是 window.aiAssetGenerate.open；收到 models.changed 事件时重新读取模型清单并刷新模型下拉。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -15,15 +15,10 @@
   const EVENT_MODELS_CHANGED = 'models.changed';
 
   const LANGUAGE_LABELS = { zh: '中文', en: '英文' };
-  const GENERIC_ERROR_TEXT = '操作失败，请重试。';
   const COST_NOTICE = '每次提交按平台规则计费；结果保存为新版本，采用后才会被使用。';
   const MODEL_DEFAULT_TEXT = '由模型决定';
 
-  /** 取错误载荷中的说明文字：有字段错误时列出各项，否则用错误说明。 */
-  function errorText(error) {
-    const fields = error && error.fieldErrors ? Object.values(error.fieldErrors) : [];
-    return fields.length > 0 ? fields.join('\n') : (error && error.message) || GENERIC_ERROR_TEXT;
-  }
+  const { errorText, genericErrorText } = window.pageFormat;
 
   /** 下拉选项：值与显示文字相同。 */
   function plainOptions(values) {
@@ -133,8 +128,7 @@
       await window.hostBridge.request(REQUEST_GENERATE, payload);
       return true;
     } catch (error) {
-      state.messageElement.textContent = errorText(error);
-      state.messageElement.hidden = false;
+      state.message.show(errorText(error), true);
       return false;
     }
   }
@@ -157,7 +151,7 @@
     }
     if (!catalog.availability.available) {
       current = null;
-      await aiUi.alert({ title: '暂时不能生成', message: catalog.availability.reason || GENERIC_ERROR_TEXT });
+      await aiUi.alert({ title: '暂时不能生成', message: catalog.availability.reason || genericErrorText });
       return;
     }
 
@@ -172,7 +166,7 @@
       voice: catalog.defaults.voice,
       useReferenceImages: catalog.defaults.useReferenceImages,
       paramsElement: aiUi.h('div'),
-      messageElement: aiUi.h('p', { class: 'ui-message ui-message--flush status-error', hidden: true, attrs: { role: 'alert' } })
+      message: aiUi.message({ flush: true, role: 'alert' })
     };
     const modelSelect = aiUi.select({
       options: catalog.models.map((model) => ({ value: String(model.id), label: model.label })),
@@ -191,7 +185,7 @@
       aiUi.field({ label: '模型', control: modelSelect }).element,
       state.paramsElement,
       aiUi.h('p', { class: 'description', text: COST_NOTICE }),
-      state.messageElement
+      state.message.element
     );
     renderParams(state);
 
@@ -212,11 +206,10 @@
       }
       renderParams(state);
       if (!latest.availability.available) {
-        state.messageElement.textContent = latest.availability.reason || GENERIC_ERROR_TEXT;
-        state.messageElement.hidden = false;
+        state.message.show(latest.availability.reason || genericErrorText, true);
         isReasonShown = true;
       } else if (isReasonShown) {
-        state.messageElement.hidden = true;
+        state.message.show('', false);
         isReasonShown = false;
       }
     };
@@ -234,7 +227,7 @@
           variant: 'primary',
           isDefault: true,
           onClick: async () => {
-            state.messageElement.hidden = true;
+            state.message.show('', false);
             return (await submit(state)) ? undefined : false;
           }
         }

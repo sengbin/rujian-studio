@@ -38,12 +38,12 @@ export function buildVideoRequest(snapshot: JobSnapshot, firstFrameId: number | 
     if (firstFrame === null) {
       throw new ProviderError('invalid_request', '首帧图片已不存在，请重新生成前序镜头。');
     }
-  } else if (snapshot.firstFrameFileId !== undefined && snapshot.firstFrameFileId !== null) {
+  } else if (snapshot.firstFrameFileId !== null) {
     firstFrame = media.readAssetFile(snapshot.firstFrameFileId) ?? null;
     if (firstFrame === null) {
       throw new ProviderError('invalid_request', '指定的首帧图片已被删除或替换，请在镜头编辑里重新选择后再生成。');
     }
-  } else if (snapshot.firstFrameImageId !== undefined && snapshot.firstFrameImageId !== null) {
+  } else if (snapshot.firstFrameImageId !== null) {
     firstFrame = media.readShotFirstFrame(snapshot.firstFrameImageId) ?? null;
     if (firstFrame === null) {
       throw new ProviderError('invalid_request', '指定的首帧图片已被删除或替换，请在镜头编辑里重新选择后再生成。');

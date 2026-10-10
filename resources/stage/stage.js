@@ -1,36 +1,29 @@
 // ------------------------------------------------------------------------
 // 名称：stage.js
-// 说明：阶段产出层的外壳脚本：在所属页面内以弹出页面显示生成进度，提供版本、确认采用、取消、重试、重新生成、查看原始输出；各阶段自己的内容区由登记的“阶段内容”负责。
+// 说明：阶段产出层的外壳脚本：在所属页面内以弹出页面显示生成进度，提供版本、确认采用、取消、重试、重新生成、查看原始输出；各阶段自己的内容区由登记的“阶段内容”负责。本文件只保留页面状态、数据加载与各部分的装配。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：通过 aiStage.open(workId, stage, episodeId?, focus?) 打开（focus 为打开后要定位的对象，由阶段内容解释：分镜脚本为镜头标识），同一作品的同一阶段（分镜脚本还要同一集）只有一个产出层；阶段内容由 stage-beat-sheet.js、stage-creative.js、stage-screenplay.js、stage-storyboard.js 通过 aiStage.registerStage 登记；阶段登记 layout: 'workspace' 时使用工作区布局（头部带汇总、主体占满弹出页面高度并在内部滚动），样式见 stage.css；请求载荷都带 workId 与 stage（分镜脚本还带 episodeId），事件名称与 src/app/pages/stage-handlers.ts 一致；依赖 form/form-runtime.js（aiForm）与 shared/page-format.js（pageFormat）。
+// 备注：通过 aiStage.open(workId, stage, episodeId?, focus?) 打开（focus 为打开后要定位的对象，由阶段内容解释：分镜脚本为镜头标识），同一作品的同一阶段（分镜脚本还要同一集）只有一个产出层；阶段内容由 stage-beat-sheet.js、stage-creative.js、stage-screenplay.js、stage-storyboard.js 通过 aiStage.registerStage 登记；阶段登记 layout: 'workspace' 时使用工作区布局（头部带汇总、主体占满弹出页面高度并在内部滚动），样式见 stage.css；头部与进度区在 stage-header.js（aiStageHeader），确认采用、取消、重试、重新生成、查看原始输出与版本切换在 stage-actions.js（aiStageActions），二者以“工厂函数 + 注入上下文”创建，须先于本文件加载；请求载荷都带 workId 与 stage（分镜脚本还带 episodeId），事件名称与 src/app/pages/stage-handlers.ts 一致；依赖 form/form-runtime.js（aiForm）与 shared/page-format.js（pageFormat）。
 // ------------------------------------------------------------------------
 
 'use strict';
 
 (function () {
   const REQUEST_LOAD = 'stage.load';
-  const REQUEST_APPROVE = 'stage.approve';
-  const REQUEST_CANCEL = 'stage.cancel';
-  const REQUEST_RETRY = 'stage.retry';
-  const REQUEST_RAW_OUTPUT = 'stage.rawOutput';
   const EVENT_CHANGED = 'stage.changed';
 
-  const GENERIC_ERROR_TEXT = '操作失败，请重试。';
   const REFRESH_DELAY_MS = 150;
   const PAGE_WIDTH = 960;
   const PAGE_HEIGHT = 640;
   const PAGE_MIN_WIDTH = 420;
   const PAGE_MIN_HEIGHT = 360;
-  const SOURCE_LABELS = { text: '文字灵感', image: '灵感图片', novel: '小说原文', original: '原创文稿' };
   /** 阶段登记的布局名称：工作区布局让主体占满弹出页面高度，头部同时显示阶段汇总。 */
   const LAYOUT_WORKSPACE = 'workspace';
-  /** 不显示阶段汇总的状态：产出尚未完整生成。 */
-  const SUMMARY_HIDDEN_DISPLAYS = ['running', 'failed', 'canceled'];
-  const STALE_TEXT = '上游产出已修改，本产出可能已过期。不会自动重新生成，请检查后决定是否重新生成。';
 
-  const { formatRelativeTime, stageStatusLabel, stageStatusClass } = window.pageFormat;
+  const { requestAction, createFormOpener } = window.pageFormat;
+  const actionsApi = window.aiStageActions;
+  const headerApi = window.aiStageHeader;
 
   /**
    * 各阶段登记的“阶段内容”：
@@ -75,15 +68,12 @@
     let latestRunId = null;
     let loadError = '';
     let isLoading = true;
-    let isFormOpen = false;
     let refreshTimer = 0;
     let handle = null;
 
-    const headerElement = aiUi.h('header', { class: 'stage-header' });
-    const messageElement = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
-    const progressElement = aiUi.h('div', { class: 'stage-progress-area' });
+    const forms = createFormOpener({ open: (options) => aiForm.open(options) });
+    const message = aiUi.message();
     const bodyElement = aiUi.h('div', { class: 'stage-body' });
-    const root = aiUi.h('div', { class: isWorkspace ? 'stage-view stage-view--workspace' : 'stage-view' }, headerElement, messageElement, progressElement, bodyElement);
 
     /** 发起带作品标识与阶段（分镜脚本还带集标识）的请求。 */
     function call(name, payload) {
@@ -97,20 +87,13 @@
 
     /** 在操作结果区显示文字；空串表示清除。 */
     function showMessage(text, isError) {
-      messageElement.textContent = text;
-      messageElement.className = isError ? 'ui-message status-error' : 'ui-message status-success';
-      messageElement.hidden = text === '';
+      message.show(text, isError);
     }
 
     /** 发起请求，失败时在操作结果区显示原因；成功返回响应数据，失败返回 undefined。 */
-    async function runAction(name, payload) {
+    function runAction(name, payload) {
       showMessage('', false);
-      try {
-        return await call(name, payload);
-      } catch (error) {
-        showMessage((error && error.message) || GENERIC_ERROR_TEXT, true);
-        return undefined;
-      }
+      return requestAction(() => call(name, payload), (text) => showMessage(text, true));
     }
 
     /** 加载请求的序号，只采纳最后一次请求的响应：保存、切换版本、事件刷新会并发，旧响应不能覆盖新状态。 */
@@ -178,162 +161,35 @@
       });
     }
 
-    /** 确认采用：说明影响后请求宿主。 */
-    async function approve() {
-      const confirmed = await aiUi.confirm({
-        title: '确认采用',
-        message: `确认采用“${view.work.name}”的${provider.label}${titleSuffix().replace(' › ', ' ')} v${view.run.version}？${provider.approveNote(view)}`,
-        confirmText: '确认采用'
-      });
-      if (!confirmed) return;
-      if (await runAction(REQUEST_APPROVE, { id: view.run.id })) {
-        await loadView(false);
-        showMessage('已确认采用。', false);
-      }
-    }
-
-    async function cancelGeneration() {
-      await runAction(REQUEST_CANCEL, { id: view.run.id });
-    }
-
-    async function retryGeneration() {
-      if (await runAction(REQUEST_RETRY, { id: view.run.id })) await loadView(false);
-    }
-
-    /** 弹出“重新生成”表单，初始值为上次使用的参数。 */
-    async function regenerate() {
-      if (isFormOpen || !(await confirmDiscardEdits())) return;
-      if (provider.confirmRegenerate && !(await provider.confirmRegenerate(view))) return;
-      isFormOpen = true;
-      try {
-        await aiForm.open({ form: provider.regenerateForm, params: { workId: view.work.id, ...(episodeId ? { episodeId } : {}) } });
-      } finally {
-        isFormOpen = false;
-      }
-    }
-
-    /** 在弹出页面中显示失败时保留的模型原始输出。 */
-    async function showRawOutput() {
-      const result = await runAction(REQUEST_RAW_OUTPUT, { id: view.run.id });
-      if (!result) return;
-      aiUi.openPage({
-        title: '模型原始输出',
-        content: aiUi.h('pre', { class: 'stage-raw', text: result.text || '（没有保留原始输出）' }),
-        width: 640,
-        height: 420,
-        buttons: [{ id: 'close', text: '关闭', variant: 'primary', isDefault: true, isCancel: true }]
-      });
-    }
-
-    /** 切换版本：固定查看所选版本；选择最新版本等于取消固定。 */
-    async function switchVersion(runId) {
-      if (!(await confirmDiscardEdits())) {
-        renderHeader();
-        return;
-      }
-      content.discard();
-      pinnedRunId = runId === latestRunId ? null : runId;
-      await loadView(false);
-    }
-
-    /** 状态文字：颜色之外始终带文字。 */
-    function renderStatus() {
-      const { run } = view;
-      const progress = run.progress && run.display === 'running' ? `（${run.progress.step}）` : '';
-      return aiUi.h('span', { class: stageStatusClass(run.display), text: `${stageStatusLabel(run.display)}${progress}` });
-    }
-
-    /** 阶段自己的汇总；生成中、失败与已取消时没有可汇总的完整产出，不显示。 */
-    function createSummary() {
-      if (SUMMARY_HIDDEN_DISPLAYS.includes(view.run.display)) return null;
-      return content.renderSummary(view);
-    }
-
-    /** 顶部：作品信息、版本、状态与操作按钮；作品名显示在弹出页面的标题行。工作区布局把汇总一并放在信息区。 */
-    function renderHeader() {
-      headerElement.textContent = '';
-      if (!view) return;
-      const { work, run, actions, versions } = view;
-      if (handle) handle.setTitle(`${work.name} › ${provider.label}${titleSuffix()}`);
-
-      const versionSelect = aiUi.select({
-        options: versions.map((item) => ({
-          value: String(item.id),
-          label: `v${item.version} · ${stageStatusLabel(item.display)}${item.isCurrent ? '（当前）' : ''}`
-        })),
-        value: String(run.id),
-        allowEmpty: false,
-        ariaLabel: '版本',
-        onChange: (value) => void switchVersion(Number(value))
-      });
-
-      const buttons = [
-        aiUi.button({ text: '确认采用', variant: 'primary', disabled: !actions.canApprove, onClick: () => void approve() }),
-        actions.canCancel ? aiUi.button({ text: '取消生成', variant: 'danger', onClick: () => void cancelGeneration() }) : null,
-        actions.canRetry ? aiUi.button({ text: '重试', onClick: () => void retryGeneration() }) : null,
-        ...(provider.headerActions ? provider.headerActions(view) : []),
-        provider.canRegenerate && !provider.canRegenerate(view)
-          ? null
-          : aiUi.button({ text: '重新生成', disabled: actions.canCancel, onClick: () => void regenerate() }),
-        run.hasRawOutput ? aiUi.button({ text: '查看原始输出', onClick: () => void showRawOutput() }) : null
-      ].filter(Boolean);
-
-      const details = [
-        `${work.kindLabel || ''}`,
-        SOURCE_LABELS[work.sourceType] || '',
-        run.modelInfo ? `模型：${run.modelInfo}` : '',
-        `开始于 ${formatRelativeTime(run.createdAt)}`
-      ].filter(Boolean);
-
-      headerElement.append(
-        isWorkspace
-          ? aiUi.h(
-              'div',
-              { class: 'stage-header__info' },
-              aiUi.h('div', { class: 'stage-meta' }, details.map((text) => aiUi.h('span', { text }))),
-              createSummary()
-            )
-          : aiUi.h('p', { class: 'description', text: details.join(' · ') }),
-        aiUi.h(
-          'div',
-          { class: 'stage-bar' },
-          aiUi.h('div', { class: 'stage-bar__version' }, versionSelect.element),
-          // 工作区布局的版本下拉里已带状态文字。
-          isWorkspace ? null : renderStatus(),
-          aiUi.h('div', { class: 'stage-bar__buttons' }, buttons.map((button) => button.element))
-        )
-      );
-    }
-
-    /** 状态提示与进度条：生成中显示进度；失败、已取消显示原因；生成结束后显示上游变更提示与阶段自己的汇总。 */
-    function renderProgress() {
-      progressElement.textContent = '';
-      if (!view) return;
-      const { run } = view;
-      if (run.display === 'running') {
-        const total = run.progress ? Math.max(run.progress.total, 1) : 1;
-        const done = run.progress ? run.progress.done : 0;
-        const text = run.progress ? `${run.progress.step}（${run.progress.done} / ${run.progress.total}）` : '准备中…';
-        progressElement.append(
-          aiUi.h('progress', { class: 'stage-progress', attrs: { max: String(total), value: String(done), 'aria-label': '生成进度' } }),
-          aiUi.h('p', { class: 'description', text })
-        );
-        return;
-      }
-      if (run.display === 'failed') {
-        progressElement.append(
-          aiUi.h('p', { class: 'status-error', text: `生成失败：${run.errorMessage || '未知原因'}。${provider.keptNote}，可点“重试”继续。` })
-        );
-      } else if (run.display === 'canceled') {
-        progressElement.append(aiUi.h('p', { class: 'description', text: `已取消生成，${provider.keptNote}，可点“重试”继续。` }));
-      }
-      if (view.stale) progressElement.append(aiUi.h('p', { class: 'status-warning', text: STALE_TEXT }));
-      // 工作区布局的汇总已在头部显示。
-      if (!isWorkspace) {
-        const summary = createSummary();
-        if (summary) progressElement.append(summary);
-      }
-    }
+    // 头部与进度区、各项操作由 stage-header.js、stage-actions.js 提供；它们依赖阶段内容与上面的状态访问器，所以放在 content 之后创建。
+    const actions = actionsApi.create({
+      provider,
+      episodeId,
+      forms,
+      content,
+      getView: () => view,
+      getLatestRunId: () => latestRunId,
+      setPinnedRunId: (runId) => {
+        pinnedRunId = runId;
+      },
+      runAction,
+      showMessage,
+      titleSuffix,
+      reload: () => loadView(false),
+      confirmDiscardEdits,
+      renderHeader: () => header.renderHeader(view)
+    });
+    const header = headerApi.create({
+      provider,
+      isWorkspace,
+      content,
+      titleSuffix,
+      setTitle: (title) => {
+        if (handle) handle.setTitle(title);
+      },
+      ...actions
+    });
+    const root = aiUi.h('div', { class: isWorkspace ? 'stage-view stage-view--workspace' : 'stage-view' }, header.headerElement, message.element, header.progressElement, bodyElement);
 
     /** 主体：加载中与错误由外壳显示，其余交给阶段内容。 */
     function renderBody() {
@@ -353,8 +209,8 @@
     }
 
     function render() {
-      renderHeader();
-      renderProgress();
+      header.renderHeader(view);
+      header.renderProgress(view);
       renderBody();
     }
 

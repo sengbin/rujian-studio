@@ -1,11 +1,17 @@
 // ------------------------------------------------------------------------
 // 名称：image-size.ts
-// 说明：从图片文件头读取像素宽高（PNG、JPEG、WebP），不解码图片内容。
+// 说明：图片文件头处理：识别图片格式（PNG、JPEG、WebP）、读取像素宽高，并给出图片文件大小的统一上限，不解码图片内容。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
 // 备注：纯函数；只读取文件头里的尺寸字段，文件被截断或结构异常时返回 null，由调用方决定如何处理；宽高超过 IMAGE_SIDE_MAX 视为不合理。
 // ------------------------------------------------------------------------
+
+/** 单张图片文件的大小上限（字节）：灵感图片、资产参考图、镜头首帧图片与工作台尾帧共用。 */
+export const IMAGE_FILE_MAX_BYTES = 10 * 1024 * 1024;
+
+/** 单边像素的合理上限，超过按读取失败处理。 */
+const IMAGE_SIDE_MAX = 65535;
 
 /** 图片的像素宽高。 */
 export interface ImageSize {
@@ -13,11 +19,23 @@ export interface ImageSize {
   readonly height: number;
 }
 
-/** 单边像素的合理上限，超过按读取失败处理。 */
-const IMAGE_SIDE_MAX = 65535;
-
 /** JPEG 中不携带图片尺寸的标记（DHT、JPG、DAC）。 */
 const JPEG_NON_FRAME_MARKERS: readonly number[] = [0xc4, 0xc8, 0xcc];
+
+/** 按文件头识别图片格式，返回 MIME 类型；不是受支持的格式返回 null。 */
+export function detectImageMime(content: Uint8Array): string | null {
+  const startsWith = (offset: number, bytes: readonly number[]) => bytes.every((byte, index) => content[offset + index] === byte);
+  if (startsWith(0, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
+    return 'image/png';
+  }
+  if (startsWith(0, [0xff, 0xd8, 0xff])) {
+    return 'image/jpeg';
+  }
+  if (startsWith(0, [0x52, 0x49, 0x46, 0x46]) && startsWith(8, [0x57, 0x45, 0x42, 0x50])) {
+    return 'image/webp';
+  }
+  return null;
+}
 
 /** 读取小端无符号整数（1 至 4 字节）。 */
 function readLittleEndian(content: Uint8Array, offset: number, length: number): number {

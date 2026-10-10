@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：qianwen-api-client.test.ts
-// 说明：千问AI平台 HTTP 客户端的自动化测试：普通请求的默认超时、流式生成的空闲超时、与调用方取消信号合并、网络错误消息的脱敏与不暴露原始异常。
+// 说明：千问AI平台 HTTP 客户端的自动化测试：普通请求的默认超时与 postJson 的超时覆盖、流式生成的空闲超时、与调用方取消信号合并、网络错误消息的脱敏与不暴露原始异常。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
@@ -264,6 +264,16 @@ test('流式：连接失败与读取中断的消息同样脱敏且不携带原�
     assert.equal(error.cause, undefined);
     assert.match(error.message, /^读取千问AI平台的响应时中断：/);
     assert.ok(!/sk-secret|api\.test|Bearer/.test(error.message), error.message);
+    return true;
+  });
+});
+
+test('postJson 的 timeoutMs 覆盖默认总超时：到时按超时报网络错误，并且不影响附加请求头', async () => {
+  const client = new QianwenApiClient(hangingFetch().fetchFunction, { requestMs: 5_000, streamIdleMs: 5_000 });
+  await assert.rejects(client.postJson(CONTEXT, '/submit', {}, { 'X-DashScope-Async': 'enable' }, 30), (error: unknown) => {
+    assert.ok(error instanceof ProviderError);
+    assert.equal(error.category, 'network');
+    assert.match(error.message, /请求超时：千问AI平台在 1 秒内没有响应/);
     return true;
   });
 });

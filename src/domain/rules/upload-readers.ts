@@ -7,11 +7,11 @@
 // 备注：文件以 JSON 文本传输（[{ name, mimeType, size, data, ... }]，data 为 Base64）；作品素材与资产文件共用，调用方再按各自规则检查文件类型与内容。
 // ------------------------------------------------------------------------
 
-import { FieldErrors } from './field-readers';
+import { BASE64_PATTERN } from './base64-pattern';
+import { FieldErrors, isBlank } from './field-readers';
 
 /** 文件名保存时的最大长度。 */
 const FILE_NAME_MAX_LENGTH = 200;
-const BASE64_PATTERN = /^[A-Za-z0-9+/]*={0,2}$/;
 /** 图片宽高的合理上限（像素）。 */
 const IMAGE_SIDE_MAX = 20000;
 
@@ -67,7 +67,7 @@ export function readUploadedFiles(
 
 /** 把提交值解析为文件条目数组；空串视为没有文件，格式不对返回 undefined。 */
 function parseFileItems(value: unknown): Array<Record<string, unknown>> | undefined {
-  if (value === undefined || value === null || value === '') {
+  if (isBlank(value)) {
     return [];
   }
   let parsed: unknown = value;

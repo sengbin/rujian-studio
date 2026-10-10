@@ -9,12 +9,13 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { RESULT_VIDEO_MAX_BYTES } from '../../domain/rules/generation-rules';
+import { RESULT_VIDEO_MAX_BYTES } from '../../domain/rules/tail-frame-rules';
 import { MessageRouter } from '../messaging/message-router';
 import { BeatSheetService } from '../services/beat-sheet-service';
 import { BindingService } from '../services/binding-service';
 import { GenerationProfileService } from '../services/generation-profile-service';
-import { GenerationService, SubmitResult } from '../services/generation-service';
+import { GenerationService } from '../services/generation-service';
+import { SubmitResult } from '../services/generation-views';
 import { ScreenplayService } from '../services/screenplay-service';
 import { StageService } from '../services/stage-service';
 import { StoryboardService } from '../services/storyboard-service';

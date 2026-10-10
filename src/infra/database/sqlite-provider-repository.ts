@@ -12,6 +12,7 @@ import { ModelKind } from '../../domain/models/model-capability';
 import { ModelDescriptor, ModelRecord, NewProvider, ProviderPatch, ProviderRecord, ProviderSettings } from '../../domain/models/model-provider';
 import { ModelFilter, ProviderRepository } from '../../domain/ports/provider-repository';
 import { parseCapability, serializeCapability } from '../../domain/rules/model-capability-rules';
+import { placeholders } from './sql-placeholders';
 import { runInTransaction } from './transaction';
 
 /** providers 表的一行。 */
@@ -157,8 +158,7 @@ export class SqliteProviderRepository implements ProviderRepository {
   }
 
   disableModelsExcept(providerId: number, keepCodes: readonly string[]): void {
-    const placeholders = keepCodes.map(() => '?').join(', ');
-    const keepClause = keepCodes.length === 0 ? '' : ` AND code NOT IN (${placeholders})`;
+    const keepClause = keepCodes.length === 0 ? '' : ` AND code NOT IN (${placeholders(keepCodes.length)})`;
     this.database.prepare(`UPDATE models SET is_enabled = 0 WHERE provider_id = ?${keepClause}`).run(providerId, ...keepCodes);
   }
 

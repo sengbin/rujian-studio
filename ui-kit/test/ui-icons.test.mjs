@@ -110,12 +110,24 @@ test('图标匹配：各页面的按钮文字都匹配到贴切的图标', () =>
 
 test('规则引用的图标和页面使用的图标都存在于图标集', () => {
   const rules = readFileSync(join(sourceRoot, 'ui-icon-rules.js'), 'utf8');
+  const pageRules = readFileSync(join(sourceRoot, '..', '..', 'resources', 'shared', 'page-icons.js'), 'utf8');
   const icons = readFileSync(join(sourceRoot, 'ui-icons.js'), 'utf8');
   const ui = setup();
-  const names = [...rules.matchAll(/^\s*\[\/.*\/, '([a-z0-9-]+)'/gm)].map((match) => match[1]);
+  const names = [...(rules + pageRules).matchAll(/^\s*\[\/.*\/, '([a-z0-9-]+)'/gm)].map((match) => match[1]);
   assert.ok(names.length > 30, '应读取到全部规则');
   for (const name of new Set(names)) assert.ok(ui.icon(name), `规则引用的图标 ${name} 不存在`);
   assert.ok(!/\bhref=/.test(icons) && !/<use\b/.test(icons), '图标必须内联图形，不引用外部文件');
+});
+
+test('图标规则：组件库内置规则不含业务词，业务规则由页面登记并先于内置规则匹配', () => {
+  const rules = readFileSync(join(sourceRoot, 'ui-icon-rules.js'), 'utf8');
+  assert.doesNotMatch(rules, /项目|作品|资产|音色|分组|镜头|备份|密钥|提示词/, '内置规则不应出现业务词');
+  const ui = setup();
+  assert.equal(ui.iconForLabel('创建项目').name, 'folder-plus');
+  assert.equal(ui.iconForLabel('保存草稿').name, 'device-floppy');
+  ui.registerIconRules([[/^保存草稿/, 'star']]);
+  assert.equal(ui.iconForLabel('保存草稿').name, 'star', '登记的规则先于内置规则匹配');
+  assert.equal(ui.iconForLabel('保存').name, 'device-floppy', '其他文字仍按内置规则');
 });
 
 test('按钮：图标按文字自动匹配，指定图标优先，false 不显示图标，图标位置可调', () => {

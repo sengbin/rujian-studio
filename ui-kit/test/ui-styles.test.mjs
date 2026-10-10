@@ -96,11 +96,46 @@ test('令牌：定义了禁用态颜色', () => {
   }
 });
 
-test('全局字体：由令牌统一定义并应用到 body，对话框沿用令牌', () => {
+test('全局字体：令牌定义组件字体，页面字体由应用主题样式的 body 规则设置，对话框沿用令牌', () => {
   const tokens = readStyle('ui-tokens.css');
-  assert.ok(tokens.includes('--font-family:'), '缺少令牌 --font-family');
-  assert.match(ruleBody(tokens, 'body'), /font-family:\s*var\(--font-family\)/);
+  assert.match(tokens, /--font-family:\s*var\(--host-font-family\)/, '缺少令牌 --font-family');
+  assert.doesNotMatch(tokens, /(^|\n)body\s*\{/, '令牌文件不应再写 body 规则（会被主题样式覆盖）');
+  const hostTheme = readFileSync(join(sourceRoot, '..', '..', 'resources', 'shared', 'host-theme.css'), 'utf8').replace(/\r\n/g, '\n');
+  assert.match(ruleBody(hostTheme, 'body'), /font-family:\s*var\(--host-font-family\)/);
+  assert.ok(readStyle('ui-dialog.css').includes('var(--font-family)'), '对话框应沿用全局字体令牌');
   assert.ok(!readStyle('ui-dialog.css').includes('--host-font-family'), '对话框不应绕过全局字体令牌');
+});
+
+test('组件样式不直接引用 --host-* 主题变量，统一经过 ui-tokens.css 的令牌', () => {
+  for (const file of ['ui-controls.css', 'ui-feedback.css', 'ui-file-picker.css', 'ui-table.css', 'ui-dialog.css']) {
+    assert.doesNotMatch(readStyle(file), /--host-/, `${file} 不应直接写 --host-*`);
+  }
+  const tokens = readStyle('ui-tokens.css');
+  for (const name of ['--accent', '--accent-foreground', '--input-foreground', '--thumb-size']) {
+    assert.ok(tokens.includes(`${name}:`), `缺少令牌 ${name}`);
+  }
+});
+
+test('隐藏：组件库自己给设置了 display 的控件加 hidden 规则，不依赖页面基础样式', () => {
+  const css = readStyle('ui-controls.css');
+  for (const selector of ['.ui-button[hidden]', '.ui-input[hidden]', '.ui-select__custom[hidden]']) {
+    assert.ok(css.includes(selector), `缺少 ${selector}`);
+  }
+  assert.match(css, /\[hidden\][^{]*\{\s*display:\s*none\s*!important/);
+});
+
+test('反馈样式：说明块与提示区在 ui-feedback.css，消息正文子规则不再分散在对话框样式里', () => {
+  const feedback = readStyle('ui-feedback.css');
+  for (const selector of ['.ui-state', '.ui-message', '.ui-message--flush', '.ui-message p', '.ui-message__details']) {
+    assert.ok(feedback.includes(`${selector} {`), `ui-feedback.css 缺少 ${selector}`);
+  }
+  for (const file of ['ui-controls.css', 'ui-dialog.css']) {
+    assert.doesNotMatch(readStyle(file), /\.ui-(state|message)\b/, `${file} 不应再定义 .ui-state / .ui-message`);
+  }
+});
+
+test('组件样式不含页面专用的类（页签卡片式、页签警示、大标题）', () => {
+  assert.doesNotMatch(readStyle('ui-controls.css'), /ui-tabs--cards|ui-tab--warning|\.ui-display/);
 });
 
 test('表格：样式只使用令牌颜色，令牌已定义；数字列靠右，操作列收缩到内容宽度', () => {

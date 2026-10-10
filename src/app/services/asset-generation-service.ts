@@ -25,17 +25,20 @@ import {
   countUsedEpisodes,
   GenerationAvailability,
   hasUngeneratedChanges,
-  modelKindOfAsset
+  languageCodeOf,
+  modelKindOfAsset,
+  readAudioRunParams,
+  readImageRunParams
 } from '../../domain/rules/asset-generation-rules';
 import { readAudioKind, resolveGenerationPrompt } from '../../domain/rules/asset-prompt-rules';
-import { ASSET_AUDIO_MAX_SECONDS, ASSET_IMAGE_MAX_BYTES, ASSET_IMAGE_MAX_FILES } from '../../domain/rules/asset-rules';
+import { ASSET_AUDIO_MAX_SECONDS, ASSET_IMAGE_MAX_FILES } from '../../domain/rules/asset-rules';
+import { BASE64_PATTERN } from '../../domain/rules/base64-pattern';
 import { FieldErrors, assertNoFieldErrors, readEntityId, readRecord } from '../../domain/rules/field-readers';
-import { describeJobFailure } from '../../domain/rules/generation-rules';
-import { detectImageMime } from '../../domain/rules/work-rules';
+import { describeJobFailure } from '../../domain/rules/generation-failure-copy';
+import { IMAGE_FILE_MAX_BYTES, detectImageMime } from '../../domain/rules/image-size';
 
 /** 缩略图的大小上限，单位为字节。 */
 const THUMBNAIL_MAX_BYTES = 256 * 1024;
-const BASE64_PATTERN = /^[A-Za-z0-9+/]*={0,2}$/;
 
 /** 提交后调度生成的能力（资产生成队列实现）。 */
 export interface AssetGenerationScheduler {
@@ -439,9 +442,9 @@ export class AssetGenerationService {
       if (chosen.length > ASSET_IMAGE_MAX_FILES) {
         throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: `最多采用 ${ASSET_IMAGE_MAX_FILES} 张图片。` });
       }
-      const oversized = chosen.find((file) => file.sizeBytes > ASSET_IMAGE_MAX_BYTES);
+      const oversized = chosen.find((file) => file.sizeBytes > IMAGE_FILE_MAX_BYTES);
       if (oversized !== undefined) {
-        throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: `有图片超过 ${ASSET_IMAGE_MAX_BYTES / (1024 * 1024)} MB，不能采用。` });
+        throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: `有图片超过 ${IMAGE_FILE_MAX_BYTES / (1024 * 1024)} MB，不能采用。` });
       }
       const ready = new Set(files.filter((file) => file.role === 'thumbnail').map((file) => file.sortOrder));
       if (chosen.some((file) => !ready.has(file.sortOrder))) {
@@ -470,29 +473,23 @@ export class AssetGenerationService {
     this.dependencies.notify();
   }
 
-  /** 读取图片生成参数：数量、画幅、分辨率与是否使用参考图。 */
+  /** 读取图片生成参数：数量、画幅、分辨率的范围校验见 domain 规则，这里再检查是否使用参考图。 */
   private readImageParams(source: Record<string, unknown>, assetId: number, capability: ImageCapability, errors: FieldErrors): AssetGenerationParams {
-    const count = source.count === undefined ? 1 : source.count;
-    if (typeof count !== 'number' || !Number.isInteger(count) || count < 1 || count > capability.imagesPerRequestMax) {
-      errors.count = `生成数量必须是 1 到 ${capability.imagesPerRequestMax} 之间的整数。`;
-    }
-    const aspectRatio = readOption(source.aspectRatio, capability.aspectRatios, '画幅', 'aspectRatio', errors);
-    const resolution = readOption(source.resolution, capability.resolutions, '分辨率', 'resolution', errors);
+    const { count, aspectRatio, resolution } = readImageRunParams(source, capability, { count: 'count', aspectRatio: 'aspectRatio', resolution: 'resolution' }, errors);
     const useReferenceImages = source.useReferenceImages === true;
     if (useReferenceImages && (capability.referenceImagesMax === 0 || this.dependencies.assets.countReferenceFiles(assetId) === 0)) {
       errors.useReferenceImages = '所选模型不支持参考图，或资产还没有参考图。';
     }
-    return { count: typeof count === 'number' ? count : 1, aspectRatio, resolution, seed: null, language: null, voice: null, useReferenceImages, extraParams: {} };
+    return { count, aspectRatio, resolution, seed: null, language: null, voice: null, useReferenceImages, extraParams: {} };
   }
 
-  /** 读取音频生成参数：每次固定生成 1 个；语言与预置音色受模型能力限制。 */
+  /** 读取音频生成参数：每次固定生成 1 个；语言与预置音色的范围校验见 domain 规则，这里再检查模型支持该音频类型。 */
   private readAudioParams(source: Record<string, unknown>, asset: AssetRecord, capability: AudioCapability, errors: FieldErrors): AssetGenerationParams {
     const audioKind = readAudioKind(asset.attributes);
     if (!capability.audioKinds.includes(audioKind)) {
       errors.modelId = '所选模型不能生成这种类型的音频。';
     }
-    const language = readOption(source.language, capability.languages, '语言', 'language', errors);
-    const voice = readOption(source.voice, capability.voices, '音色', 'voice', errors);
+    const { language, voice } = readAudioRunParams(source, capability, { language: 'language', voice: 'voice' }, errors);
     return { count: 1, aspectRatio: null, resolution: null, seed: null, language, voice, useReferenceImages: false, extraParams: {} };
   }
 
@@ -545,22 +542,9 @@ function filterUsableForAsset(usable: readonly UsableModel[], asset: Pick<AssetR
   return usable.filter((item) => (item.model.capability as AudioCapability).audioKinds.includes(audioKind));
 }
 
-/** 读取可选的下拉值：空串或未提供视为不指定；不在可选范围内时记录字段错误。 */
-function readOption(value: unknown, options: readonly string[], label: string, key: string, errors: FieldErrors): string | null {
-  if (value === undefined || value === null || value === '') {
-    return null;
-  }
-  if (typeof value !== 'string' || !options.includes(value)) {
-    errors[key] = `${label}不在所选模型支持的范围内。`;
-    return null;
-  }
-  return value;
-}
-
 /** 音频资产的语言设置对应的语言代码；没有或为“其他”时返回 undefined。 */
 function audioLanguageOf(asset: AssetRecord): string | undefined {
-  const language = asset.attributes.language;
-  return language === '中文' ? 'zh' : language === '英文' ? 'en' : undefined;
+  return languageCodeOf(asset.attributes.language);
 }
 
 /** 按版本列表推算生成摘要（与列表查询的含义一致）。 */

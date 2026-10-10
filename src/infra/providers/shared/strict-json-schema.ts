@@ -7,6 +7,8 @@
 // 备注：严格模式要求每个对象的所有属性都列入 required、additionalProperties 为 false，可选字段只能写成允许 null 的类型；方舟文档只列出 type、enum、properties、items、anyOf 等关键字，数值与长度范围等关键字可能被直接报错，转换时去掉（范围由各解析器校验）；工具定义不把 null 当作有意义的取值，所以结果里的 null 一律视为“未填”。
 // ------------------------------------------------------------------------
 
+import { isRecord } from './provider-payload';
+
 type JsonObject = Record<string, unknown>;
 
 /** 严格模式不保证支持的约束关键字：数值范围、数组长度、字符串长度与格式。 */
@@ -84,8 +86,4 @@ function allowNull(node: Readonly<JsonObject>): JsonObject {
     result.enum = [...node.enum, null];
   }
   return result;
-}
-
-function isRecord(value: unknown): value is JsonObject {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

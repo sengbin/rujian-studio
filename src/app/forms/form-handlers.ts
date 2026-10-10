@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
-// 备注：表单在页面内以弹出页面显示，未保存修改的确认在页面完成，宿主只维护会话；表单动作在会话内执行，表单关闭时中止仍在运行的动作。
+// 备注：表单在页面内以弹出页面显示，未保存修改的确认在页面完成，宿主只维护会话。
 // ------------------------------------------------------------------------
 
 import { FORM_LEVEL_ERROR_KEY, NotFoundError, ValidationError } from '../../domain/errors';
@@ -17,21 +17,17 @@ export const FORM_REQUESTS = {
   open: 'form.open',
   checkField: 'form.checkField',
   submit: 'form.submit',
-  action: 'form.action',
-  cancelAction: 'form.cancelAction',
   close: 'form.close',
   refresh: 'form.refresh'
 } as const;
 
 /** 表单会话失效（已提交或已关闭）时的提示。 */
 const SESSION_EXPIRED_MESSAGE = '表单已失效，请重新打开。';
-const ACTION_RUNNING_MESSAGE = '正在执行，请等待完成或取消。';
 
-/** 一次打开的表单会话：定义、创建它的工厂与打开参数（用于刷新），以及正在运行的动作（动作键到取消控制器）。 */
+/** 一次打开的表单会话：定义，以及创建它的工厂与打开参数（用于刷新）。 */
 interface FormSession {
   definition: FormDefinition;
   readonly create: () => Promise<FormDefinition>;
-  readonly running: Map<string, AbortController>;
 }
 
 /**
@@ -44,21 +40,13 @@ export function registerFormHandlers(router: MessageRouter, catalog: FormCatalog
   const sessions = new Map<number, FormSession>();
   let nextFormId = 1;
 
-  const findSession = (payload: unknown): { formId: number; definition: FormDefinition; create: () => Promise<FormDefinition>; running: Map<string, AbortController> } => {
+  const findSession = (payload: unknown): { formId: number; definition: FormDefinition; create: () => Promise<FormDefinition> } => {
     const formId = readRecord(payload).formId;
     const session = typeof formId === 'number' ? sessions.get(formId) : undefined;
     if (typeof formId !== 'number' || session === undefined) {
       throw new NotFoundError(SESSION_EXPIRED_MESSAGE);
     }
     return { formId, ...session };
-  };
-
-  /** 会话结束时中止仍在运行的动作并移除会话。 */
-  const endSession = (formId: number): void => {
-    for (const controller of sessions.get(formId)?.running.values() ?? []) {
-      controller.abort();
-    }
-    sessions.delete(formId);
   };
 
   router.register(FORM_REQUESTS.open, async (payload) => {
@@ -69,11 +57,11 @@ export function registerFormHandlers(router: MessageRouter, catalog: FormCatalog
     }
     const definition = await factory(source.params);
     const formId = nextFormId++;
-    sessions.set(formId, { definition, create: async () => factory(source.params), running: new Map() });
+    sessions.set(formId, { definition, create: async () => factory(source.params) });
     return { formId, schema: definition.schema, values: definition.initialValues };
   });
 
-  // 可用模型变化后由页面调用：用打开时的参数重新生成定义，后续的字段检查、提交和动作都用新定义。
+  // 可用模型变化后由页面调用：用打开时的参数重新生成定义，后续的字段检查和提交都用新定义。
   router.register(FORM_REQUESTS.refresh, async (payload) => {
     const { formId, create } = findSession(payload);
     const definition = await create();
@@ -102,40 +90,14 @@ export function registerFormHandlers(router: MessageRouter, catalog: FormCatalog
       throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: '不支持的提交方式。' });
     }
     await definition.submit(readFormValues(source.values), submitKey);
-    endSession(formId);
-    return {};
-  });
-
-  router.register(FORM_REQUESTS.action, async (payload) => {
-    const { definition, running } = findSession(payload);
-    const source = readRecord(payload);
-    const key = readString(source.action, 'action');
-    const action = definition.actions?.[key];
-    if (action === undefined) {
-      throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: '不支持的操作。' });
-    }
-    if (running.has(key)) {
-      throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: ACTION_RUNNING_MESSAGE });
-    }
-    const controller = new AbortController();
-    running.set(key, controller);
-    try {
-      return { values: await action(readFormValues(source.values), controller.signal) };
-    } finally {
-      running.delete(key);
-    }
-  });
-
-  router.register(FORM_REQUESTS.cancelAction, (payload) => {
-    const { running } = findSession(payload);
-    running.get(readString(readRecord(payload).action, 'action'))?.abort();
+    sessions.delete(formId);
     return {};
   });
 
   router.register(FORM_REQUESTS.close, (payload) => {
     const formId = readRecord(payload).formId;
     if (typeof formId === 'number') {
-      endSession(formId);
+      sessions.delete(formId);
     }
     return {};
   });

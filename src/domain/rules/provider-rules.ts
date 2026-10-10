@@ -9,7 +9,7 @@
 
 import { FORM_LEVEL_ERROR_KEY, ValidationError } from '../errors';
 import { ProviderSettingField, ProviderSettings } from '../models/model-provider';
-import { FieldErrors, assertNoFieldErrors, readRecord } from './field-readers';
+import { FieldErrors, assertNoFieldErrors, readIdentifier, readRecord } from './field-readers';
 
 /** 访问密钥的最大长度。 */
 export const API_KEY_MAX_LENGTH = 500;
@@ -46,15 +46,6 @@ export function providerAccountSecretKeys(providerCode: string): { readonly acce
  */
 export function resolveProviderSettings(fields: readonly ProviderSettingField[], stored: ProviderSettings): ProviderSettings {
   return Object.fromEntries(fields.map((field) => [field.key, stored[field.key] || field.defaultValue]));
-}
-
-/** 读取请求载荷中的整数标识；缺失或不是整数时抛出校验错误。 */
-function readIdentifier(source: Record<string, unknown>, key: string, label: string): number {
-  const value = source[key];
-  if (typeof value !== 'number' || !Number.isInteger(value)) {
-    throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: `${label}标识无效。` });
-  }
-  return value;
 }
 
 /** 服务商修改请求中未经设置项校验的部分。 */

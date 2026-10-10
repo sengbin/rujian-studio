@@ -30,13 +30,9 @@ body.backup-page {
   min-width: 0;
 }
 
+/* 卡片表面（底色、圆角、无阴影）见组件库的 .ui-card，这里只定内边距 */
 .backup-card {
-  min-width: 0;
   padding: var(--backup-card-padding);
-  background: var(--card-bg);
-  border: 0;
-  border-radius: var(--card-radius);
-  box-shadow: none;
 }
 
 .backup-card__title {

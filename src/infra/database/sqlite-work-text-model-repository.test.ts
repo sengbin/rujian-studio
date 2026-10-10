@@ -17,7 +17,7 @@ const NOW = '2026-10-03T00:00:00.000Z';
 function createFixture() {
   const database = openDatabase(IN_MEMORY_DATABASE_PATH);
   database.prepare("INSERT INTO projects (name, created_at, updated_at) VALUES ('项目', ?, ?)").run(NOW, NOW);
-  const insertWork = database.prepare("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (1, ?, 'short_drama', ?, ?)");
+  const insertWork = database.prepare("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (1, ?, 'short_drama', 'text', ?, ?)");
   insertWork.run('甲', NOW, NOW);
   insertWork.run('乙', NOW, NOW);
   return { database, repository: new SqliteWorkTextModelRepository(database, () => new Date(NOW)) };

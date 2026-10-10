@@ -110,7 +110,7 @@
   };
 
   /**
-   * 标签：圆角小标签，用于视觉风格、分类等短文本。
+   * 标签：圆角小标签，用于风格、类别等短文本。
    * @param {{ text: string }} options
    * @returns {HTMLElement}
    */

@@ -45,8 +45,8 @@
 }
 
 .ui-button--primary {
-  color: var(--host-button-foreground);
-  background: var(--host-button-background);
+  color: var(--accent-foreground);
+  background: var(--accent);
 }
 
 .ui-button--primary:hover {
@@ -70,7 +70,7 @@
   background: var(--button-danger-active-bg);
 }
 
-/* 强调色按钮：用于“参考节拍表生成”这类会替换当前内容、需要和普通次要按钮区分的特殊操作；
+/* 强调色按钮：用于会替换当前内容、需要和普通次要按钮区分的特殊操作；
    不用红色（danger 专用于删除），复用状态色里的警示黄 */
 .ui-button--accent {
   color: var(--button-accent-text);
@@ -146,8 +146,8 @@
 .ui-audio-preview__button--playing,
 .ui-audio-preview__button--playing:hover,
 .ui-audio-preview__button--playing:active {
-  color: var(--host-button-foreground);
-  background: var(--host-button-background);
+  color: var(--accent-foreground);
+  background: var(--accent);
 }
 
 .ui-audio-preview__button--playing:hover {
@@ -180,7 +180,7 @@
   box-sizing: border-box;
   width: 100%;
   margin: 0;
-  color: var(--host-input-foreground);
+  color: var(--input-foreground);
   font: inherit;
   background: transparent;
   border: 0;
@@ -298,7 +298,7 @@
   min-height: 0;
   height: var(--select-height);
   padding: 0 var(--select-padding-right) 0 var(--select-padding-left);
-  color: var(--host-input-foreground);
+  color: var(--input-foreground);
   font: inherit;
   font-size: var(--select-font-size);
   text-align: left;
@@ -445,7 +445,7 @@
   cursor: pointer;
   user-select: none;
   /* 开启状态的强调色，悬停与按下时逐级加深 */
-  --choice-accent: var(--host-button-background);
+  --choice-accent: var(--accent);
 }
 
 .ui-choice:not([aria-disabled="true"]):hover {
@@ -506,7 +506,7 @@
   left: 3px;
   width: 3px;
   height: 7px;
-  border: solid var(--host-button-foreground);
+  border: solid var(--accent-foreground);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
@@ -582,7 +582,7 @@
 }
 
 .ui-switch[aria-checked="true"] {
-  background: var(--host-button-background);
+  background: var(--accent);
 }
 
 .ui-switch[aria-checked="true"]:hover {
@@ -608,7 +608,7 @@
 .ui-switch:disabled[aria-checked="true"],
 .ui-switch:disabled[aria-checked="true"]:hover,
 .ui-switch:disabled[aria-checked="true"]:active {
-  background: color-mix(in srgb, var(--host-button-background) 35%, transparent);
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .ui-switch:disabled .ui-switch__thumb {
@@ -674,7 +674,7 @@
 }
 
 /* ---------- 页签 ---------- */
-/* 下划线标出选中项，后面可跟数量；设置页、分镜编辑、分镜预览共用，页面只负责放置位置（外边距、滚动） */
+/* 下划线标出选中项，后面可跟数量；多个页面共用，页面只负责放置位置（外边距、滚动） */
 .ui-tabs {
   display: flex;
   flex: none;
@@ -717,7 +717,7 @@
   bottom: 0;
   left: 0;
   height: 2px;
-  background: var(--host-button-background);
+  background: var(--accent);
   border-radius: 2px 2px 0 0;
   content: '';
 }
@@ -732,53 +732,8 @@
   display: none;
 }
 
-.ui-tab--warning .ui-tab__count {
-  color: var(--status-warning);
-}
-
-/* 卡片式页签（带图标、标题和副文字的步骤导航）：等宽排列，选中项用底部强调线加底色表示 */
-.ui-tabs--cards {
-  display: grid;
-  grid-auto-columns: minmax(0, 1fr);
-  grid-auto-flow: column;
-  min-height: var(--panel-header-height);
-}
-
-.ui-tabs--cards .ui-tab {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--space-xs);
-  min-width: 0;
-  padding: var(--space-sm) var(--space-page);
-  color: var(--text);
-  text-align: left;
-  border-bottom: 2px solid transparent;
-  transition: background-color var(--hover-duration) ease, border-color var(--hover-duration) ease;
-}
-
-.ui-tabs--cards .ui-tab:hover {
-  border-radius: 0;
-}
-
-.ui-tabs--cards .ui-tab:active {
-  background: var(--option-active-bg);
-}
-
-.ui-tabs--cards .ui-tab[aria-selected="true"],
-.ui-tabs--cards .ui-tab[aria-selected="true"]:hover,
-.ui-tabs--cards .ui-tab[aria-selected="true"]:active {
-  background: var(--option-selected-bg);
-  border-bottom-color: var(--host-button-background);
-  font-weight: inherit;
-}
-
-.ui-tabs--cards .ui-tab[aria-selected="true"]::after {
-  display: none;
-}
-
 /* ---------- 可选择的列表 ---------- */
-/* 列表容器与列表项：阶段列表、工作台镜头组等共用；项内部的排版由页面自己决定，选中、悬停、按下、焦点反馈在这里统一 */
+/* 列表容器与列表项：多处共用；项内部的排版由页面自己决定，选中、悬停、按下、焦点反馈在这里统一 */
 .ui-list {
   display: flex;
   flex-direction: column;
@@ -817,7 +772,7 @@
 .ui-list__item[aria-current="true"] {
   background: var(--option-selected-bg);
   border-color: var(--focus-border);
-  box-shadow: inset 3px 0 0 var(--host-button-background);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .ui-list__item[aria-current="true"]:hover {
@@ -830,16 +785,11 @@
 
 /* ---------- 文字角色 ---------- */
 /* 标题的字号与字重由总控的字体角色决定；页面只管外边距，不再各写一遍 */
-.ui-display,
 .ui-title,
 .ui-heading,
 .ui-subheading {
   margin: 0;
   font-weight: var(--font-weight-strong);
-}
-
-.ui-display {
-  font-size: var(--font-size-display);
 }
 
 .ui-title {
@@ -896,23 +846,66 @@
   justify-content: center;
 }
 
-/* ---------- 空状态与页内提示 ---------- */
-/* 列表、工作台等页面在没有内容或出错时显示的说明块（可带一个按钮），以及按钮操作后的状态提示 */
-.ui-state {
-  padding: var(--space-page) 0;
+/* 缩略图：固定尺寸的方块，图片用 cover 铺满；可点击的缩略图是按钮，没有图片时显示占位文字；尺寸由 --thumb-size 决定，页面可在元素上改写 */
+.ui-thumb {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--thumb-size);
+  height: var(--thumb-size);
+  padding: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  border: 1px solid var(--table-border);
+  border-radius: var(--radius-md);
 }
 
-.ui-state .ui-button {
-  margin-top: var(--space-md);
+.ui-thumb--button {
+  background: transparent;
+  cursor: pointer;
 }
 
-.ui-message {
-  flex: none;
-  margin: var(--space-md) 0;
-  white-space: pre-line;
+.ui-thumb--button:focus-visible {
+  outline: 1px solid var(--focus-border);
+  outline-offset: 1px;
 }
 
-/* 所在容器已用 gap 排版时，提示不再自带外边距 */
-.ui-message--flush {
-  margin: 0;
+/* ---------- 卡片 ---------- */
+/* 卡片表面：底色、圆角与阴影取总控的卡片令牌；内边距由页面决定；flat 去掉阴影 */
+.ui-card {
+  min-width: 0;
+  background: var(--card-bg);
+  border: 0;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+
+.ui-card--flat {
+  box-shadow: none;
+}
+
+/* ---------- 隐藏 ---------- */
+/* 上面的控件都写了 display，会盖过 hidden 属性；这里让它们在没有页面基础样式（theme.css）的页面里也能正常隐藏 */
+.ui-button[hidden],
+.ui-audio-preview[hidden],
+.ui-input[hidden],
+.ui-textarea[hidden],
+.ui-select[hidden],
+.ui-select__custom[hidden],
+.ui-select__trigger[hidden],
+.ui-choice-group[hidden],
+.ui-choice[hidden],
+.ui-switch-row[hidden],
+.ui-tabs[hidden],
+.ui-tab[hidden],
+.ui-list[hidden],
+.ui-stack[hidden],
+.ui-row[hidden],
+.ui-wrap[hidden],
+.ui-thumb[hidden],
+.ui-image-viewer[hidden] {
+  display: none !important;
 }

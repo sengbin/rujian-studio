@@ -137,7 +137,8 @@ test('节拍内容：数量与顺序必须和模板一致，不能增减；小�
     [3, '第3拍', [1, 2]],
     [4, '第4拍', [1, 2]]
   ]);
-  assert.deepEqual(parseBeatSheet(beats, 4, 0)[0].sourceRefs, [], '非小说素材忽略依据序号');
+  assert.deepEqual(parseBeatSheet({ beats }, 4, 0)[0].sourceRefs, [], '非小说素材忽略依据序号');
+  assert.equal(issuesOf(() => parseBeatSheet(beats, 4, 0)).length, 1, '直接的数组不接受');
 
   assert.ok(issuesOf(() => parseBeatSheet({ beats: beats.slice(0, 3) }, 4))[0].includes('恰好给出 4 个'));
   assert.ok(issuesOf(() => parseBeatSheet({ beats: [...beats, beats[0]] }, 4)).length > 0);

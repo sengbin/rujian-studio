@@ -27,7 +27,7 @@ test('令牌样式最先加载，核心脚本最先加载', () => {
 test('每个脚本只依赖排在它前面的脚本（按 aiUi.xxx 的使用检查）', () => {
   const providers = {
     'ui-icons.js': ['icon'],
-    'ui-icon-rules.js': ['iconForLabel'],
+    'ui-icon-rules.js': ['iconForLabel', 'registerIconRules'],
     'ui-button.js': ['button'],
     'ui-audio-preview.js': ['audioPreview'],
     'ui-input-controls.js': ['textInput', 'textArea'],
@@ -38,7 +38,9 @@ test('每个脚本只依赖排在它前面的脚本（按 aiUi.xxx 的使用检�
     'ui-table.js': ['table', 'tableMainCell', 'chip'],
     'ui-tabs.js': ['tabs'],
     'ui-list.js': ['list', 'listItem'],
-    'ui-dialog.js': ['openDialog', 'alert', 'confirm', 'confirmDelete', 'openPage']
+    'ui-feedback.js': ['state', 'message'],
+    'ui-dialog.js': ['openDialog', 'alert', 'confirm', 'confirmDelete', 'openPage'],
+    'ui-image.js': ['thumb', 'viewImage']
   };
   for (const [index, file] of scripts.entries()) {
     const source = readFileSync(join(sourceRoot, file), 'utf8');

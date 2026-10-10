@@ -9,8 +9,18 @@
 
 import { BackupFileInspection } from '../models/backup';
 
-/** 如见 Studio 数据库一定包含的核心表：初始迁移创建且之后始终存在，用来识别备份文件是否如见 Studio 的数据库。 */
-export const BACKUP_REQUIRED_TABLES: readonly string[] = ['projects', 'works', 'episodes', 'stage_runs'];
+/** 如见 Studio 数据库一定包含的核心表：初始迁移创建且之后始终存在，用来识别备份文件是否如见 Studio 的数据库；后五个是引用本地文件的表，备份与恢复本地文件时要逐表读取路径。 */
+export const BACKUP_REQUIRED_TABLES: readonly string[] = [
+  'projects',
+  'works',
+  'episodes',
+  'stage_runs',
+  'asset_files',
+  'asset_version_files',
+  'work_sources',
+  'result_frames',
+  'shot_first_frames'
+];
 
 /** 完整性检查通过时 PRAGMA quick_check 返回的结果。 */
 export const INTEGRITY_OK = 'ok';

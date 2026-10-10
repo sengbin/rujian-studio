@@ -27,12 +27,8 @@ export function toErrorPayload(error: unknown): ErrorPayload {
   if (error instanceof NotFoundError) {
     return { kind: 'not-found', message: error.message, fieldErrors: { [FORM_LEVEL_ERROR_KEY]: error.message } };
   }
-  if (error instanceof TextGenerationError) {
-    // 文本生成服务不可用、未授权等：原因已是面向用户的说明，直接作为表单级提示显示。
-    return { kind: 'unavailable', message: error.message, fieldErrors: { [FORM_LEVEL_ERROR_KEY]: error.message } };
-  }
-  if (error instanceof ProviderError) {
-    // 图像、音频、视频模型服务失败（鉴权、限流、参数、审核等）：说明已是面向用户的原因，直接显示。
+  if (error instanceof TextGenerationError || error instanceof ProviderError) {
+    // 文本、图像、音频、视频模型服务不可用、未授权、限流、参数或审核失败等：原因已是面向用户的说明，直接作为表单级提示显示。
     return { kind: 'unavailable', message: error.message, fieldErrors: { [FORM_LEVEL_ERROR_KEY]: error.message } };
   }
 

@@ -8,18 +8,17 @@
 // ------------------------------------------------------------------------
 
 import { createWriteStream } from 'node:fs';
-import { mkdir, readdir, rename, rm } from 'node:fs/promises';
+import { mkdir, readdir, rm } from 'node:fs/promises';
 import * as path from 'node:path';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import type { ReadableStream as WebReadableStream } from 'node:stream/web';
 import { GroupLocation } from '../../domain/models/generation';
 import { ResultStore, SavedResultFile } from '../../domain/ports/generation-repository';
-import { RESULT_VIDEO_MAX_BYTES } from '../../domain/rules/generation-rules';
+import { RESULT_VIDEO_MAX_BYTES } from '../../domain/rules/tail-frame-rules';
+import { replaceFileAtomicallyAsync } from './atomic-file';
 import { resolveInsideRoot } from './relative-path';
-
-/** 下载中的临时文件后缀。 */
-const PARTIAL_SUFFIX = '.part';
+import { PARTIAL_SUFFIX } from './storage-file-types';
 
 /** 结果视频在存储根目录下的子目录名；数据备份页据此告知用户这些文件不在数据库备份内。 */
 export const RESULT_VIDEO_DIRECTORY_NAME = 'videos';
@@ -41,7 +40,6 @@ export class LocalResultStore implements ResultStore {
     }
     const filePath = `${RESULT_VIDEO_DIRECTORY_NAME}/${location.projectId}/${location.workId}/${location.episodeId}/${groupId}-${jobId}.mp4`;
     const absolutePath = this.resolvePath(filePath);
-    const partialPath = `${absolutePath}${PARTIAL_SUFFIX}`;
     await mkdir(path.dirname(absolutePath), { recursive: true });
 
     const response = await this.fetchFunction(url, { signal });
@@ -55,13 +53,9 @@ export class LocalResultStore implements ResultStore {
         callback(sizeBytes > RESULT_VIDEO_MAX_BYTES ? new Error('结果视频超过大小上限。') : null, chunk);
       }
     });
-    try {
-      await pipeline(Readable.fromWeb(response.body as unknown as WebReadableStream), counter, createWriteStream(partialPath));
-      await rename(partialPath, absolutePath);
-    } catch (error) {
-      await rm(partialPath, { force: true });
-      throw error;
-    }
+    await replaceFileAtomicallyAsync(absolutePath, (partialPath) =>
+      pipeline(Readable.fromWeb(response.body as unknown as WebReadableStream), counter, createWriteStream(partialPath))
+    );
     return { filePath, sizeBytes };
   }
 

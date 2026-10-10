@@ -4,15 +4,16 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：素材来源由入口决定，所属项目在新建表单里选择（入口可传默认项目）；提交时先校验全部字段，创建作品后再启动生成，启动失败会撤销刚创建的作品，让用户可以直接重试；作品原先单独选择的文本模型已不可用时，在文本模型字段的说明里提示，重新生成表单同样有该字段，选择会保存为作品的文本模型，启动失败时恢复原选择；节拍参考模式不是字段而是提交按钮“参考节拍表生成”，新建表单始终禁用，重新生成表单按是否已有确认节拍表决定是否可点。
+// 备注：素材来源由入口决定，所属项目在新建表单里选择（入口可传默认项目）；表单只解析并校验字段，创建作品、保存文本模型、启动生成的编排（启动失败会撤销刚创建的作品、恢复原文本模型选择）由服务层完成；作品原先单独选择的文本模型已不可用时，在文本模型字段的说明里提示，重新生成表单同样有该字段；节拍参考模式不是字段而是提交按钮“参考节拍表生成”，新建表单始终禁用，重新生成表单按是否已有确认节拍表决定是否可点。
 // ------------------------------------------------------------------------
 
 import { FORM_LEVEL_ERROR_KEY, ValidationError } from '../../domain/errors';
 import { CreativeParams } from '../../domain/models/creative';
 import { GENRE_OPTIONS, TONE_OPTIONS } from '../../domain/models/option-sets';
 import { ProjectSummary } from '../../domain/models/project';
-import { NewWorkSource, WorkSourceType } from '../../domain/models/work';
+import { WorkSourceType } from '../../domain/models/work';
 import { readEntityId, readRecord } from '../../domain/rules/field-readers';
+import { IMAGE_FILE_MAX_BYTES } from '../../domain/rules/image-size';
 import { listSupportedFormats } from '../../domain/rules/production-profile-rules';
 import {
   CREATIVE_CHOICE_MAX_LENGTH,
@@ -27,7 +28,6 @@ import {
 import {
   IMAGE_EXTENSIONS,
   IMAGE_FIELD_KEY,
-  IMAGE_MAX_BYTES,
   IMAGE_MAX_FILES,
   MANUSCRIPT_FILE_FIELD_KEY,
   MANUSCRIPT_TEXT_FIELD_KEY,
@@ -44,17 +44,19 @@ import {
 import { ProjectService } from '../services/project-service';
 import { BeatSheetService } from '../services/beat-sheet-service';
 import { StageService } from '../services/stage-service';
+import { StageStartService } from '../services/stage-start-service';
 import { WorkTextModelState } from '../services/text-settings-service';
 import { DUPLICATE_WORK_NAME_MESSAGE, WorkService } from '../services/work-service';
+import { WorkCreationService } from '../services/work-creation-service';
 import { AsyncFormFactory, FormCatalog, FormDefinition, FormFactory, FormValues } from './form-definition';
 import { FormFieldSchema, FormSubmitActionSchema } from './form-schema';
+import { storedFilesToFieldValue } from './file-field-value';
 import {
   TEXT_MODEL_FIELD_KEY,
   TEXT_MODEL_SAVED_NOTE,
   WorkTextModels,
   createTextModelField,
   readTextModelKey,
-  startWithWorkTextModel,
   textModelInitialValue
 } from './text-model-field';
 
@@ -73,6 +75,10 @@ export interface WorkFormDependencies {
   /** 读取已确认的节拍表，决定重新生成创意时能否选择“参考节拍表”。 */
   readonly beatSheets: BeatSheetService;
   readonly textModels: WorkTextModels;
+  /** 新建作品并启动创意生成（原创文稿导入原稿）。 */
+  readonly creations: WorkCreationService;
+  /** 保存作品的文本模型并重新启动创意生成。 */
+  readonly starts: Pick<StageStartService, 'startCreative'>;
   /** 生成已开始（创建作品并启动生成，或重新生成）后调用，用于打开阶段产出页。 */
   readonly onStarted: (workId: number) => void;
 }
@@ -144,13 +150,13 @@ function createImageField(): FormFieldSchema {
   return {
     key: IMAGE_FIELD_KEY,
     label: '灵感图片',
-    description: `至少 1 张，最多 ${IMAGE_MAX_FILES} 张；PNG、JPEG、WebP，每张不超过 ${IMAGE_MAX_BYTES / (1024 * 1024)} MB，点击缩略图查看原图，可调整顺序`,
+    description: `至少 1 张，最多 ${IMAGE_MAX_FILES} 张；PNG、JPEG、WebP，每张不超过 ${IMAGE_FILE_MAX_BYTES / (1024 * 1024)} MB，点击缩略图查看原图，可调整顺序`,
     control: 'file',
     required: true,
     accept: IMAGE_EXTENSIONS,
     multiple: true,
     maxFiles: IMAGE_MAX_FILES,
-    maxFileBytes: IMAGE_MAX_BYTES,
+    maxFileBytes: IMAGE_FILE_MAX_BYTES,
     preview: 'image'
   };
 }
@@ -301,18 +307,6 @@ function createParamFields(sourceType: WorkSourceType): FormFieldSchema[] {
   return fields;
 }
 
-/** 已保存的图片转文件字段的初始值（与界面提交的格式一致：JSON 文本，Base64 内容）。 */
-function imagesToValue(images: readonly NewWorkSource[]): string {
-  return JSON.stringify(
-    images.map((image) => ({
-      name: image.fileName,
-      mimeType: image.mime,
-      size: image.content.length,
-      data: Buffer.from(image.content).toString('base64')
-    }))
-  );
-}
-
 /** 生成参数转表单初始值：数字转为文本，未设置的项为空串；节拍参考模式已改为提交按钮，不再写回字段。 */
 function paramsToValues(params: CreativeParams): FormValues {
   return {
@@ -380,7 +374,7 @@ function createNewWorkForm(
   sourceType: WorkSourceType,
   textModelState: WorkTextModelState
 ): FormDefinition {
-  const { works, stages, textModels, onStarted } = dependencies;
+  const { creations, onStarted } = dependencies;
   const imports = sourceType === 'original';
   return {
     schema: {
@@ -433,19 +427,12 @@ function createNewWorkForm(
         return;
       }
 
-      const work = works.createWork(project.id, creation);
-      try {
-        textModels.setWorkModel(work.id, textModel);
-        if (imports) {
-          stages.importOriginal(work.id);
-        } else {
-          await stages.startCreative(work.id, params);
-        }
-      } catch (error) {
-        // 没能开始生成或导入（例如文本模型不可用、原稿分段过多）：撤销刚创建的作品，用户修正后可以直接再次提交。
-        works.deleteWork(work.id);
-        throw error;
-      }
+      const work = await creations.createAndStart({
+        projectId: project.id,
+        creation,
+        textModelKey: textModel,
+        ...(imports ? {} : { params })
+      });
       onStarted(work.id);
     }
   };
@@ -458,7 +445,7 @@ function createNewWorkForm(
  * @param textModelState 作品的文本模型选择状态，用于文本模型字段的选项与初始值。
  */
 function createRegenerateForm(dependencies: WorkFormDependencies, workId: number, textModelState: WorkTextModelState): FormDefinition {
-  const { works, stages, beatSheets, textModels, onStarted } = dependencies;
+  const { works, stages, beatSheets, starts, onStarted } = dependencies;
   const work = works.getWork(workId);
   if (work.sourceType === 'original') {
     throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: ORIGINAL_REGENERATE_MESSAGE });
@@ -489,16 +476,10 @@ function createRegenerateForm(dependencies: WorkFormDependencies, workId: number
       ...(lastParams === undefined ? DEFAULT_PARAM_VALUES : paramsToValues(lastParams))
     },
     submit: async (values, submitKey) => {
-      // 没有已确认节拍表时按钮本就禁用，这里仍兜底校验，防止绕过界面直接提交 reference。
       const forcedMode = submitKey === SUBMIT_KEY_BEAT_REFERENCE ? 'reference' : 'free';
-      if (forcedMode === 'reference' && !beatReferenceAvailable) {
-        throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: '参考节拍表需要先确认节拍表。' });
-      }
       const params = normalizeCreativeParams(values, forcedMode);
       const textModel = readTextModelKey(textModelState, values);
-      await startWithWorkTextModel(textModels, workId, textModelState, textModel, async () => {
-        await stages.startCreative(workId, params);
-      });
+      await starts.startCreative(workId, textModel, params);
       onStarted(workId);
     }
   };
@@ -529,7 +510,7 @@ function createEditWorkForm(dependencies: WorkFormDependencies, workId: number, 
       workName: work.name,
       kind: WORK_KIND_LABELS[work.kind],
       [TEXT_MODEL_FIELD_KEY]: textModelInitialValue(textModelState),
-      ...(hasImages ? { [IMAGE_FIELD_KEY]: imagesToValue(works.listImageSources(workId)) } : {})
+      ...(hasImages ? { [IMAGE_FIELD_KEY]: storedFilesToFieldValue(works.listImageSources(workId)) } : {})
     },
     checkField: (key, value) =>
       key === 'workName' && !works.isWorkNameAvailable(work.projectId, value, work.id) ? DUPLICATE_WORK_NAME_MESSAGE : undefined,

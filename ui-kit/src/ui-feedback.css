@@ -1,0 +1,54 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：ui-feedback.css
+ * 说明：界面组件库的反馈样式：说明块（空状态、加载中、出错）、提示区与消息内容（对话框正文的段落与要点列表）。
+ * 作者：Lion
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-10
+ * 备注：所有选择器以 ui- 开头；依赖 ui-tokens.css；对应脚本见 ui-feedback.js，对话框的消息正文也用 .ui-message。
+ * ------------------------------------------------------------------------
+ */
+
+:root {
+  --state-padding: var(--space-page) 0;
+  --state-button-gap: var(--space-md);
+  --message-margin: var(--space-md) 0;
+  --message-paragraph-gap: var(--space-md);
+  --message-details-indent: 20px;
+}
+
+/* ---------- 说明块 ---------- */
+/* 列表等内容区在没有内容或出错时显示的说明（可带一个按钮） */
+.ui-state {
+  padding: var(--state-padding);
+}
+
+.ui-state .ui-button {
+  margin-top: var(--state-button-gap);
+}
+
+/* ---------- 提示区与消息内容 ---------- */
+/* 按钮操作后的状态提示，也是对话框正文的容器；正文里的段落与要点列表在下面统一排版 */
+.ui-message {
+  flex: none;
+  margin: var(--message-margin);
+  white-space: pre-line;
+}
+
+/* 所在容器已用 gap 排版时，提示不再自带外边距 */
+.ui-message--flush {
+  margin: 0;
+}
+
+.ui-message p {
+  margin: 0 0 var(--message-paragraph-gap);
+}
+
+.ui-message p:last-child {
+  margin-bottom: 0;
+}
+
+.ui-message__details {
+  margin: 0 0 var(--message-paragraph-gap);
+  padding-left: var(--message-details-indent);
+}

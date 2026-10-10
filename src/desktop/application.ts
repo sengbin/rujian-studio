@@ -129,11 +129,11 @@ export function createApplication(environment: ApplicationEnvironment): Applicat
   };
   const projectPages = new ProjectPages(container.projectService, container.deletionService, panels);
   const workListPages = new WorkListPages(
-    { ...services, profiles: container.profileService, providers: container.providerService, textModels: container.textSettingsService, voices: container.voicePreviewService, voiceDrafts: container.voiceDraftService },
+    { ...services, profiles: container.profileService, providers: container.providerService, textModels: container.textSettingsService, creations: container.workCreationService, starts: container.stageStartService, voices: container.voicePreviewService, voiceDrafts: container.voiceDraftService },
     panels
   );
   const assetListPages = new AssetListPages(
-    { projects: container.projectService, assets: container.assetService, categories: container.assetCategoryService, prompts: container.assetPromptService, textModels: container.textSettingsService, providers: container.providerService, generation: container.assetGenerationService },
+    { projects: container.projectService, assets: container.assetService, categories: container.assetCategoryService, prompts: container.assetPromptService, textModels: container.textSettingsService, providers: container.providerService, generation: container.assetGenerationService, creations: container.assetCreationService },
     panels
   );
   const settingsPages = new SettingsPages({ text: container.textSettingsService, providers: container.providerService, accounts: container.providerAccountService }, panels);
@@ -160,6 +160,8 @@ export function createApplication(environment: ApplicationEnvironment): Applicat
       prompts: container.assetPromptService,
       providers: container.providerService,
       textModels: container.textSettingsService,
+      starts: container.stageStartService,
+      assetCreations: container.assetCreationService,
       voices: container.voicePreviewService,
       voiceDrafts: container.voiceDraftService,
       ...services

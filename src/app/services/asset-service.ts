@@ -10,9 +10,17 @@
 import { ConflictError, FORM_LEVEL_ERROR_KEY, NotFoundError, ValidationError } from '../../domain/errors';
 import { AssetFileRecord, AssetFileSource, AssetKind, AssetListItem, AssetRecord, AssetUsageSummary } from '../../domain/models/asset';
 import { AssetRepository } from '../../domain/ports/asset-repository';
-import { VoiceSampleInput, keepPresetVoice, mergeUploadContent, normalizeAssetContent, normalizeAssetPrompts, normalizeVoiceSample } from '../../domain/rules/asset-rules';
-import { computePromptRevision, computeRevisionUpdate } from '../../domain/rules/asset-generation-rules';
+import { VoiceSampleInput, keepPresetVoice, mergeUploadContent, normalizeAssetContent, normalizeAssetPrompts, normalizeVoiceSample, readAssetFileSource } from '../../domain/rules/asset-rules';
+import {
+  GenerationAvailability,
+  checkGenerationAvailability,
+  computePromptRevision,
+  computeRevisionUpdate,
+  hasUngeneratedChanges,
+  isPromptOutdated
+} from '../../domain/rules/asset-generation-rules';
 import { FieldErrors } from '../../domain/rules/field-readers';
+import { ReferenceFileData, readFirstReferenceFile } from './asset-reference-file';
 import { ChangeNotifier } from './change-notifier';
 
 /** 同类型下资产重名时的提示。 */
@@ -49,6 +57,21 @@ export interface AssetDeletionImpact {
   readonly usage: AssetUsageSummary;
 }
 
+/** 列表中的一行：资产加生成状态标记。 */
+export interface AssetListRow extends AssetListItem {
+  /** 提示词需更新：表单字段在提示词之后改过。 */
+  readonly isPromptOutdated: boolean;
+  /** 图片（音频）有改动未生成。 */
+  readonly hasUngeneratedChanges: boolean;
+  /** 能否提交图片（音频）生成及不能时的原因。 */
+  readonly availability: GenerationAvailability;
+}
+
+/** 资产没有参考图时的提示。 */
+const NO_REFERENCE_IMAGE_MESSAGE = '该资产没有参考图。';
+/** 资产没有参考音频时的提示。 */
+const NO_REFERENCE_AUDIO_MESSAGE = '该资产还没有参考音频。';
+
 /** 资产应用服务。 */
 export class AssetService {
   private readonly changeNotifier = new ChangeNotifier();
@@ -78,6 +101,19 @@ export class AssetService {
   }
 
   /**
+   * 列出某类型的全部资产并附上生成状态标记（提示词需更新、有改动未生成、能否提交生成）。
+   * @param hasUsableModel 判断某条资产是否有可用的同类型模型；音频资产按各自的音频类型逐条判断。
+   */
+  listAssetRows(kind: AssetKind, hasUsableModel: (asset: AssetListItem) => boolean): AssetListRow[] {
+    return this.repository.list(kind).map((asset) => ({
+      ...asset,
+      isPromptOutdated: isPromptOutdated(asset),
+      hasUngeneratedChanges: hasUngeneratedChanges(asset, asset.generation),
+      availability: checkGenerationAvailability(asset, asset.generation, hasUsableModel(asset))
+    }));
+  }
+
+  /**
    * 读取资产。
    * @throws NotFoundError 资产不存在。
    */
@@ -92,6 +128,22 @@ export class AssetService {
   /** 读取资产当前使用来源的图片或音频文件（含内容）。 */
   getReferenceFiles(id: number): AssetFileRecord[] {
     return this.repository.listReferenceFiles(this.getAsset(id).id);
+  }
+
+  /**
+   * 读取资产第一张参考图的原图，用于列表预览点击查看。
+   * @throws NotFoundError 资产不存在，或没有参考图。
+   */
+  readReferenceImage(id: number): ReferenceFileData {
+    return readFirstReferenceFile(this.repository, this.getAsset(id).id, NO_REFERENCE_IMAGE_MESSAGE);
+  }
+
+  /**
+   * 读取音频资产的第一个参考音频，用于列表试听。
+   * @throws NotFoundError 资产不存在，或没有参考音频。
+   */
+  readReferenceAudio(id: number): ReferenceFileData {
+    return readFirstReferenceFile(this.repository, this.getAsset(id).id, NO_REFERENCE_AUDIO_MESSAGE);
   }
 
   /** 读取资产上传的图片或音频文件（含内容），用于编辑表单带出已有文件；与当前使用的来源无关。 */
@@ -185,10 +237,12 @@ export class AssetService {
 
   /**
    * 切换资产使用的文件来源：上传与生成两种来源的文件都保留，切换后绑定与视频生成读取的是新来源的文件。
-   * @throws ValidationError 改用上传但还没有上传过文件，或被用作音色参考的音频改用了没有文件的来源。
+   * @param rawSource 界面提交的文件来源，必须是 upload 或 generated。
+   * @throws ValidationError 文件来源无效，改用上传但还没有上传过文件，或被用作音色参考的音频改用了没有文件的来源。
    * @throws NotFoundError 资产不存在。
    */
-  switchFileSource(id: number, source: AssetFileSource): AssetRecord {
+  switchFileSource(id: number, rawSource: unknown): AssetRecord {
+    const source = readAssetFileSource(rawSource);
     const asset = this.getAsset(id);
     if (asset.fileSource === source) {
       return asset;

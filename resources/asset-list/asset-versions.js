@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：请求名称与 src/app/pages/asset-list-handlers.ts 一致；依赖 asset-generate.js（aiAssetGenerate）与 form/form-runtime.js（aiForm）；缩略图在这里用 canvas 生成并回传，宿主不引入图像库；对外是 window.aiAssetVersions 的 open、refresh、viewImage（弹出页查看原图，列表预览也用）。
+// 备注：请求名称与 src/app/pages/asset-list-handlers.ts 一致；依赖 asset-generate.js（aiAssetGenerate）、form/form-runtime.js（aiForm）与 shared/page-format.js（pageFormat）；缩略图在这里用 canvas 生成并回传，宿主不引入图像库；对外是 window.aiAssetVersions 的 open、refresh、viewImage（弹出页查看原图，列表预览也用）。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -21,34 +21,22 @@
 
   const THUMBNAIL_MAX_SIDE = 256;
   const THUMBNAIL_QUALITY = 0.82;
-  const GENERIC_ERROR_TEXT = '操作失败，请重试。';
   const STATUS_LABELS = { queued: '排队中', running: '生成中', succeeded: '已生成', failed: '失败', canceled: '已取消' };
   const LANGUAGE_LABELS = { zh: '中文', en: '英文' };
+
+  const { formatDateTime, requestAction, errorText } = window.pageFormat;
 
   /** 当前打开的版本层；没有打开时为 null。 */
   let session = null;
 
-  /** 取错误载荷中的说明文字。 */
-  function errorText(error) {
-    const fields = error && error.fieldErrors ? Object.values(error.fieldErrors) : [];
-    return fields.length > 0 ? fields.join('\n') : (error && error.message) || GENERIC_ERROR_TEXT;
-  }
-
-  /** 在提示区显示文字；空串表示清除。 */
-  function showMessage(text, isError) {
-    session.message.textContent = text;
-    session.message.className = isError ? 'ui-message ui-message--flush status-error' : 'ui-message ui-message--flush status-success';
-    session.message.hidden = text === '';
-  }
-
   /** 发起请求；失败时在提示区显示原因并返回 undefined。 */
-  async function request(name, payload) {
-    try {
-      return await window.hostBridge.request(name, payload);
-    } catch (error) {
-      if (session) showMessage(errorText(error), true);
-      return undefined;
-    }
+  function request(name, payload) {
+    return requestAction(
+      () => window.hostBridge.request(name, payload),
+      (text) => {
+        if (session) session.message.show(text, true);
+      }
+    );
   }
 
   /** 版本下拉里一项的文字。 */
@@ -96,7 +84,7 @@
         // 缺缩略图时不能采用此版本，必须告诉用户原因；并允许下次刷新时重试，而不是永久失败。
         if (session) {
           session.thumbnailTried.delete(version.id);
-          showMessage(`缩略图生成失败，暂时不能采用此版本：${(error && error.message) || '未知原因'}。重新打开版本窗口可重试。`, true);
+          session.message.show(`缩略图生成失败，暂时不能采用此版本：${(error && error.message) || '未知原因'}。重新打开版本窗口可重试。`, true);
         }
         return;
       }
@@ -106,8 +94,7 @@
 
   /** 弹出页查看一张图片的原图。 */
   function viewImage(title, data) {
-    const image = aiUi.h('img', { class: 'ui-image ui-image--contain', attrs: { src: `data:${data.mime};base64,${data.data}`, alt: title } });
-    aiUi.openPage({ title, content: aiUi.h('div', { class: 'ui-image-viewer' }, image), width: 640, height: 520, minWidth: 320, minHeight: 240, buttons: [{ id: 'close', text: '关闭', isCancel: true }] });
+    aiUi.viewImage({ title, src: `data:${data.mime};base64,${data.data}` });
   }
 
   /** 查看一张结果图片的原图。 */
@@ -129,13 +116,14 @@
           updateButtons();
         }
       });
-      const thumb = file.thumbnail
-        ? aiUi.h(
-            'button',
-            { class: 'asset-ver__thumb', attrs: { type: 'button', 'aria-label': `查看原图：${detail.version.version}-${file.sortOrder + 1}` }, on: { click: () => void viewOriginal(file, `v${detail.version.version} · 第 ${file.sortOrder + 1} 张`) } },
-            aiUi.h('img', { class: 'ui-image ui-image--cover', attrs: { src: `data:${file.thumbnail.mime};base64,${file.thumbnail.data}`, alt: `第 ${file.sortOrder + 1} 张` } })
-          )
-        : aiUi.h('div', { class: 'asset-ver__thumb asset-ver__thumb--empty', text: '缩略图生成中…' });
+      const thumb = aiUi.thumb({
+        className: 'asset-ver__thumb',
+        text: '缩略图生成中…',
+        src: file.thumbnail ? `data:${file.thumbnail.mime};base64,${file.thumbnail.data}` : undefined,
+        alt: `第 ${file.sortOrder + 1} 张`,
+        ariaLabel: `查看原图：${detail.version.version}-${file.sortOrder + 1}`,
+        onClick: () => void viewOriginal(file, `v${detail.version.version} · 第 ${file.sortOrder + 1} 张`)
+      });
       grid.append(
         aiUi.h(
           'div',
@@ -174,8 +162,8 @@
     } else if (version.language) {
       lines.push(`语言：${LANGUAGE_LABELS[version.language] || version.language}`);
     }
-    lines.push(`提交于：${new Date(version.createdAt).toLocaleString('zh-CN')}`);
-    if (version.finishedAt) lines.push(`结束于：${new Date(version.finishedAt).toLocaleString('zh-CN')}`);
+    lines.push(`提交于：${formatDateTime(version.createdAt)}`);
+    if (version.finishedAt) lines.push(`结束于：${formatDateTime(version.finishedAt)}`);
     if (version.attempt > 1) lines.push(`第 ${version.attempt} 次尝试`);
     const prompts = aiUi.h(
       'details',
@@ -303,7 +291,7 @@
       if (session !== current) return;
       // 资产已被删除（或随项目一起删除）时自动关闭。
       if (error && error.kind === 'not-found') current.page.close('api');
-      else showMessage(errorText(error), true);
+      else current.message.show(errorText(error), true);
       return;
     }
     if (session !== current) return;
@@ -351,7 +339,7 @@
     });
     if (!confirmed || !session) return;
     const result = await request(REQUEST_ADOPT, { versionId: detail.version.id, fileIds: [...session.selectedFileIds] });
-    if (result && session) showMessage(`已采用 v${detail.version.version}。`, false);
+    if (result && session) session.message.show(`已采用 v${detail.version.version}。`, false);
   }
 
   /** 删除当前版本：先确认。 */
@@ -365,7 +353,7 @@
     });
     if (!confirmed || !session) return;
     session.thumbnailTried.delete(version.id);
-    if (await request(REQUEST_DELETE_VERSION, { versionId: version.id })) showMessage(`已删除 v${version.version}。`, false);
+    if ((await request(REQUEST_DELETE_VERSION, { versionId: version.id })) && session) session.message.show(`已删除 v${version.version}。`, false);
   }
 
   /** 重试当前版本（失败或已取消）。 */
@@ -393,7 +381,7 @@
    */
   function open(asset) {
     if (session) return;
-    const message = aiUi.h('p', { class: 'ui-message ui-message--flush', hidden: true, attrs: { role: 'status' } });
+    const message = aiUi.message({ flush: true });
     const summary = aiUi.h('span', { class: 'description' });
     const versionSlot = aiUi.h('div', { class: 'asset-ver__select' });
     const body = aiUi.h('div', { class: 'ui-stack asset-ver__body' });
@@ -412,7 +400,7 @@
       summary,
       aiUi.h('div', { class: 'asset-ver__actions' }, Object.values(buttons).map((button) => button.element))
     );
-    const content = aiUi.h('div', { class: 'ui-stack asset-ver' }, bar, message, body);
+    const content = aiUi.h('div', { class: 'ui-stack asset-ver' }, bar, message.element, body);
     session = { assetId: asset.id, name: asset.name, page: null, versionId: null, list: null, detail: null, selectedFileIds: new Set(), thumbnailTried: new Set(), message, summary, versionSlot, body, buttons };
     const page = aiUi.openPage({ title: `版本：${asset.name}`, content, width: 760, height: 560, minWidth: 460, minHeight: 320, buttons: [{ id: 'close', text: '关闭', isCancel: true }] });
     session.page = page;

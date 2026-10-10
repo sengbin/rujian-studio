@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：备份文件夹名为“备份文件名 + .files”；引用文件的表见 FILE_REFERENCE_TABLES（资产、作品素材、镜头首帧、尾帧）；只复制数据库引用的文件，恢复只补充缺少的文件、不删除任何现有文件（文件名由内容哈希决定，同名即同内容）；备份库里的路径不可信，逐个经 resolveInsideRoot 校验，不合法的按缺失处理；资产文件表没有文件路径列的备份无法读出文件清单，视为没有本地文件；其余表没有文件路径列时（旧结构的备份）跳过该表。
+// 备注：备份文件夹名为“备份文件名 + .files”；引用文件的表见 FILE_REFERENCE_TABLES（资产、作品素材、镜头首帧、尾帧）；只复制数据库引用的文件，恢复只补充缺少的文件、不删除任何现有文件（文件名由内容哈希决定，同名即同内容）；备份库里的路径不可信，逐个经 resolveInsideRoot 校验，不合法的按缺失处理。
 // ------------------------------------------------------------------------
 
 import { copyFileSync, existsSync, mkdirSync, rmSync, statSync } from 'node:fs';
@@ -25,19 +25,10 @@ export function assetFilesDirectoryOf(backupPath: string): string {
   return `${backupPath}${BACKUP_FILES_SUFFIX}`;
 }
 
-/** 数据库里指定的表是否有文件路径列。 */
-function hasFilePathColumn(database: DatabaseSync, table: string): boolean {
-  const columns = database.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
-  return columns.some((column) => column.name === 'file_path');
-}
-
-/** 读取数据库引用的全部本地文件路径（去重）；资产文件表没有路径列时返回 undefined。 */
-function listReferencedPaths(database: DatabaseSync): string[] | undefined {
-  if (!hasFilePathColumn(database, 'asset_files')) {
-    return undefined;
-  }
+/** 读取数据库引用的全部本地文件路径（去重）。 */
+function listReferencedPaths(database: DatabaseSync): string[] {
   const paths = new Set<string>();
-  for (const table of FILE_REFERENCE_TABLES.filter((candidate) => hasFilePathColumn(database, candidate))) {
+  for (const table of FILE_REFERENCE_TABLES) {
     for (const row of database.prepare(`SELECT file_path FROM ${table}`).all() as unknown as Array<{ file_path: string }>) {
       paths.add(row.file_path);
     }
@@ -77,7 +68,7 @@ export function copyAssetFilesToBackup(database: DatabaseSync, assetDirectory: s
   if (overlaps(assetDirectory, directory)) {
     throw new Error('备份位置不能在资产文件目录之内，请换一个位置。');
   }
-  const paths = listReferencedPaths(database) ?? [];
+  const paths = listReferencedPaths(database);
   rmSync(directory, { recursive: true, force: true });
   let fileCount = 0;
   let sizeBytes = 0;
@@ -102,17 +93,14 @@ export function copyAssetFilesToBackup(database: DatabaseSync, assetDirectory: s
  * @param backupDatabase 以只读方式打开的备份数据库。
  * @param backupPath 备份文件的绝对路径。
  * @param assetDirectory 当前资产文件根目录。
- * @returns 检查结果；备份里没有资产文件路径列时返回 undefined。
+ * @returns 检查结果。
  */
 export function inspectBackupAssetFiles(
   backupDatabase: DatabaseSync,
   backupPath: string,
   assetDirectory: string
-): BackupAssetFileInspection | undefined {
+): BackupAssetFileInspection {
   const paths = listReferencedPaths(backupDatabase);
-  if (paths === undefined) {
-    return undefined;
-  }
   const directory = assetFilesDirectoryOf(backupPath);
   const availableCount = paths.filter(
     (filePath) => resolveExisting(directory, filePath) !== undefined || resolveExisting(assetDirectory, filePath) !== undefined
@@ -127,7 +115,7 @@ export function inspectBackupAssetFiles(
  * @param assetDirectory 当前资产文件根目录。
  */
 export function restoreAssetFilesFromBackup(backupDatabase: DatabaseSync, backupPath: string, assetDirectory: string): void {
-  const paths = listReferencedPaths(backupDatabase) ?? [];
+  const paths = listReferencedPaths(backupDatabase);
   const directory = assetFilesDirectoryOf(backupPath);
   for (const filePath of paths) {
     if (resolveExisting(assetDirectory, filePath) !== undefined) {

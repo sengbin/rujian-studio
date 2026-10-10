@@ -18,7 +18,8 @@ import {
   RemoteJobRef,
   RemoteJobState
 } from '../../../domain/ports/provider-adapters';
-import { mapExtraParams, readObject, toDataUri, validateExtraParams, validateMediaFiles } from '../shared/provider-payload';
+import { findDescribedModelByCode } from '../shared/provider-model-lookup';
+import { mapExtraParams, parseJson, readObject, toDataUri, validateExtraParams, validateMediaFiles } from '../shared/provider-payload';
 import { FetchFunction, QianwenApiClient } from './qianwen-api-client';
 import {
   AUDIO_PROTOCOL_PATHS,
@@ -29,6 +30,9 @@ import {
 } from './qianwen-audio-catalog';
 import { QIANWEN_PROVIDER } from './qianwen-catalog';
 import { CONNECTION_PROBE_PATH } from './qianwen-protocol';
+
+/** 单次音频生成请求的总超时（毫秒）：同步生成，且可能带 Base64 参考音频，比普通请求的 60 秒久；与 MiniMax 的同步语音合成一致取 120 秒。 */
+const AUDIO_REQUEST_TIMEOUT_MS = 120_000;
 
 /** 千问AI平台的音频适配器。 */
 export class QianwenAudioProvider implements AudioModelProvider {
@@ -48,11 +52,11 @@ export class QianwenAudioProvider implements AudioModelProvider {
   }
 
   getCapability(modelCode: string): AudioCapability | undefined {
-    return findModel(modelCode)?.descriptor.capability;
+    return findDescribedModelByCode(QIANWEN_AUDIO_MODELS, modelCode)?.descriptor.capability;
   }
 
   validate(request: AudioGenerationRequest): readonly string[] {
-    const model = findModel(request.modelCode);
+    const model = findDescribedModelByCode(QIANWEN_AUDIO_MODELS, request.modelCode);
     if (model === undefined) {
       return [`千问AI平台没有模型 ${request.modelCode}。`];
     }
@@ -65,14 +69,17 @@ export class QianwenAudioProvider implements AudioModelProvider {
       throw new ProviderError('invalid_request', issues.join('；'));
     }
     // 校验已确认模型存在。
-    const model = findModel(request.modelCode) as QianwenAudioModel;
-    const response = await this.client.postJson(context, AUDIO_PROTOCOL_PATHS[model.protocol], buildRequestBody(request, model));
+    const model = findDescribedModelByCode(QIANWEN_AUDIO_MODELS, request.modelCode) as QianwenAudioModel;
+    const response = await this.client.postJson(context, AUDIO_PROTOCOL_PATHS[model.protocol], buildRequestBody(request, model), {}, AUDIO_REQUEST_TIMEOUT_MS);
 
     const audio = readObject(readObject(response.output).audio);
     if (typeof audio.url !== 'string' || audio.url === '') {
       throw new ProviderError('server', '千问AI平台没有返回音频地址。');
     }
-    const result: AudioJobResult = { audioUrl: toHttpsUrl(audio.url), durationSeconds: readDuration(audio, readObject(response.usage)) };
+    if (!audio.url.startsWith('https://')) {
+      throw new ProviderError('server', '平台返回了非 https 的音频地址');
+    }
+    const result: AudioJobResult = { audioUrl: audio.url, durationSeconds: readDuration(audio, readObject(response.usage)) };
     return { modelCode: request.modelCode, remoteJobId: JSON.stringify(result) };
   }
 
@@ -88,10 +95,6 @@ export class QianwenAudioProvider implements AudioModelProvider {
     const durationSeconds = typeof audio.durationSeconds === 'number' ? audio.durationSeconds : null;
     return { status: 'succeeded', result: { audioUrl: audio.audioUrl, durationSeconds }, errorCategory: null, errorCode: null, errorMessage: null };
   }
-}
-
-function findModel(modelCode: string): QianwenAudioModel | undefined {
-  return QIANWEN_AUDIO_MODELS.find((model) => model.descriptor.code === modelCode);
 }
 
 /** 校验音频类型、提示词、语言、音色、时长和参考音频。 */
@@ -139,22 +142,8 @@ function buildRequestBody(request: AudioGenerationRequest, model: QianwenAudioMo
   return { model: request.modelCode, input };
 }
 
-/** 平台可能返回 http 开头的临时地址，而下载只接受 https；对象存储同时支持 https，所以统一升级。 */
-function toHttpsUrl(url: string): string {
-  return url.replace(/^http:\/\//i, 'https://');
-}
-
 /** 读取音频时长：语音接口在 output.audio.duration，音乐接口在 usage.duration；都没有时为 null。 */
 function readDuration(audio: Record<string, unknown>, usage: Record<string, unknown>): number | null {
   if (typeof audio.duration === 'number') return audio.duration;
   return typeof usage.duration === 'number' ? usage.duration : null;
-}
-
-/** 解析 JSON；不合法时返回 undefined，由调用方按任务引用损坏处理。 */
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return undefined;
-  }
 }

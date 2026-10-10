@@ -20,7 +20,7 @@ import {
 } from '../models/model-capability';
 
 /** 音频类型的显示名称。 */
-const AUDIO_KIND_LABELS: Readonly<Record<string, string>> = { voice: '音色参考', music: '配乐', sfx: '音效' };
+const AUDIO_KIND_LABELS: Readonly<Record<string, string>> = { voice: '音色参考', music: '背景音乐', sfx: '音效' };
 
 /** 摘要中列表项之间的分隔符。 */
 const LIST_SEPARATOR = '、';

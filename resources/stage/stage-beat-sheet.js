@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：向 stage.js 的外壳登记；请求名称与 src/app/pages/stage-handlers.ts、重新生成表单名称与 src/app/forms/beat-sheet-form.ts 一致；参考时长与字数只是参考基准，不是硬性限制，界面不做超标提示。
+// 备注：向 stage.js 的外壳登记；请求名称与 src/app/pages/stage-handlers.ts、重新生成表单名称与 src/app/forms/beat-sheet-form.ts 一致；只读原因、保存按钮状态、已确认版本被编辑时的确认来自 stage-editor-common.js（aiStageEditor），必须先于本文件加载；参考时长与字数只是参考基准，不是硬性限制，界面不做超标提示。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -13,11 +13,10 @@
   const REQUEST_SAVE_BEAT = 'stage.saveBeat';
   const FORM_REGENERATE = 'beatSheet.start';
   const SAVE_TEXT = '保存本拍';
-  const SAVED_TEXT = '已保存';
-  const SAVE_STATE_DIRTY = 'dirty';
-  const SAVE_STATE_SAVED = 'saved';
   // 剧情内容按内容增高，最多长到这个行数再滚动。
   const BODY_MAX_ROWS = 12;
+
+  const { SAVE_STATE_DIRTY, SAVE_STATE_SAVED, readonlyReason, createSaveButton, confirmReopening } = window.aiStageEditor;
 
   /** 参考时长与字数的文字，如“约 4.5 秒 / 18 字”。 */
   function budgetText(beat) {
@@ -72,15 +71,7 @@
     /** 保存当前节拍；已确认的版本被编辑时先提示会回到待确认。 */
     async function performSaveBeat() {
       const view = context.getView();
-      if (view.actions.editNeedsConfirm) {
-        const confirmed = await aiUi.confirm({
-          title: '保存修改',
-          message: '该版本已确认采用。保存后将回到待确认，需要重新确认。',
-          confirmText: '保存',
-          cancelText: '取消'
-        });
-        if (!confirmed) return;
-      }
+      if (!(await confirmReopening(view, { title: '保存修改', action: '保存', confirmText: '保存' }))) return;
       const result = await context.runAction(REQUEST_SAVE_BEAT, {
         id: view.run.id,
         seq: selectedSeq,
@@ -114,15 +105,6 @@
       );
     }
 
-    /** 不能编辑时的原因。 */
-    function readonlyReason(view) {
-      const { run, actions } = view;
-      if (actions.canEdit) return '';
-      if (run.display === 'running') return '生成中，暂不能编辑。';
-      if (run.display === 'failed' || run.display === 'canceled') return '生成尚未成功，暂不能编辑。';
-      return '历史版本只读；如需修改，请切换到最新版本。';
-    }
-
     /** 节拍编辑区：切换节拍时重建；同一节拍有未保存的修改时保留输入。 */
     function renderEditor(view, beat) {
       const key = `${view.run.id}:${beat.seq}:${view.actions.canEdit}:${view.actions.editNeedsConfirm}`;
@@ -140,12 +122,7 @@
       const canEdit = view.actions.canEdit;
       const synopsis = aiUi.textArea({ value: beat.synopsis, ariaLabel: '剧情内容', maxRows: BODY_MAX_ROWS, disabled: !canEdit, onChange: markDirty });
       const reason = readonlyReason(view);
-      const saveButton = aiUi.button({ text: SAVE_TEXT, variant: 'primary', disabled: true, onClick: () => void saveBeat() });
-      /** 保存按钮只在有修改时可点，保存后显示“已保存”，再次修改后恢复。 */
-      const setSaveState = (state) => {
-        saveButton.setText(state === SAVE_STATE_SAVED ? SAVED_TEXT : SAVE_TEXT);
-        saveButton.setDisabled(state !== SAVE_STATE_DIRTY);
-      };
+      const { button: saveButton, setSaveState } = createSaveButton({ text: SAVE_TEXT, onClick: () => void saveBeat() });
 
       const refs = beat.sourceRefs.length === 0 ? '' : `依据原文第 ${beat.sourceRefs.join('、')} 段`;
       const element = aiUi.h(

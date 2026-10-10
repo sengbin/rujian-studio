@@ -73,7 +73,7 @@ export class SqliteBackupStorage implements BackupStorage {
     return copyAssetFilesToBackup(this.requireDatabase(), this.assetFileDirectory, targetPath);
   }
 
-  inspectAssetFiles(filePath: string): BackupAssetFileInspection | undefined {
+  inspectAssetFiles(filePath: string): BackupAssetFileInspection {
     const file = new DatabaseSync(filePath, { readOnly: true });
     try {
       return inspectBackupAssetFiles(file, filePath, this.assetFileDirectory);

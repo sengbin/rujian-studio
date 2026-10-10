@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：请求名称与 src/app/forms/form-handlers.ts 一致；字段值一律以文本传输（布尔为 true/false，多选为 JSON 数组文本）；页面通过 aiForm.open 使用；字段动作按钮（schema.actions）把当前值发给宿主执行，结果回填到指定字段；字段可随另一个字段的值联动：说明（descriptionByValue）、值（valueByValue）、显示与隐藏（visibleWhen，隐藏的字段不校验、提交时仍带值）、下拉选项（optionsByValue，可逐级联动）；收到 models.changed 事件（名称与 src/app/pages/model-events.ts 一致）后，向宿主重新取表单定义，更新下拉选项与说明、增删字段，保留用户已填的内容。
+// 备注：请求名称与 src/app/forms/form-handlers.ts 一致；依赖 shared/page-format.js（pageFormat.decodeBase64，须先于本文件加载）；字段值一律以文本传输（多选为 JSON 数组文本）；页面通过 aiForm.open 使用；字段可随另一个字段的值联动：说明（descriptionByValue）、值（valueByValue）、显示与隐藏（visibleWhen，隐藏的字段不校验、提交时仍带值）、下拉选项（optionsByValue，可逐级联动）；收到 models.changed 事件（名称与 src/app/pages/model-events.ts 一致）后，向宿主重新取表单定义，更新下拉选项与说明、增删字段，保留用户已填的内容。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -13,8 +13,6 @@
   const REQUEST_OPEN = 'form.open';
   const REQUEST_CHECK_FIELD = 'form.checkField';
   const REQUEST_SUBMIT = 'form.submit';
-  const REQUEST_ACTION = 'form.action';
-  const REQUEST_CANCEL_ACTION = 'form.cancelAction';
   const REQUEST_CLOSE = 'form.close';
   const REQUEST_REFRESH = 'form.refresh';
   const EVENT_MODELS_CHANGED = 'models.changed';
@@ -32,9 +30,6 @@
   const DISCARD_MESSAGE = '放弃未保存的修改？';
   const DISCARD_CONFIRM_TEXT = '放弃修改';
   const DISCARD_CANCEL_TEXT = '继续编辑';
-  const ACTION_CANCEL_LABEL = '取消';
-  const OVERWRITE_TITLE = '覆盖现有内容';
-  const OVERWRITE_MESSAGE = '这些字段已有内容，要用新生成的内容覆盖吗？';
   const OVERWRITE_CONFIRM_TEXT = '覆盖';
   const OVERWRITE_CANCEL_TEXT = '保留现有内容';
   const CHOOSE_ONE_CONTROLS = ['select', 'radio'];
@@ -43,17 +38,7 @@
   // 缩略图最长边的像素数与 JPEG 质量。
   const THUMBNAIL_MAX_SIDE = 256;
   const THUMBNAIL_QUALITY = 0.82;
-  // 随动作发送的参考图最长边像素数：足够看清细节，又不至于让请求过大。
-  const ACTION_IMAGE_MAX_SIDE = 1024;
   const AUDIO_SAMPLE_RATE = 44100;
-
-  /** 把文件条目的 Base64 内容解码为字节。 */
-  function toBytes(item) {
-    const binary = window.atob(item.data);
-    const bytes = new Uint8Array(binary.length);
-    for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-    return bytes;
-  }
 
   /** 加载图片；无法解码时抛出带文件名的错误。 */
   function loadImage(item) {
@@ -65,11 +50,11 @@
     });
   }
 
-  /** 把图片缩小到最长边不超过 maxSide（透明底色填充为白色），返回宽高与 JPEG 的 Base64 内容。 */
-  function renderJpeg(image, maxSide) {
+  /** 把图片缩小到最长边不超过缩略图上限（透明底色填充为白色），返回宽高与 JPEG 的 Base64 内容。 */
+  function renderJpeg(image) {
     const width = image.naturalWidth;
     const height = image.naturalHeight;
-    const scale = Math.min(1, maxSide / Math.max(width, height));
+    const scale = Math.min(1, THUMBNAIL_MAX_SIDE / Math.max(width, height));
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.round(width * scale));
     canvas.height = Math.max(1, Math.round(height * scale));
@@ -84,20 +69,14 @@
   /** 为图片读取宽高并生成 JPEG 缩略图。 */
   async function deriveImage(item) {
     const image = await loadImage(item);
-    const { width, height, data } = renderJpeg(image, THUMBNAIL_MAX_SIDE);
+    const { width, height, data } = renderJpeg(image);
     return { ...item, width, height, thumbnail: { mimeType: 'image/jpeg', data } };
-  }
-
-  /** 把图片缩小为随动作发送的 JPEG（只保留文件名、类型和内容）。 */
-  async function shrinkImage(item) {
-    const { data } = renderJpeg(await loadImage(item), ACTION_IMAGE_MAX_SIDE);
-    return { name: item.name, mimeType: 'image/jpeg', size: data.length, data };
   }
 
   /** 解码音频读取时长（秒）；无法解码时抛出带文件名的错误。 */
   async function deriveAudio(item) {
     try {
-      const bytes = toBytes(item);
+      const bytes = window.pageFormat.decodeBase64(item.data);
       const buffer = await new window.OfflineAudioContext(1, 1, AUDIO_SAMPLE_RATE).decodeAudioData(bytes.buffer);
       return { ...item, durationSeconds: buffer.duration };
     } catch {
@@ -120,7 +99,7 @@
     }
   }
 
-  /** 按字段描述创建控件，并说明其值的种类：text、boolean 或 list。 */
+  /** 按字段描述创建控件，并说明其值的种类：text、list 或 files。 */
   function createControl(fieldSchema, initialText) {
     const options = fieldSchema.options || [];
     switch (fieldSchema.control) {
@@ -145,15 +124,8 @@
             allowCustom: Boolean(fieldSchema.allowCustom)
           })
         };
-      case 'radio': {
-        const disabled = fieldSchema.disabledOptions || [];
-        const items = options.map((option) => ({ value: option, disabled: disabled.includes(option) }));
-        return { kind: 'text', control: aiUi.radioGroup({ options: items, value: initialText }) };
-      }
-      case 'checkbox':
-        return { kind: 'boolean', control: aiUi.checkbox({ label: fieldSchema.label, checked: initialText === 'true' }) };
-      case 'switch':
-        return { kind: 'boolean', control: aiUi.switchControl({ label: fieldSchema.label, checked: initialText === 'true' }) };
+      case 'radio':
+        return { kind: 'text', control: aiUi.radioGroup({ options, value: initialText }) };
       case 'checkboxes':
         return { kind: 'list', control: aiUi.checkboxGroup({ options, value: parseList(initialText) }) };
       case 'file': {
@@ -180,7 +152,6 @@
    */
   function validateLocally(entry) {
     const fieldSchema = entry.schema;
-    if (entry.kind === 'boolean') return '';
     if (entry.kind === 'list' || entry.kind === 'files') {
       const unit = entry.kind === 'files' ? '个文件' : '项';
       return fieldSchema.required && entry.control.getValue().length === 0 ? `${fieldSchema.label}至少选择一${unit}。` : '';
@@ -199,7 +170,6 @@
   /** 读取字段当前值，转换为提交用的文本。 */
   function readText(entry) {
     const value = entry.control.getValue();
-    if (entry.kind === 'boolean') return value ? 'true' : 'false';
     if (entry.kind === 'list' || entry.kind === 'files') return JSON.stringify(value);
     return value;
   }
@@ -328,7 +298,7 @@
       const { kind, control } = createControl(fieldSchema, initialText);
       if (fieldSchema.disabled) control.setDisabled(true);
       const field = aiUi.field({
-        label: kind === 'boolean' ? undefined : fieldSchema.label,
+        label: fieldSchema.label,
         description: fieldSchema.description,
         required: fieldSchema.required,
         control
@@ -384,90 +354,6 @@
       }
       const summary = fieldErrors[FORM_LEVEL_ERROR_KEY] || (!hasFieldError && error && error.message) || '';
       showSummary(hasFieldError && !summary ? '请修改标出的字段后重新保存。' : summary || GENERIC_ERROR_MESSAGE);
-    }
-
-    /** 读取动作要发送的值：文本照常发送，文件字段只发送动作指定的那一个（前若干张、缩小后）。 */
-    async function collectActionValues(actionSchema) {
-      const collected = {};
-      for (const [key, entry] of entries) {
-        if (entry.kind !== 'files') {
-          collected[key] = readText(entry);
-        } else if (key === actionSchema.imageField) {
-          const items = entry.control.getValue().slice(0, actionSchema.maxImages || 0);
-          collected[key] = JSON.stringify(await Promise.all(items.map(shrinkImage)));
-        } else {
-          collected[key] = '';
-        }
-      }
-      return collected;
-    }
-
-    /** 把动作结果回填到字段；目标字段已有内容时先询问是否覆盖。返回是否已回填。 */
-    async function applyActionResult(actionSchema, result) {
-      const targets = actionSchema.fills.map((key) => entries.get(key)).filter(Boolean);
-      const hasContent = targets.some((entry) => String(entry.control.getValue()).trim() !== '');
-      if (hasContent) {
-        const confirmed = await aiUi.confirm({
-          title: OVERWRITE_TITLE,
-          message: OVERWRITE_MESSAGE,
-          confirmText: OVERWRITE_CONFIRM_TEXT,
-          cancelText: OVERWRITE_CANCEL_TEXT
-        });
-        if (!confirmed) return false;
-      }
-      for (const entry of targets) {
-        if (typeof result[entry.schema.key] !== 'string') continue;
-        entry.control.setValue(result[entry.schema.key]);
-        entry.field.setError('');
-      }
-      return true;
-    }
-
-    /** 创建字段动作按钮：进行中按钮变为“取消”，失败原因显示在按钮旁。 */
-    function renderAction(actionSchema) {
-      let isRunning = false;
-      let isCanceled = false;
-      const message = aiUi.h('span', { class: 'form-action__message status-error', hidden: true, attrs: { role: 'alert' } });
-      const button = aiUi.button({ text: actionSchema.label, compact: true, onClick: () => void toggle() });
-
-      const showMessage = (text) => {
-        message.textContent = text;
-        message.hidden = text === '';
-      };
-      const finish = () => {
-        isRunning = false;
-        button.setText(actionSchema.label);
-        button.setDisabled(false);
-      };
-
-      async function toggle() {
-        if (isRunning) {
-          // 进行中点“取消”：告知宿主中止，等请求返回后恢复按钮。
-          isCanceled = true;
-          button.setDisabled(true);
-          window.hostBridge.request(REQUEST_CANCEL_ACTION, { formId, action: actionSchema.key }).catch(() => undefined);
-          return;
-        }
-        isRunning = true;
-        isCanceled = false;
-        showMessage('');
-        button.setText(ACTION_CANCEL_LABEL);
-        try {
-          await Promise.all([...entries.values()].map((entry) => (entry.control.whenReady ? entry.control.whenReady() : undefined)));
-          const values = await collectActionValues(actionSchema);
-          if (isCanceled) return;
-          const response = await window.hostBridge.request(REQUEST_ACTION, { formId, action: actionSchema.key, values });
-          // 覆盖确认期间按钮已恢复，不再显示“取消”。
-          finish();
-          if (!isCanceled) await applyActionResult(actionSchema, response.values || {});
-        } catch (error) {
-          if (!isCanceled) showMessage((error && error.message) || GENERIC_ERROR_MESSAGE);
-        } finally {
-          finish();
-        }
-      }
-
-      return aiUi.h('div', { class: 'form-action' }, button.element, message);
     }
 
     const cancelButton = aiUi.button({ text: CANCEL_LABEL, onClick: handlers.onCancel });
@@ -559,8 +445,6 @@
         )
       );
 
-    /** 字段动作按钮元素：所在字段键 → 元素（显示在该字段之前），字段增减重排时跟着移动。 */
-    const actionElements = new Map();
     /** 说明文字和按钮行：字段总是插在它们之前。 */
     const footerElements = [
       actionNotes.length > 0 ? aiUi.h('div', { class: 'form-actions-notes' }, actionNotes) : null,
@@ -613,7 +497,6 @@
       for (const key of previousKeys) {
         if (ordered.has(key)) continue;
         entries.get(key).field.element.remove();
-        (actionElements.get(key) || []).forEach((action) => action.remove());
       }
       const nextKeys = [...ordered.keys()];
       const isRestructured = nextKeys.length !== previousKeys.length || nextKeys.some((key, index) => key !== previousKeys[index]);
@@ -622,9 +505,7 @@
       if (isRestructured) {
         // 已在页面里的元素重新插入会被移动，按新顺序逐个插到说明和按钮行之前。
         const anchor = footerElements.find(Boolean);
-        for (const [key, entry] of entries) {
-          for (const node of [...(actionElements.get(key) || []), entry.field.element]) form.insertBefore(node, anchor);
-        }
+        for (const entry of entries.values()) form.insertBefore(entry.field.element, anchor);
       }
       const rebuilt = {};
       for (const [key, entry] of entries) rebuilt[key] = key in snapshot ? snapshot[key] : readText(entry);
@@ -661,11 +542,7 @@
           }
         }
       },
-      schema.fields.flatMap((fieldSchema) => {
-        const actions = (schema.actions || []).filter((action) => action.before === fieldSchema.key).map(renderAction);
-        if (actions.length > 0) actionElements.set(fieldSchema.key, actions);
-        return [...actions, renderField(fieldSchema, values[fieldSchema.key] || '')];
-      }),
+      schema.fields.map((fieldSchema) => renderField(fieldSchema, values[fieldSchema.key] || '')),
       // 说明文字在上面单独一块，按钮都在下面同一行（取消 + 全部提交按钮），不再按是否有说明拆成两行。
       footerElements
     );

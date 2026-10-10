@@ -123,7 +123,7 @@
       onChange: settings.onChange,
       getValue: () => selectedValue,
       setValue: (value) => {
-        const text = value === undefined || value === null ? '' : String(value);
+        const text = aiUi.toText(value);
         selectedValue = items.some((item) => item.value === text) ? text : '';
         refresh();
       },

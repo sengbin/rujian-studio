@@ -54,10 +54,16 @@ export interface AssetPrompts {
   readonly prompt: string;
 }
 
-/** 读取音频资产的类型；没有设置时按音色参考处理。 */
+/**
+ * 读取音频资产的类型；音频类型在创建时必填，缺失或取值不合法说明数据有误。
+ * @throws Error attributes 里没有有效的 audio_kind。
+ */
 export function readAudioKind(attributes: Readonly<Record<string, string>>): AudioKind {
   const value = attributes.audio_kind;
-  return value === 'music' || value === 'sfx' ? value : 'voice';
+  if (value === undefined || !Object.hasOwn(AUDIO_KIND_LABELS, value)) {
+    throw new Error('音频资产缺少有效的音频类型（audio_kind），无法判断它是音色、配乐还是音效。');
+  }
+  return value as AudioKind;
 }
 
 /** 资产类型（音频为其音频类型）在提示词里的名称，用作模板变量。 */

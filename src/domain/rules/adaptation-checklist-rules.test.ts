@@ -60,7 +60,7 @@ test('取舍项：分配标识、换算秒数、初始勾选等于模型建议�
   assert.deepEqual(options[0].affectedRefs, ['第3章']);
   assert.deepEqual(options[1].affectedRefs, []);
   assert.deepEqual(parseAdaptationOptions({ options: [] }, 4), []);
-  assert.deepEqual(parseAdaptationOptions([], 4), []);
+  assert.throws(() => parseAdaptationOptions([], 4), GeneratedOutputError, '直接的数组不接受');
 });
 
 test('取舍项：类型、文字、节省字数不合法时逐项报出问题', () => {

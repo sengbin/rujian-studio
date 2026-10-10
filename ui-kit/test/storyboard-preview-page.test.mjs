@@ -11,24 +11,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { afterEach, test } from 'node:test';
-import { IDS, makeShot, makeSound, makeStaging, makeView } from './storyboard-preview-fixtures.mjs';
+import { IDS, makeShot, makeSound, makeStaging, makeView, PREVIEW_PAGE_SCRIPTS as PREVIEW_SCRIPTS } from './storyboard-preview-fixtures.mjs';
 import { createUiEnvironment, fire, pressKey } from './ui-environment.mjs';
 
 const RESOURCES_ROOT = fileURLToPath(new URL('../../resources/', import.meta.url));
-const PREVIEW_SCRIPTS = [
-  'stage/stage-storyboard-preview-timeline.js',
-  'stage/stage-storyboard-preview-checks.js',
-  'stage/stage-storyboard-preview-art.js',
-  'stage/stage-storyboard-preview-props.js',
-  'stage/stage-storyboard-preview-creatures.js',
-  'stage/stage-storyboard-preview-bestiary.js',
-  'stage/stage-storyboard-preview-renderer.js',
-  'stage/stage-storyboard-preview-modes.js',
-  'stage/stage-storyboard-preview-player.js',
-  'stage/stage-storyboard-preview-voice.js',
-  'stage/stage-storyboard-preview-voice-draft.js',
-  'stage/stage-storyboard-preview.js'
-];
 const WORK_ID = 1;
 const EPISODE_ID = 7;
 
@@ -81,7 +67,7 @@ function setup(responder = () => previewView(), voiceResponder = defaultVoiceRes
   window.aiStage = { open: (...args) => opened.push(args), onCloseMissing: () => undefined };
   const context = new Proxy({ measureText: (text) => ({ width: String(text).length * 10 }) }, { get: (target, name) => (name in target ? target[name] : () => undefined), set: () => true });
   window.HTMLCanvasElement.prototype.getContext = () => context;
-  for (const file of PREVIEW_SCRIPTS) window.eval(readFileSync(`${RESOURCES_ROOT}${file}`, 'utf8'));
+  for (const file of ['shared/page-format.js', ...PREVIEW_SCRIPTS]) window.eval(readFileSync(`${RESOURCES_ROOT}${file}`, 'utf8'));
   return {
     window,
     doc: env.document,
@@ -657,7 +643,7 @@ test('入口：分镜脚本产出层头部的“分镜动画”按钮打开预�
   };
   const context = new Proxy({ measureText: (text) => ({ width: String(text).length * 10 }) }, { get: (target, name) => (name in target ? target[name] : () => undefined), set: () => true });
   window.HTMLCanvasElement.prototype.getContext = () => context;
-  for (const file of ['shared/page-format.js', 'stage/stage.js', 'stage/stage-storyboard-panels.js', 'stage/stage-storyboard.js', ...PREVIEW_SCRIPTS]) {
+  for (const file of ['shared/page-format.js', 'stage/stage-actions.js', 'stage/stage-header.js', 'stage/stage.js', 'stage/stage-editor-common.js', 'stage/stage-storyboard-panels.js', 'stage/stage-storyboard.js', ...PREVIEW_SCRIPTS]) {
     window.eval(readFileSync(`${RESOURCES_ROOT}${file}`, 'utf8'));
   }
   window.aiStage.open(WORK_ID, 'storyboard_script', EPISODE_ID);
@@ -682,7 +668,7 @@ test('入口：分镜脚本产出层头部的“分镜动画”按钮打开预�
   const empty = env.window;
   view = previewView({ shots: [], groups: [] });
   empty.hostBridge = { request: async () => view, onEvent: () => undefined };
-  for (const file of ['shared/page-format.js', 'stage/stage.js', 'stage/stage-storyboard-panels.js', 'stage/stage-storyboard.js', ...PREVIEW_SCRIPTS]) {
+  for (const file of ['shared/page-format.js', 'stage/stage-actions.js', 'stage/stage-header.js', 'stage/stage.js', 'stage/stage-editor-common.js', 'stage/stage-storyboard-panels.js', 'stage/stage-storyboard.js', ...PREVIEW_SCRIPTS]) {
     empty.eval(readFileSync(`${RESOURCES_ROOT}${file}`, 'utf8'));
   }
   empty.aiStage.open(WORK_ID, 'storyboard_script', EPISODE_ID);

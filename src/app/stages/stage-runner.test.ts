@@ -558,14 +558,14 @@ test('重试恢复：只改分段设置（分段结果恰好相同）也不复�
 
   assert.equal(harness.runs.findById(runId)?.status, 'succeeded');
   assert.equal(countRequests(harness.text.requests, '# 任务：提取原文要点'), 6);
-  const source = (harness.runs.findById(runId)?.progress?.detail as { source: { split: unknown } }).source;
+  const source = (harness.runs.findById(runId)!.progress!.detail as { source: { split: unknown } }).source;
   assert.deepEqual(source.split, { mode: 'chapter', maxSegmentChars: 1200 }, '新进度记录的是当前设置');
 });
 
 test('重试恢复：素材与设置完全一致时复用旧进度，不提示；进度里记录了分段设置、各段长度与内容哈希', async () => {
   const options: HarnessOptions = { novelText: NOVEL_TEXT };
   const { harness, runId } = await failAtSecondChapter(options);
-  const source = (harness.runs.findById(runId)?.progress?.detail as { source: { split: unknown; lengths: number[]; contentHash: string } }).source;
+  const source = (harness.runs.findById(runId)!.progress!.detail as { source: { split: unknown; lengths: number[]; contentHash: string } }).source;
   assert.deepEqual(source.split, SPLIT_SETTINGS);
   assert.equal(source.lengths.length, 3);
   assert.match(source.contentHash, /^[0-9a-f]{64}$/);
@@ -584,7 +584,7 @@ test('重试恢复：旧进度没有素材指纹时无法确认一致，同样�
   const options: HarnessOptions = { novelText: NOVEL_TEXT };
   const { harness, runId } = await failAtSecondChapter(options);
   const failed = harness.runs.findById(runId)!;
-  const { source: _removed, ...legacyDetail } = failed.progress?.detail as Record<string, unknown>;
+  const { source: _removed, ...legacyDetail } = failed.progress!.detail as Record<string, unknown>;
   harness.runs.updateProgress(runId, { ...failed.progress!, detail: legacyDetail });
 
   await harness.runner.resume(runId);

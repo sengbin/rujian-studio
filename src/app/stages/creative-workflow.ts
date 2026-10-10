@@ -14,7 +14,7 @@ import { StageProgress } from '../../domain/models/stage-run';
 import { ChapterRepository } from '../../domain/ports/chapter-repository';
 import { CreativeSourceReader } from '../../domain/ports/creative-source-reader';
 import { readBeatSheetSnapshot } from '../../domain/rules/beat-sheet-rules';
-import { countWords, normalizeCreativeParams, parseChapter, parseOutline } from '../../domain/rules/creative-rules';
+import { assertBeatReferenceReady, countWords, normalizeCreativeParams, parseChapter, parseOutline } from '../../domain/rules/creative-rules';
 import { FieldErrors, assertNoFieldErrors, readOptionalChoice, readRecord } from '../../domain/rules/field-readers';
 import { NovelSegment, NovelSplitSettings } from '../../domain/rules/novel-splitter';
 import { CalibrationResult, describeDeviation, toleranceRange } from '../../domain/rules/timing-calibration-rules';
@@ -23,7 +23,7 @@ import { ImageInput } from '../../domain/ports/text-generation-port';
 import { AskOptions, askModel } from './ask-model';
 import { runWithCalibration } from './calibration';
 import { SUBMIT_CHAPTER_TOOL, createOutlineTool } from './output-tools/creative-output-tools';
-import { wrapMaterial } from './prompt-templates';
+import { NOT_APPLICABLE, wrapMaterial } from './prompt-templates';
 import { LoadedSource, MaterialProgress, MaterialSourceType, loadSource, prepareMaterial, readMaterialProgress, segmentLabel } from './source-material';
 import { SourceFingerprint, isSameFingerprint } from './source-fingerprint';
 import { StageContext, StageWorkflow } from './stage-workflow';
@@ -77,7 +77,6 @@ const SOURCE_KIND_LABELS: Readonly<Record<CreativeSourceType, string>> = {
   image: '灵感图片',
   novel: '小说原文'
 };
-const NOT_APPLICABLE = '（无）';
 const PREVIOUS_ENDING_CHARS = 300;
 /** 恢复进度时发现素材或分段设置与上次不一致（或无法确认一致）、丢弃旧进度从头开始时给用户的提示。 */
 const RESTART_NOTICE = '素材或分段设置与上次不一致，已丢弃之前的进度从头开始';
@@ -168,9 +167,7 @@ export class CreativeWorkflow implements StageWorkflow {
     assertNoFieldErrors(errors);
     // 参考模式下必须带着启动时已确认的节拍表快照，重试和查看偏差都以它为准。
     const beatSheet = params?.beatReferenceMode === 'reference' ? readBeatSheetSnapshot(source.beatSheet) : undefined;
-    if (params?.beatReferenceMode === 'reference' && beatSheet === undefined) {
-      throw new ValidationError({ beatReferenceMode: '参考节拍表需要先确认节拍表。' });
-    }
+    assertBeatReferenceReady(params?.beatReferenceMode ?? 'free', beatSheet);
     return beatSheet === undefined ? { sourceType, params } : { sourceType, params, beatSheet };
   }
 

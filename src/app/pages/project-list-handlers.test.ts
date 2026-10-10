@@ -76,7 +76,7 @@ test('取删除影响范围返回项目名称和各类内容数量，项目不�
   try {
     const project = service.createProject({ name: '甲' });
     database
-      .prepare("INSERT INTO works (project_id, name, kind, created_at, updated_at) VALUES (?, '作品', 'short_video', 't', 't')")
+      .prepare("INSERT INTO works (project_id, name, kind, source_type, created_at, updated_at) VALUES (?, '作品', 'short_video', 'text', 't', 't')")
       .run(project.id);
 
     const response = await send(PROJECT_LIST_REQUESTS.prepareDelete, { id: project.id });

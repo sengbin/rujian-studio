@@ -10,6 +10,7 @@
 import { FORM_LEVEL_ERROR_KEY, NotFoundError, ValidationError } from '../../domain/errors';
 import { NarratorVoiceRepository } from '../../domain/ports/narrator-voice-repository';
 import { AudioGenerationRequest } from '../../domain/ports/provider-adapters';
+import { UnitOfWork } from '../../domain/ports/unit-of-work';
 import {
   buildDraftPrompt,
   guessLanguageCode,
@@ -92,8 +93,10 @@ export interface VoiceAdoptResult {
 export interface VoiceDraftServiceDependencies {
   readonly storyboards: Pick<StoryboardService, 'getView'>;
   readonly bindings: Pick<BindingService, 'getEntityDetail' | 'bind' | 'listBindings' | 'listSiblingEpisodeIds'>;
-  readonly assets: Pick<AssetService, 'createVoiceAsset' | 'deleteAsset' | 'isNameAvailable'>;
+  readonly assets: Pick<AssetService, 'createVoiceAsset' | 'isNameAvailable'>;
   readonly narrators: Pick<NarratorVoiceRepository, 'find' | 'set'>;
+  /** 采用时建资产与多次绑定的写入放进同一个事务。 */
+  readonly transaction: UnitOfWork;
   readonly drafts: VoiceDraftStore;
   readonly providers: Pick<ProviderService, 'resolveAudioCall'>;
   readonly voices: Pick<VoicePreviewService, 'render'>;
@@ -184,7 +187,10 @@ export class VoiceDraftService {
 
     // 支持参考音频的模型按描述生成，样本之后当作参考音频；只有预置音色的模型按所选的预置音色朗读。
     const byDescription = capability.referenceAudio;
-    const presetVoice = byDescription ? null : capability.voices.includes(input.presetVoice ?? '') ? input.presetVoice : pickPresetVoice(capability.voices, speaker.entityId ?? 0);
+    if (!byDescription && input.presetVoice !== null && !capability.voices.includes(input.presetVoice)) {
+      throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: `所选模型没有“${input.presetVoice}”这个预置音色，请重新选择。` });
+    }
+    const presetVoice = byDescription ? null : (input.presetVoice ?? pickPresetVoice(capability.voices, speaker.entityId ?? 0));
     const guessed = guessLanguageCode(input.sampleText);
     const language = guessed !== null && capability.languages.includes(guessed) ? guessed : null;
     const request: AudioGenerationRequest = {
@@ -232,7 +238,7 @@ export class VoiceDraftService {
    * @throws ConflictError 已有同名的音频资产。
    */
   adopt(workId: number, rawInput: unknown): VoiceAdoptResult {
-    const { drafts, assets, bindings, narrators } = this.dependencies;
+    const { drafts, assets, bindings, narrators, transaction } = this.dependencies;
     const input = readVoiceAdoptInput(rawInput);
     const speaker = this.resolveSpeaker(workId, input);
     const key = toSpeakerKey(speaker.entityId);
@@ -244,17 +250,18 @@ export class VoiceDraftService {
       throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: `“${speaker.name}”在本集已经绑定了音色，不能再采用试听音色。` });
     }
 
-    const asset = assets.createVoiceAsset({
-      name: input.name,
-      description: draft.description,
-      language: toLanguageLabel(draft.language),
-      presetVoice: draft.presetVoice,
-      fileName: `voice-sample${SAMPLE_EXTENSIONS[draft.mime] ?? '.wav'}`,
-      content: draft.content,
-      durationSeconds: draft.durationSeconds
-    });
-    let otherEpisodesBound = 0;
-    try {
+    // 建资产与各集的绑定在同一个事务里，中途失败时资产和已写入的绑定一起撤销。
+    const result = transaction.runInTransaction(() => {
+      const asset = assets.createVoiceAsset({
+        name: input.name,
+        description: draft.description,
+        language: toLanguageLabel(draft.language),
+        presetVoice: draft.presetVoice,
+        fileName: `voice-sample${extensionOfSample(draft.mime)}`,
+        content: draft.content,
+        durationSeconds: draft.durationSeconds
+      });
+      let otherEpisodesBound = 0;
       if (speaker.entityId === null) {
         narrators.set(workId, asset.id, this.timestamp());
       } else {
@@ -266,13 +273,10 @@ export class VoiceDraftService {
           }
         }
       }
-    } catch (error) {
-      // 绑定失败时不留下没人用的新资产。
-      assets.deleteAsset(asset.id);
-      throw error;
-    }
+      return { assetId: asset.id, assetName: asset.name, otherEpisodesBound };
+    });
     drafts.delete(workId, key);
-    return { assetId: asset.id, assetName: asset.name, otherEpisodesBound };
+    return result;
   }
 
   /** 确认说话人：集属于作品，角色存在且是角色类型；旁白不需要实体。 */
@@ -304,6 +308,15 @@ export class VoiceDraftService {
   private timestamp(): string {
     return (this.dependencies.now?.() ?? new Date()).toISOString();
   }
+}
+
+/** 样本文件的扩展名，按 MIME 类型；暂存的样本都经过音频格式识别，其他类型视为程序错误。 */
+function extensionOfSample(mime: string): string {
+  const extension = SAMPLE_EXTENSIONS[mime];
+  if (extension === undefined) {
+    throw new Error(`未登记扩展名的音频类型：${mime}`);
+  }
+  return extension;
 }
 
 /** 暂存的试听音色转成界面视图。 */

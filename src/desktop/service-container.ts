@@ -15,6 +15,7 @@ import { AssetGenerationService } from '../app/services/asset-generation-service
 import { AssetPromptService } from '../app/services/asset-prompt-service';
 import { AssetService } from '../app/services/asset-service';
 import { AssetCategoryService } from '../app/services/asset-category-service';
+import { AssetCreationService } from '../app/services/asset-creation-service';
 import { BeatSheetService } from '../app/services/beat-sheet-service';
 import { BindingService } from '../app/services/binding-service';
 import { ChangeNotifier } from '../app/services/change-notifier';
@@ -27,12 +28,14 @@ import { ProviderAccountService } from '../app/services/provider-account-service
 import { sweepUnreferencedResults } from '../app/services/result-file-cleanup';
 import { ScreenplayService } from '../app/services/screenplay-service';
 import { StageChange, StageService } from '../app/services/stage-service';
+import { StageStartService } from '../app/services/stage-start-service';
 import { StoryboardService } from '../app/services/storyboard-service';
 import { TextGenerationRouter } from '../app/services/text-generation-router';
 import { TextSettingsService } from '../app/services/text-settings-service';
 import { VoiceDraftService } from '../app/services/voice-draft-service';
 import { VoiceDraftStore } from '../app/services/voice-draft-store';
 import { VoicePreviewService } from '../app/services/voice-preview-service';
+import { WorkCreationService } from '../app/services/work-creation-service';
 import { WorkService } from '../app/services/work-service';
 import { BeatSheetWorkflow } from '../app/stages/beat-sheet-workflow';
 import { createApprovedBeatSheetReader } from '../app/stages/approved-beat-sheet';
@@ -57,6 +60,7 @@ import { SqliteProviderRepository } from '../infra/database/sqlite-provider-repo
 import { SqliteScreenplayRepository } from '../infra/database/sqlite-screenplay-repository';
 import { SqliteChapterRepository, SqliteStageRunRepository } from '../infra/database/sqlite-stage-run-repository';
 import { SqliteStoryboardRepository } from '../infra/database/sqlite-storyboard-repository';
+import { SqliteUnitOfWork } from '../infra/database/sqlite-unit-of-work';
 import { SqliteWorkRepository } from '../infra/database/sqlite-work-repository';
 import { SqliteWorkTextModelRepository } from '../infra/database/sqlite-work-text-model-repository';
 import { SqliteWorkSourceReader } from '../infra/database/sqlite-work-source-reader';
@@ -96,6 +100,7 @@ export function createServiceContainer(input: ServiceContainerInput) {
 
   // 存储与外部服务。图片、音频、小说等文件保存在数据目录下，数据库只记路径。
   const assetFileStore = new LocalAssetFileStore(path.join(dataRoot, ASSET_FILE_DIRECTORY_NAME));
+  const transaction = new SqliteUnitOfWork(database);
   const runs = new SqliteStageRunRepository(database);
   const chapters = new SqliteChapterRepository(database);
   const beatSheets = new SqliteBeatSheetRepository(database);
@@ -160,6 +165,7 @@ export function createServiceContainer(input: ServiceContainerInput) {
       runs,
       chapters,
       sources: new SqliteWorkSourceReader(database, assetFileStore),
+      transaction,
       getSplitSettings: () => settingsStore.getSplitSettings()
     }),
     changes: stageChanges
@@ -181,6 +187,7 @@ export function createServiceContainer(input: ServiceContainerInput) {
     stages: stageService
   });
   const textSettingsService = new TextSettingsService(settingsStore, providerService, workTextModels);
+  const workCreationService = new WorkCreationService({ works: workService, stages: stageService, textModels: textSettingsService, transaction });
   const assetService = new AssetService(assetRepository);
   const assetCategoryService = new AssetCategoryService(new SqliteAssetCategoryRepository(database));
   const bindingService = new BindingService(bindingRepository, assetRepository);
@@ -213,6 +220,13 @@ export function createServiceContainer(input: ServiceContainerInput) {
     providers: providerService,
     scheduler: assetQueue,
     notify: notifyAssetsChanged
+  });
+  const assetCreationService = new AssetCreationService({
+    assets: assetService,
+    bindings: bindingService,
+    prompts: assetPromptService,
+    generation: assetGenerationService,
+    transaction
   });
 
   // 视频生成：结果视频保存在数据目录；队列启动时先处理上次退出时遗留的任务。
@@ -254,6 +268,14 @@ export function createServiceContainer(input: ServiceContainerInput) {
     screenplays,
     models: providerRepository
   });
+  const stageStartService = new StageStartService({
+    textModels: textSettingsService,
+    stages: stageService,
+    beatSheets: beatSheetService,
+    screenplays: screenplayService,
+    storyboards: storyboardService,
+    profiles: profileService
+  });
   // 删除作品与项目前，先停掉它们名下的阶段生成与视频任务。
   const deletionService = new DeletionService({
     projects: projectService,
@@ -286,7 +308,8 @@ export function createServiceContainer(input: ServiceContainerInput) {
     narrators: narratorVoiceRepository,
     drafts: voiceDraftStore,
     providers: providerService,
-    voices: voicePreviewService
+    voices: voicePreviewService,
+    transaction
   });
 
   return {
@@ -308,6 +331,9 @@ export function createServiceContainer(input: ServiceContainerInput) {
     assetCategoryService,
     assetPromptService,
     assetGenerationService,
+    assetCreationService,
+    workCreationService,
+    stageStartService,
     bindingService,
     generationService
   };

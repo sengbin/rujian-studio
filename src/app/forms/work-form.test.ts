@@ -13,8 +13,10 @@ import { NotFoundError, TextGenerationError, ValidationError } from '../../domai
 import { normalizeWorkCreation } from '../../domain/rules/work-rules';
 import { createServiceFixture } from '../services/testing/service-fixture';
 import { DUPLICATE_WORK_NAME_MESSAGE } from '../services/work-service';
+import { WorkCreationService } from '../services/work-creation-service';
 import { FormDefinition } from './form-definition';
 import { DEFAULT_TEXT_MODEL_OPTION, createFakeTextModels } from './testing/fake-text-models';
+import { createTestStageStarts } from './testing/stage-starts';
 import { WORK_FORM_NAMES, createWorkFormCatalog } from './work-form';
 
 const UNAVAILABLE_HINT = '原选择的文本模型已不可用，当前将使用“假服务商 · 假文本模型”。';
@@ -45,6 +47,8 @@ function createFixture() {
     stages: fixture.stages,
     beatSheets: fixture.beatSheets,
     textModels,
+    creations: new WorkCreationService({ works: fixture.works, stages: fixture.stages, textModels, transaction: fixture.transaction }),
+    starts: createTestStageStarts(fixture, textModels),
     onStarted: (workId) => started.push(workId)
   });
   const open = async (name: string, params: unknown): Promise<FormDefinition> => {
@@ -69,7 +73,6 @@ test('新建表单：字段随素材来源变化，标题带素材来源，初�
     assert.deepEqual(form.schema.fields.find((field) => field.key === 'projectName')?.options, ['项目甲']);
     const kindField = form.schema.fields.find((field) => field.key === 'kind');
     assert.deepEqual(kindField?.options, ['单个短视频', '多集短片']);
-    assert.equal(kindField?.disabledOptions, undefined);
     assert.equal(form.checkField, undefined, '所属项目可能还没选，重名只在提交时检查');
     // 只有一个项目时自动选中它。
     assert.deepEqual(form.initialValues, {

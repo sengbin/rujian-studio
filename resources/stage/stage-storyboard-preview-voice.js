@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
-// 备注：通过 window.aiStoryboardVoice 暴露；请求名称与 src/app/pages/voice-preview-handlers.ts 一致，模型变化事件与 src/app/pages/model-events.ts 一致；声音模型的状态是页面级共享的（所有打开的预览层共用同一份，所选模型也共用）；合成会调用模型并产生费用，只在用户点“试听”或“合成本镜头配音”时才请求，播放时只播放已合成的结果；生成试听音色或采用音色后，说话人的音色变了，已合成的结果全部作废（宿主缓存按音色内容命中，没变的不会再调用模型）；依赖 host-bridge.js。
+// 备注：通过 window.aiStoryboardVoice 暴露；请求名称与 src/app/pages/voice-preview-handlers.ts 一致，模型变化事件与 src/app/pages/model-events.ts 一致；声音模型的状态是页面级共享的（所有打开的预览层共用同一份，所选模型也共用）；合成会调用模型并产生费用，只在用户点“试听”或“合成本镜头配音”时才请求，播放时只播放已合成的结果；生成试听音色或采用音色后，说话人的音色变了，已合成的结果全部作废（宿主缓存按音色内容命中，没变的不会再调用模型）；依赖 host-bridge.js 与 stage-storyboard-preview-timeline.js（EPSILON）。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -23,7 +23,6 @@
   const GENERIC_OPTIONS_ERROR = '声音模型读取失败。';
   /** 相邻两次更新的时间差超过这个值（秒）视为跳转，已播放记录清空。 */
   const JUMP_SECONDS = 0.6;
-  const EPSILON = 1e-6;
   /** 测量静音：按这个窗口长度（秒）算均方根；低于“绝对下限”与“本段最响窗口的一定比例”两者中较大者的窗口视为静音（有底噪的音频也能找到开口处）。 */
   const SILENCE_WINDOW_SECONDS = 0.02;
   const SILENCE_RMS = 0.015;
@@ -38,6 +37,8 @@
   const FIT_TOLERANCE_SECONDS = 0.2;
   /** 点击时预先解锁的音频元素个数（同时出声的配音条数上限，超过的临时创建）。 */
   const UNLOCK_POOL_SIZE = 4;
+
+  const { EPSILON } = window.aiStoryboardTimeline;
 
   /** 共享状态：声音模型选项、提示与当前所选。 */
   const state = { loaded: false, loading: false, models: [], hint: '', error: '', selectedId: null };
@@ -161,7 +162,6 @@
       data: prepared.data,
       text: sound.text,
       delivery: sound.delivery || '',
-      lead: 0,
       length: prepared.length
     });
   }
@@ -401,7 +401,7 @@
    * 浏览器可能只允许在用户点击的当下播放新创建的音频元素，所以点击时调用 unlock：预先创建一组音频元素并播放一段静音解锁，之后的配音循环使用这些已解锁的元素，即使点击已经过去很久也能出声。
    * @param {() => HTMLAudioElement} [createAudio] 创建音频元素，缺省使用页面的 audio 元素。
    * @param {(error: Error) => void} [onPlayError] 浏览器拒绝或中断播放时调用（被自己停掉导致的中断不报告）。
-   * @returns {{ setEnabled: (enabled: boolean) => void, isEnabled: () => boolean, unlock: () => void, update: (frame: object) => void, stop: () => void }}
+   * @returns {{ setEnabled: (enabled: boolean) => void, unlock: () => void, update: (frame: object) => void, stop: () => void }}
    *   update 每帧调用，参数为 { timeline, shotIndex, time, playing, rate }；动画暂停时配音一并暂停、继续时接着播；被关闭、时间回退或跳转时停止并清空已播放记录。
    */
   function createSync(createAudio, onPlayError) {
@@ -457,8 +457,8 @@
     /** 开始播放一条配音；elapsed 是它已经开始了多久（补播时用），说完了就不播。 */
     function start(clip, slotEnd, frame, elapsed) {
       const fit = fitRateOf(clip, slotEnd - (frame.time - elapsed));
-      const position = clip.lead + elapsed * fit;
-      const endAt = clip.length === null ? null : clip.lead + clip.length;
+      const position = elapsed * fit;
+      const endAt = clip.length;
       if (endAt !== null && position >= endAt) return;
       const element = idle.pop() || create();
       const entry = { element, fit, endAt };
@@ -491,7 +491,7 @@
     function settle(rate) {
       for (const entry of [...active]) {
         const { element } = entry;
-        if (element.ended === true || (entry.endAt !== null && typeof element.currentTime === 'number' && element.currentTime >= entry.endAt)) {
+        if (element.ended === true || (entry.endAt !== null && element.currentTime >= entry.endAt)) {
           element.pause();
           remove(entry);
           continue;
@@ -500,6 +500,10 @@
       }
     }
 
+    /**
+     * 每帧调用：按动画的播放状态同步配音（开始、暂停、继续、停止）。
+     * @param {{ timeline: object, shotIndex: number, time: number, playing: boolean, rate: number }} frame 当前帧：时间线、所在镜头序位、动画时间（秒）、是否在播放、倍速。
+     */
     function update(frame) {
       const modelId = state.selectedId;
       const shot = frame.timeline.shots[frame.shotIndex];
@@ -538,7 +542,6 @@
         enabled = Boolean(value);
         if (!enabled) reset();
       },
-      isEnabled: () => enabled,
       unlock,
       update,
       stop: reset
@@ -547,5 +550,5 @@
 
   window.hostBridge.onEvent(EVENT_MODELS_CHANGED, scheduleRefresh);
 
-  window.aiStoryboardVoice = { getState, subscribe, select, refresh, canPreview, load, restore, loadAll, countReady, readyClip, clearReady, loadSpeakers, getDraftInfo, createDraft, adopt, createSync, clipKey };
+  window.aiStoryboardVoice = { getState, subscribe, select, refresh, canPreview, load, restore, loadAll, countReady, readyClip, loadSpeakers, getDraftInfo, createDraft, adopt, createSync };
 })();

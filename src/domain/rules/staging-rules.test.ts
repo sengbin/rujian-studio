@@ -12,7 +12,8 @@ import { test } from 'node:test';
 import { GeneratedOutputError, ValidationError } from '../errors';
 import { ShotDraft, ShotStaging, StoryboardEntity, StoryboardParams } from '../models/storyboard';
 import { describeStaging, readStagingFields } from './staging-rules';
-import { normalizeShotEdit, parseStoryboard } from './storyboard-rules';
+import { normalizeShotEdit } from './storyboard-edit-rules';
+import { parseStoryboard } from './storyboard-output-rules';
 
 const ENTITIES: StoryboardEntity[] = [
   { id: 1, kind: 'character', name: '守夜人', aliases: ['老陈'] },

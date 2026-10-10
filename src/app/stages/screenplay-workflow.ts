@@ -50,7 +50,7 @@ import {
   createStructureTool,
   createVerbatimStructureTool
 } from './output-tools/screenplay-output-tools';
-import { wrapMaterial } from './prompt-templates';
+import { NOT_APPLICABLE, wrapMaterial } from './prompt-templates';
 import { StageContext, StageWorkflow } from './stage-workflow';
 
 /** 剧本阶段保存到阶段记录的输入快照。 */
@@ -85,7 +85,6 @@ export const SCREENPLAY_PROMPT_VARIABLES: Readonly<Record<string, readonly strin
 
 const FORMAT_TYPES: readonly ProductionFormatType[] = listSupportedFormats().map((profile) => profile.formatType);
 const FIDELITIES: readonly ScreenplayFidelity[] = ['adapted', 'verbatim'];
-const NOT_APPLICABLE = '（无）';
 /** 生成正文与抽取两个基础步骤；保真模式在其后按集增加标注步骤。 */
 const BASE_STEPS = 2;
 /** 一次请求最多标注的片段数，超过则分批，避免输出过长。 */

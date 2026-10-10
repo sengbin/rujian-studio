@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
-// 备注：只试听已保存的对白与旁白（模型会产生费用，没有音色的说话人不调用）；角色音色取本集绑定的主音色参考，旁白取作品的旁白音色，都没有时取暂存的试听音色；模型支持参考音频时用音色参考，否则用资产记录的预置音色，没有记录再按说话人固定挑一个；缓存键含模型、提示词、音色与参考音频内容，台词、说话方式、音色或模型任一变化都会重新调用模型，没有变化则直接用缓存；缓存先查内存再查本地磁盘（diskCache），重启应用后仍可用，磁盘读写失败不影响合成；restore 只读缓存把本集已合成的配音返回（不调用模型）；render 同时供“按描述生成音色”使用。
+// 备注：只试听已保存的对白与旁白（模型会产生费用，没有音色的说话人不调用）；角色音色取本集绑定的主音色参考，旁白取作品的旁白音色，都没有时取暂存的试听音色；模型支持参考音频时用音色参考，否则用资产记录的预置音色（记录的音色不在所选模型里时报错），没有记录再按说话人固定挑一个；缓存键含模型、提示词、音色与参考音频内容，台词、说话方式、音色或模型任一变化都会重新调用模型，没有变化则直接用缓存；缓存先查内存再查本地磁盘（diskCache），重启应用后仍可用，磁盘读写失败不影响合成；restore 只读缓存把本集已合成的配音返回（不调用模型）；render 同时供“按描述生成音色”使用。
 // ------------------------------------------------------------------------
 
 import { createHash } from 'node:crypto';
@@ -24,6 +24,8 @@ import { VoiceDraftStore } from './voice-draft-store';
 
 /** 没有可用声音模型时的提示。 */
 export const NO_VOICE_MODEL_MESSAGE = '还没有可用的声音模型：请到“模型设置”启用音频服务商、填写访问密钥，并启用支持语音的音频模型。';
+/** 资产记录的预置音色不在所选模型里时的提示。 */
+const PRESET_VOICE_NOT_IN_MODEL_MESSAGE = '资产的预置音色不在所选模型里，请更换模型或音色。';
 
 /** 内存缓存最多保留的条数。 */
 const CACHE_MAX_ENTRIES = 40;
@@ -222,7 +224,16 @@ export class VoicePreviewService {
       if (source === null || source === undefined) {
         continue;
       }
-      const { request } = buildSoundRequest(call, capability, sound, source);
+      let request: AudioGenerationRequest;
+      try {
+        ({ request } = buildSoundRequest(call, capability, sound, source));
+      } catch (error) {
+        // 说话人的预置音色不在所选模型里时没有可还原的缓存；合成这条时会给出原因。
+        if (error instanceof ValidationError) {
+          continue;
+        }
+        throw error;
+      }
       const hit = this.lookup(cacheKey(input.modelId, request));
       if (hit !== undefined) {
         clips.push({ soundId: sound.id, mime: hit.mime, data: hit.data });
@@ -435,12 +446,18 @@ function buildSoundRequest(
   return { request, note };
 }
 
-/** 只有预置音色的模型所用的音色：优先用音色记录的预置音色（模型提供时），否则按说话人固定挑一个。 */
+/**
+ * 只有预置音色的模型所用的音色：资产记录了预置音色时必须用它，所选模型没有这个音色则报错；没有记录时按说话人固定挑一个。
+ * @throws ValidationError 资产记录的预置音色不在所选模型里。
+ */
 function choosePresetVoice(voices: readonly string[], source: VoiceSource): string | null {
-  if (source.presetVoice !== null && voices.includes(source.presetVoice)) {
-    return source.presetVoice;
+  if (source.presetVoice === null) {
+    return pickPresetVoice(voices, source.seed);
   }
-  return pickPresetVoice(voices, source.seed);
+  if (!voices.includes(source.presetVoice)) {
+    throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: PRESET_VOICE_NOT_IN_MODEL_MESSAGE });
+  }
+  return source.presetVoice;
 }
 
 /** 缓存键：模型、提示词、音色、语言与参考音频内容任一变化，键就变化。 */

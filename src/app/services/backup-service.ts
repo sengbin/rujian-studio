@@ -80,8 +80,8 @@ export interface RestoreCandidate {
   readonly schemaVersion: number;
   /** 当前应用支持的最高结构版本；备份版本低于它时，恢复后会自动升级。 */
   readonly latestSchemaVersion: number;
-  /** 备份引用的资产文件是否齐全；备份里没有资产文件路径列时为 null。 */
-  readonly assetFiles: BackupAssetFileInspection | null;
+  /** 备份引用的资产文件是否齐全。 */
+  readonly assetFiles: BackupAssetFileInspection;
 }
 
 /** 选择备份文件的结果。 */
@@ -229,7 +229,7 @@ export class BackupService {
       sizeBytes: inspection.sizeBytes,
       schemaVersion: inspection.schemaVersion,
       latestSchemaVersion: this.latestSchemaVersion,
-      assetFiles: this.storage.inspectAssetFiles(filePath) ?? null
+      assetFiles: this.storage.inspectAssetFiles(filePath)
     };
   }
 }

@@ -10,7 +10,7 @@
 import { GeneratedOutputError } from '../errors';
 import { BeatAssignment, BeatDraft, BeatSheet, BeatSheetParams } from '../models/beat-sheet';
 import { BeatTemplate, BeatTemplateItem, ProductionFormatType } from '../models/production-profile';
-import { FieldErrors, assertNoFieldErrors, readInteger, readOptionalDecimal, readOptionalText, readRecord, readText } from './field-readers';
+import { FieldErrors, assertNoFieldErrors, isRecord, readInteger, readOptionalDecimal, readOptionalText, readRecord, readText } from './field-readers';
 import { findBeatTemplate, getProductionProfile, listBeatTemplates } from './production-profile-rules';
 
 /** 单集目标时长（秒）的取值范围。 */
@@ -155,20 +155,15 @@ export function normalizeBeatSheetParams(rawInput: unknown, formatType: Producti
   };
 }
 
-/** 判断值是否为普通对象。 */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 /**
  * 校验并整理模型返回的节拍内容：节拍数量与顺序必须与模板一致，不允许增减或合并。
- * @param raw 解析后的 JSON，形如 { "beats": [{ "seq": 1, "synopsis": "…", "sourceRefs": [1] }] }，也接受直接的数组。
+ * @param raw 解析后的 JSON，形如 { "beats": [{ "seq": 1, "synopsis": "…", "sourceRefs": [1] }] }。
  * @param expectedCount 模板的节拍数。
  * @param segmentCount 小说原文的分段数；大于 0 时 sourceRefs 必须在 1 到该数之间，其他素材忽略 sourceRefs。
  * @throws GeneratedOutputError 格式不对、节拍数量或顺序与模板不一致。
  */
 export function parseBeatSheet(raw: unknown, expectedCount: number, segmentCount = 0): BeatAssignment[] {
-  const items: unknown = Array.isArray(raw) ? raw : isRecord(raw) ? raw.beats : undefined;
+  const items: unknown = isRecord(raw) ? raw.beats : undefined;
   if (!Array.isArray(items)) {
     throw new GeneratedOutputError(['节拍表必须是包含 beats 数组的 JSON，例如 {"beats":[{"seq":1,"synopsis":"…","sourceRefs":[]}]}。']);
   }

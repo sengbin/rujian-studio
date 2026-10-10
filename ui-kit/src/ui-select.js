@@ -238,7 +238,7 @@
       onChange: settings.onChange,
       getValue: () => (selectedValue === CUSTOM_VALUE && customInput ? customInput.getValue() : selectedValue),
       setValue: (value) => {
-        const text = value === undefined || value === null ? '' : String(value);
+        const text = aiUi.toText(value);
         if (text === '') {
           selectedValue = '';
         } else if (items.some((item) => item.value === text)) {

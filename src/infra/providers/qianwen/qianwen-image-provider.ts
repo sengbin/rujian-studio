@@ -18,6 +18,8 @@ import {
   RemoteJobRef,
   RemoteJobState
 } from '../../../domain/ports/provider-adapters';
+import { toPixelSize } from '../shared/image-pixel-size';
+import { findDescribedModelByCode } from '../shared/provider-model-lookup';
 import { mapExtraParams, readObject, toDataUri, validateExtraParams, validateMediaFiles } from '../shared/provider-payload';
 import { FetchFunction, QianwenApiClient } from './qianwen-api-client';
 import { QIANWEN_PROVIDER } from './qianwen-catalog';
@@ -53,11 +55,11 @@ export class QianwenImageProvider implements ImageModelProvider {
   }
 
   getCapability(modelCode: string): ImageCapability | undefined {
-    return findModel(modelCode)?.descriptor.capability;
+    return findDescribedModelByCode(QIANWEN_IMAGE_MODELS, modelCode)?.descriptor.capability;
   }
 
   validate(request: ImageGenerationRequest): readonly string[] {
-    const model = findModel(request.modelCode);
+    const model = findDescribedModelByCode(QIANWEN_IMAGE_MODELS, request.modelCode);
     if (model === undefined) {
       return [`千问AI平台没有模型 ${request.modelCode}。`];
     }
@@ -74,7 +76,7 @@ export class QianwenImageProvider implements ImageModelProvider {
       throw new ProviderError('invalid_request', issues.join('；'));
     }
     // 校验已确认模型存在。
-    const model = findModel(request.modelCode) as QianwenImageModel;
+    const model = findDescribedModelByCode(QIANWEN_IMAGE_MODELS, request.modelCode) as QianwenImageModel;
     const response = await this.client.postJson(context, IMAGE_CREATE_TASK_PATH, buildRequestBody(request, model), ASYNC_HEADERS);
     return { modelCode: request.modelCode, remoteJobId: readTaskId(response) };
   }
@@ -94,10 +96,6 @@ export class QianwenImageProvider implements ImageModelProvider {
       return { imageUrls };
     });
   }
-}
-
-function findModel(modelCode: string): QianwenImageModel | undefined {
-  return QIANWEN_IMAGE_MODELS.find((model) => model.descriptor.code === modelCode);
 }
 
 /** 校验提示词、反向提示词和参考图。 */
@@ -149,17 +147,9 @@ function validateParameters(request: ImageGenerationRequest, model: QianwenImage
   return issues;
 }
 
-/** 按画幅和总像素数计算“宽*高”，宽高取 IMAGE_SIZE_STEP 的整数倍并向下取整，保证总像素不超过档位。 */
-function toPixelSize(aspectRatio: string, totalPixels: number): string {
-  const [ratioWidth, ratioHeight] = aspectRatio.split(':').map(Number);
-  const width = Math.floor(Math.sqrt((totalPixels * ratioWidth) / ratioHeight) / IMAGE_SIZE_STEP) * IMAGE_SIZE_STEP;
-  const height = Math.floor(Math.sqrt((totalPixels * ratioHeight) / ratioWidth) / IMAGE_SIZE_STEP) * IMAGE_SIZE_STEP;
-  return `${width}*${height}`;
-}
-
 /**
  * 决定请求体中的 size：都没指定时不传，由模型自行决定；
- * 只指定分辨率且模型接受档位写法时直接传档位（输出按最后一张参考图的宽高比缩放）；其余情况换算成“宽*高”。
+ * 只指定分辨率且模型接受档位写法时直接传档位（输出按最后一张参考图的宽高比缩放）；其余情况按画幅和档位总像素换算成“宽*高”，宽高取 IMAGE_SIZE_STEP 的整数倍。
  */
 function resolveSize(request: ImageGenerationRequest, model: QianwenImageModel): string | undefined {
   if (request.aspectRatio === null && request.resolution === null) {
@@ -169,7 +159,8 @@ function resolveSize(request: ImageGenerationRequest, model: QianwenImageModel):
     return request.resolution;
   }
   const tier = request.resolution ?? DEFAULT_RESOLUTION_TIER;
-  return toPixelSize(request.aspectRatio ?? DEFAULT_ASPECT_RATIO, RESOLUTION_TIER_PIXELS[tier]);
+  const { width, height } = toPixelSize(request.aspectRatio ?? DEFAULT_ASPECT_RATIO, RESOLUTION_TIER_PIXELS[tier], IMAGE_SIZE_STEP);
+  return `${width}*${height}`;
 }
 
 /** 构造创建任务的请求体；null 的参数不写入，由平台使用默认值。 */

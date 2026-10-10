@@ -1,19 +1,19 @@
 // ------------------------------------------------------------------------
 // 名称：ui-icon-rules.js
-// 说明：按钮文字与图标的匹配规则：根据文字含义选出最贴切的图标，使整个应用里同一种操作使用同一个图标。
+// 说明：按钮文字与图标的匹配规则：根据文字含义选出最贴切的图标，使整个应用里同一种操作使用同一个图标；通用规则内置，应用自己的规则由页面通过 aiUi.registerIconRules 登记。
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：规则按顺序匹配，先匹配到的生效，所以更具体的规则必须排在前面；图标名称须存在于 ui-icons.js；依赖 ui-icons.js。
+// 备注：规则按顺序匹配，先匹配到的生效，所以更具体的规则必须排在前面；登记的规则先于内置规则匹配；图标名称须存在于 ui-icons.js；依赖 ui-icons.js。
 // ------------------------------------------------------------------------
 
 'use strict';
 
 (function () {
-  const POSITION_START = 'start';
-  const POSITION_END = 'end';
+  const POSITION_START = window.aiUi.iconPosition.start;
+  const POSITION_END = window.aiUi.iconPosition.end;
 
-  /** 文字与图标的匹配规则：[文字匹配式, 图标名称, 图标位置（缺省在文字前）]。 */
+  /** 文字与图标的内置匹配规则：[文字匹配式, 图标名称, 图标位置（缺省在文字前）]。 */
   const LABEL_ICON_RULES = [
     // 步骤与顺序
     [/^上一步/, 'arrow-left'],
@@ -25,22 +25,9 @@
     [/^展开/, 'chevron-down'],
     [/^收起/, 'chevron-up'],
 
-    // 数据备份与设置
-    [/^备份到文件/, 'database-export'],
-    [/^从文件恢复/, 'database-import'],
-    [/^取消恢复/, 'arrow-back-up'],
+    // 设置与重启
     [/^重启应用/, 'refresh'],
-    [/^测试连接/, 'plug-connected'],
-    [/^清除密钥/, 'key-off'],
-    [/密钥$/, 'key'],
     [/^设置$/, 'settings'],
-
-    // 新建（带对象的新建先于通用的新建）
-    [/^创建项目/, 'folder-plus'],
-    [/^(创建|新建)分类/, 'category-plus'],
-    [/^新建作品/, 'video-plus'],
-    [/^新建资产/, 'photo-plus'],
-    [/^分类管理/, 'category'],
 
     // 保存、确认与采用
     [/^保存/, 'device-floppy'],
@@ -61,44 +48,26 @@
 
     // 重试与重新生成
     [/^重试/, 'reload'],
-    [/^重新分组/, 'layout-grid'],
     [/^重新(生成|抽取)/, 'refresh'],
 
-    // 生成（含“参考节拍表生成”这类前面带限定词、以“生成”结尾的按钮）
+    // 生成（含前面带限定词、以“生成”结尾的按钮）
     [/^(开始生成|AI 生成|创建并生成|生成)/, 'sparkles'],
     [/生成$/, 'sparkles'],
-
-    // 提示词
-    [/^(编辑提示词|提示词)/, 'writing'],
 
     // 提交
     [/^提交/, 'send'],
 
-    // 查看、版本与结果
-    [/^查看结果/, 'player-play'],
-    [/^查看原始输出/, 'file-code'],
+    // 查看、播放与导出
     [/^查看/, 'eye'],
-    [/^(版本|结果版本)/, 'versions'],
     [/^对比/, 'arrows-diff'],
     [/^(播放|试听)/, 'player-play'],
     [/^停止/, 'player-stop'],
-    [/^打开视频/, 'movie'],
     [/^导出/, 'file-export'],
     [/^在文件夹中显示/, 'folder-open'],
-    [/^第 \d+ 组$/, 'current-location'],
 
-    // 镜头分组
-    [/^从这里拆开/, 'scissors'],
-    [/^并入上一组/, 'arrows-join'],
-
-    // 素材绑定
-    [/^设为主资产/, 'star'],
+    // 选择与调整
     [/^解除/, 'unlink'],
-    [/^建立绑定/, 'link'],
-    [/^按名称自动匹配/, 'wand'],
     [/^(选择|再选一个)$/, 'hand-click'],
-    [/^选择资产/, 'photo-search'],
-    [/^(选择|更换)音色/, 'microphone'],
     [/^(管理|调整)/, 'adjustments'],
 
     // 文件
@@ -115,6 +84,17 @@
     [/^(删除|移除)/, 'trash']
   ];
 
+  /** 页面登记的规则，先于内置规则匹配；后登记的排在先登记的后面。 */
+  const registeredRules = [];
+
+  /**
+   * 登记应用自己的图标规则（如与具体业务对象相关的按钮文字）；格式同内置规则，登记的规则先于内置规则匹配，所以可以覆盖通用规则。
+   * @param {Array<[RegExp, string, ('start'|'end')?]>} rules 规则列表：[文字匹配式, 图标名称, 图标位置（缺省在文字前）]。
+   */
+  window.aiUi.registerIconRules = function (rules) {
+    registeredRules.push(...rules);
+  };
+
   /**
    * 按文字含义匹配图标。
    * @param {string} text 按钮文字。
@@ -122,7 +102,7 @@
    */
   window.aiUi.iconForLabel = function (text) {
     const label = String(text || '').trim();
-    for (const [pattern, name, position] of LABEL_ICON_RULES) {
+    for (const [pattern, name, position] of [...registeredRules, ...LABEL_ICON_RULES]) {
       if (pattern.test(label)) return { name, position: position || POSITION_START };
     }
     return null;

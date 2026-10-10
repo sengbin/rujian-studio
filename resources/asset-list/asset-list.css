@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  * 名称：asset-list.css
- * 说明：资产列表页样式：顶部搜索框与分类筛选、操作结果提示、空状态，预览列的缩略图与音频信息，状态列，以及分类管理页、生成图片（音频）对话框和版本层；资产表格使用界面组件库的 aiUi.table。
+ * 说明：资产列表页样式：顶部的分类筛选、预览列的音频信息、状态列，以及分类管理页、生成图片（音频）对话框和版本层；资产表格使用界面组件库的 aiUi.table，缩略图用组件库的 aiUi.thumb。
  * 作者：Lion
  * 邮箱：chengbin@3578.cn
  * 日期：2026-10-02
@@ -9,44 +9,10 @@
  * ------------------------------------------------------------------------
  */
 
-.assets-search {
-  flex: 0 0 auto;
-  width: 240px;
-}
-
-/* 工具栏里的分类筛选下拉 */
+/* 工具栏里的分类筛选下拉（搜索框见 shared/theme.css 的 .page-search） */
 .assets-filter {
   flex: 0 0 auto;
   width: 170px;
-}
-
-/* 预览列：48px 的缩略图，没有图时显示占位文字 */
-.asset-thumb {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  overflow: hidden;
-  border: 1px solid var(--table-border);
-  border-radius: var(--radius-md);
-}
-
-.asset-thumb--empty {
-  color: var(--host-description-foreground);
-  font-size: var(--font-size-caption);
-}
-
-/* 可点击的缩略图是按钮，去掉按钮默认外观 */
-.asset-thumb--button {
-  padding: 0;
-  background: transparent;
-  cursor: pointer;
-}
-
-.asset-thumb--button:focus-visible {
-  outline: 1px solid var(--host-focus-border);
-  outline-offset: 1px;
 }
 
 /* 音频：试听按钮在左，类型与时长在右侧竖排 */
@@ -119,23 +85,8 @@
 }
 
 .asset-ver__thumb {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 100%;
   height: 120px;
-  padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--table-border);
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--host-description-foreground);
-  font-size: var(--font-size-caption);
-  cursor: pointer;
-}
-
-.asset-ver__thumb--empty {
-  cursor: default;
 }
 
 .asset-ver__prompt {

@@ -23,7 +23,7 @@ import {
 } from '../models/screenplay';
 import { ProductionFormatType } from '../models/production-profile';
 import { countWords } from './creative-rules';
-import { FieldErrors, assertNoFieldErrors, readInteger, readOptionalText, readRecord, readText } from './field-readers';
+import { FieldErrors, assertNoFieldErrors, isBlank, isRecord, readInteger, readOptionalText, readRecord, readText, textOf } from './field-readers';
 import { isMultiEpisode } from './production-profile-rules';
 
 /** 不占口播时间的“标签：内容”行：画面、音效、配乐。 */
@@ -114,16 +114,6 @@ export function normalizeScreenplayParams(rawInput: unknown, formatType: Product
   return { maxEpisodeDurationSeconds, maxEpisodes, extra };
 }
 
-/** 判断值是否为普通对象。 */
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-/** 读取模型返回的文本字段并去除首尾空白；不是文本时按空串处理。 */
-function textOf(record: Record<string, unknown>, key: string): string {
-  const value = record[key];
-  return typeof value === 'string' ? value.trim() : '';
-}
 
 /**
  * 校验并整理模型返回的剧本包：标题、梗概、正文。
@@ -219,7 +209,7 @@ function readAttributes(value: unknown, kind: EntityKind, label: string, issues:
   }
   for (const { key } of ENTITY_ATTRIBUTES[kind]) {
     const entry = value[key];
-    if (entry === undefined || entry === null || entry === '') {
+    if (isBlank(entry)) {
       continue;
     }
     if (typeof entry !== 'string' || entry.trim().length > entityAttributeMaxLength(key)) {

@@ -4,16 +4,16 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
-// 备注：通过 window.aiStoryboardVoiceDraft.open(options) 打开，同一时间只有一个；请求都经 aiStoryboardVoice 发出（名称与 src/app/pages/voice-preview-handlers.ts 一致）；每次生成都会调用声音模型并产生费用，只在用户点击“生成试听”“换一个”时才请求；试听音色只暂存在宿主内存里，动画预览把它当作临时音色播放，点“采用并绑定”后才写入声音资产与绑定；只有预置音色的模型不能按描述生成，改为选预置音色；依赖 aiUi 组件库与 stage-storyboard-preview-voice.js，样式在 stage-storyboard-preview.css。
+// 备注：通过 window.aiStoryboardVoiceDraft.open(options) 打开，同一时间只有一个；请求都经 aiStoryboardVoice 发出（名称与 src/app/pages/voice-preview-handlers.ts 一致）；每次生成都会调用声音模型并产生费用，只在用户点击“生成试听”“换一个”时才请求；试听音色只暂存在宿主内存里，动画预览把它当作临时音色播放，点“采用并绑定”后才写入声音资产与绑定；只有预置音色的模型不能按描述生成，改为选预置音色；依赖 aiUi 组件库、shared/page-format.js（pageFormat.errorText）与 stage-storyboard-preview-voice.js，样式在 stage-storyboard-preview.css。
 // ------------------------------------------------------------------------
 
 'use strict';
 
 (function () {
   const voiceApi = window.aiStoryboardVoice;
+  const { errorText } = window.pageFormat;
 
   const SAMPLE_MAX_LENGTH = 120;
-  const GENERIC_ERROR_TEXT = '操作失败，请重试。';
   const COST_NOTICE = '每次生成都会调用声音模型，可能产生费用。试听音色只在这个动画预览里临时使用，点“采用并绑定”后才会保存为声音资产并绑定。';
   const DESCRIPTION_HINT = '来自剧本里角色的音色设定，可以修改；只用于这次生成，不会改动剧本。';
   const NARRATOR_HINT = '旁白没有角色设定，请写出想要的声音，例如“沉稳的中年男声，语速偏慢”。';
@@ -24,12 +24,6 @@
 
   /** 同一时间只打开一个。 */
   let active = false;
-
-  /** 取错误载荷中的说明文字：有字段错误时列出各项，否则用错误说明。 */
-  function errorText(error) {
-    const fields = error && error.fieldErrors ? Object.values(error.fieldErrors) : [];
-    return fields.length > 0 ? fields.join('\n') : (error && error.message) || GENERIC_ERROR_TEXT;
-  }
 
   /**
    * 打开“生成音色”对话框。
@@ -49,6 +43,10 @@
     }
   }
 
+  /**
+   * 对话框的完整流程：读取音色信息与声音模型，建立界面，等用户生成、试听、采用或关闭。
+   * @param {object} options 同 open 的参数。
+   */
   async function run(options) {
     const { workId, episodeId, entityId, speakerName } = options;
     const isNarrator = entityId === null;
@@ -94,7 +92,7 @@
         renderParams();
       }
     });
-    const paramsSlot = aiUi.h('div', { class: 'sbp-draft__params' });
+    const paramsSlot = aiUi.h('div', {});
     const sampleControl = aiUi.textArea({ value: state.sampleText, minRows: 1, maxRows: 3, ariaLabel: '试听台词', onChange: (text) => (state.sampleText = text) });
     const generateButton = aiUi.button({ text: '生成试听', icon: 'sparkles', onClick: () => void generate() });
     const messageElement = aiUi.h('p', { class: 'sbp-draft__message', attrs: { role: 'status' } });
@@ -180,6 +178,7 @@
       handle.setButtonDisabled('adopt', busy || state.draft === null);
     }
 
+    /** “生成试听”与“换一个”：校验试听台词与所选模型后调用声音模型生成临时音色，成功后刷新试听区并通知调用方；生成期间不重复触发。 */
     async function generate() {
       if (state.busy) return;
       if (state.sampleText.trim() === '') {
@@ -201,7 +200,7 @@
           modelId: Number(state.modelId),
           sampleText: state.sampleText,
           delivery: String(options.delivery || ''),
-          description: model && model.supportsReference ? state.description : '',
+          description: model.supportsReference ? state.description : '',
           presetVoice: state.presetVoice,
           // 已有试听音色时再点就是“换一个”：不用缓存，重新生成。
           regenerate: state.draft !== null

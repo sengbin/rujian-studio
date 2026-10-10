@@ -13,6 +13,7 @@ import { ModelDescriptor, ProviderDescriptor } from '../../../domain/models/mode
 import { ProviderCallContext, TextModelProvider } from '../../../domain/ports/provider-adapters';
 import { TextGenerationRequest } from '../../../domain/ports/text-generation-port';
 import { JSON_OUTPUT_NOTE, buildJsonSchemaFormat, buildUserContent, collectJsonContent } from '../shared/chat-tool-call';
+import { findModelByCode } from '../shared/provider-model-lookup';
 import { omitNullProperties } from '../shared/strict-json-schema';
 import { FetchFunction, VolcengineApiClient, classifyArkErrorCode } from './volcengine-api-client';
 import { VOLCENGINE_PROVIDER, VOLCENGINE_PROVIDER_NAME } from './volcengine-catalog';
@@ -36,7 +37,7 @@ export class VolcengineTextProvider implements TextModelProvider {
   }
 
   getCapability(modelCode: string): TextCapability | undefined {
-    return VOLCENGINE_TEXT_MODELS.find((model) => model.code === modelCode)?.capability;
+    return findModelByCode(VOLCENGINE_TEXT_MODELS, modelCode)?.capability;
   }
 
   checkConnection(context: ProviderCallContext): Promise<void> {

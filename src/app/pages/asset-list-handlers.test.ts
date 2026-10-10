@@ -17,10 +17,10 @@ import { MessageRouter } from '../messaging/message-router';
 import { AssetCategoryService } from '../services/asset-category-service';
 import { AssetGenerationService } from '../services/asset-generation-service';
 import { AssetPromptService } from '../services/asset-prompt-service';
-import { AssetService } from '../services/asset-service';
+import { AssetListRow, AssetService } from '../services/asset-service';
 import { createAssetGenerationFixture, createAssetWithPrompts } from '../services/testing/asset-generation-fixture';
 import { FILE_PROMPTS, ScriptedText } from '../stages/testing/scripted-text';
-import { ASSET_LIST_REQUESTS, AssetListRequest, AssetListRow, registerAssetListHandlers } from './asset-list-handlers';
+import { ASSET_LIST_REQUESTS, AssetListRequest, registerAssetListHandlers } from './asset-list-handlers';
 import { MemoryAssetFileStore } from '../../domain/ports/testing/memory-asset-file-store';
 
 function createFixture() {

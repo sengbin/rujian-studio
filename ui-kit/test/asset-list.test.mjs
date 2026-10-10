@@ -63,7 +63,7 @@ async function setup(assets) {
     },
     onEvent: () => undefined
   };
-  window.pageFormat = { formatRelativeTime: () => '刚刚' };
+  window.pageFormat = { ...window.pageFormat, formatRelativeTime: () => '刚刚' };
   window.aiForm = {
     open: async (options) => {
       forms.push(options);

@@ -8,8 +8,8 @@
 // ------------------------------------------------------------------------
 
 import { ValidationError } from '../../domain/errors';
-import { WorkSourceType } from '../../domain/models/work';
 import { readEntityId, readRecord } from '../../domain/rules/field-readers';
+import { SCREENPLAY_VIEW, STORYBOARD_VIEW, WorkListView, isListedInStoryboardView } from '../../domain/rules/work-list-rules';
 import { MessageRouter } from '../messaging/message-router';
 import { BeatSheetService } from '../services/beat-sheet-service';
 import { DeletionService } from '../services/deletion-service';
@@ -46,15 +46,6 @@ export type WorkListAction = 'create';
 export interface WorkListRequest {
   readonly action?: WorkListAction;
 }
-
-/** 作品列表页的视图：某种素材来源的作品，或跨素材来源、以剧本或分镜脚本为中心的列表。 */
-export type WorkListView = WorkSourceType | typeof SCREENPLAY_VIEW | typeof STORYBOARD_VIEW;
-
-/** 剧本视图的标识。 */
-export const SCREENPLAY_VIEW = 'screenplay';
-
-/** 分镜脚本视图的标识。 */
-export const STORYBOARD_VIEW = 'storyboard';
 
 /** 删除确认名称不一致时的提示。 */
 const CONFIRM_NAME_MISMATCH_MESSAGE = '输入的名称与作品名称不一致。';
@@ -98,21 +89,15 @@ export function registerWorkListHandlers(
   router.register(WORK_LIST_REQUESTS.load, () => {
     const summaries = projects.listProjects();
     const names = new Map(summaries.map((project) => [project.id, project.name]));
-    // 剧本视图只列创意已确认（可以生成剧本）或已有剧本记录的作品；分镜脚本视图只列剧本已确认或已有分镜脚本记录的作品。
-    const items =
-      view === SCREENPLAY_VIEW
-        ? works.listAllWorks().filter((work) => work.canStartScreenplay || work.screenplay.runId !== null)
-        : view === STORYBOARD_VIEW
-          ? works.listAllWorks()
-          : works.listWorksBySource(view);
-    const rows: WorkListRow[] = items
+    const rows: WorkListRow[] = works
+      .listForView(view)
       .map((work) => ({
         ...work,
         projectName: names.get(work.projectId) ?? '',
         contentCounts: view === SCREENPLAY_VIEW ? screenplays.getContentCounts(work.id) : null,
         storyboard: view === STORYBOARD_VIEW ? storyboards.getSummary(work.id) : null
       }))
-      .filter((row) => row.storyboard === null || row.storyboard.canStart || row.storyboard.started > 0);
+      .filter((row) => row.storyboard === null || isListedInStoryboardView(row.storyboard));
     return { view, projects: summaries.map(({ id, name }) => ({ id, name })), works: rows };
   });
 

@@ -11,6 +11,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { ProfileTarget, ProfileValues } from '../../domain/models/generation-profile';
 import { VideoAudioElement, VideoAudioMode } from '../../domain/models/model-capability';
 import { GenerationProfileRepository } from '../../domain/ports/generation-profile-repository';
+import { placeholders } from './sql-placeholders';
 import { runInTransaction } from './transaction';
 
 /** generation_profiles 表中本仓库使用的列。 */
@@ -80,7 +81,7 @@ export class SqliteGenerationProfileRepository implements GenerationProfileRepos
     const rows = this.database
       .prepare(
         `SELECT group_id, ${PROFILE_COLUMNS} FROM generation_profiles
-         WHERE scope = 'group' AND group_id IN (${groupIds.map(() => '?').join(', ')})`
+         WHERE scope = 'group' AND group_id IN (${placeholders(groupIds.length)})`
       )
       .all(...groupIds) as unknown as Array<ProfileRow & { readonly group_id: number }>;
     return new Map(rows.map((row) => [row.group_id, toValues(row)]));

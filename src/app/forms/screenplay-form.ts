@@ -4,10 +4,9 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：生成表单带文本模型字段，所选模型保存为作品的文本模型，启动失败时恢复原选择；原创文稿的文字原样保留，表单没有“补充要求”；生成表单的作品由入口固定；“选择作品”表单只选择、不启动生成，选好后由页面再打开生成表单；创意未确认时不能打开表单。
+// 备注：生成表单带文本模型字段，所选模型保存为作品的文本模型，启动失败时恢复原选择（由阶段启动服务完成）；原创文稿的文字原样保留，表单没有“补充要求”；生成表单的作品由入口固定；“选择作品”表单只选择、不启动生成，选好后由页面再打开生成表单；创意未确认时不能打开表单。
 // ------------------------------------------------------------------------
 
-import { FORM_LEVEL_ERROR_KEY, ValidationError } from '../../domain/errors';
 import { ScreenplayParams } from '../../domain/models/screenplay';
 import { readEntityId, readRecord } from '../../domain/rules/field-readers';
 import { isMultiEpisode } from '../../domain/rules/production-profile-rules';
@@ -19,6 +18,7 @@ import {
 } from '../../domain/rules/screenplay-rules';
 import { ProjectService } from '../services/project-service';
 import { ScreenplayService } from '../services/screenplay-service';
+import { StageStartService } from '../services/stage-start-service';
 import { WorkTextModelState } from '../services/text-settings-service';
 import { WorkService } from '../services/work-service';
 import { AsyncFormFactory, FormCatalog, FormDefinition, FormFactory, FormValues } from './form-definition';
@@ -26,12 +26,12 @@ import { FormFieldSchema } from './form-schema';
 import {
   TEXT_MODEL_FIELD_KEY,
   TEXT_MODEL_SAVED_NOTE,
-  WorkTextModels,
+  TextModelStates,
   createTextModelField,
   readTextModelKey,
-  startWithWorkTextModel,
   textModelInitialValue
 } from './text-model-field';
+import { createWorkPickForm, readPickProjectId } from './work-pick-form';
 
 /** 剧本表单在表单目录中的名称，页面据此请求打开。 */
 export const SCREENPLAY_FORM_NAMES = {
@@ -44,8 +44,10 @@ export interface ScreenplayFormDependencies {
   readonly projects: ProjectService;
   readonly works: WorkService;
   readonly screenplays: ScreenplayService;
-  /** 文本模型：读取候选与作品当前的选择，保存本次选择。 */
-  readonly textModels: WorkTextModels;
+  /** 文本模型：读取候选与作品当前的选择。 */
+  readonly textModels: TextModelStates;
+  /** 保存作品的文本模型并启动剧本生成。 */
+  readonly starts: Pick<StageStartService, 'startScreenplay'>;
   /** 生成已开始后调用，用于打开阶段产出层。 */
   readonly onStarted: (workId: number) => void;
   /** “选择作品”表单提交后调用，用于打开该作品的生成表单。 */
@@ -53,11 +55,7 @@ export interface ScreenplayFormDependencies {
 }
 
 const SUBMIT_LABEL = '开始生成';
-const PICK_SUBMIT_LABEL = '下一步';
-const PICK_FIELD_KEY = 'work';
-const PICK_SEPARATOR = ' › ';
 const NO_STARTABLE_MESSAGE = '没有可生成剧本的作品，请先在“创作”列表中确认创意。';
-const PICK_REQUIRED_MESSAGE = '请选择所属作品。';
 const TEXT_MODEL_PURPOSE = '生成剧本时';
 
 /** 生成参数转表单初始值：数字转为文本，未设置的项为空串。 */
@@ -71,7 +69,7 @@ function paramsToValues(params: ScreenplayParams): FormValues {
 
 /** 创建“生成剧本”表单的定义。 */
 function createStartForm(dependencies: ScreenplayFormDependencies, workId: number, textModelState: WorkTextModelState): FormDefinition {
-  const { works, screenplays, textModels, onStarted } = dependencies;
+  const { works, screenplays, starts, onStarted } = dependencies;
   const work = works.getWork(workId);
   screenplays.assertCanStart(workId);
   const lastParams = screenplays.getLastParams(workId);
@@ -125,45 +123,8 @@ function createStartForm(dependencies: ScreenplayFormDependencies, workId: numbe
     },
     submit: async (values) => {
       const textModel = readTextModelKey(textModelState, values);
-      await startWithWorkTextModel(textModels, workId, textModelState, textModel, async () => {
-        await screenplays.start(workId, values);
-      });
+      await starts.startScreenplay(workId, textModel, values);
       onStarted(workId);
-    }
-  };
-}
-
-/**
- * 创建“选择作品”表单的定义：只列创意已确认的作品，选项标签为“项目 › 作品”。
- * @param projectId 限定在该项目内选择；缺省列出全部项目。
- */
-function createPickForm(dependencies: ScreenplayFormDependencies, projectId: number | undefined): FormDefinition {
-  const { projects, works, onPicked } = dependencies;
-  const names = new Map(projects.listProjects().map((project) => [project.id, project.name]));
-  const candidates = works
-    .listAllWorks()
-    .filter((work) => work.canStartScreenplay && (projectId === undefined || work.projectId === projectId))
-    .map((work) => ({ id: work.id, label: `${names.get(work.projectId) ?? ''}${PICK_SEPARATOR}${work.name}` }));
-  if (candidates.length === 0) {
-    throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: NO_STARTABLE_MESSAGE });
-  }
-  const field: FormFieldSchema = {
-    key: PICK_FIELD_KEY,
-    label: '所属作品',
-    description: '只列出创意已确认的作品',
-    control: 'select',
-    required: true,
-    options: candidates.map((candidate) => candidate.label)
-  };
-  return {
-    schema: { title: '生成剧本', submitLabel: PICK_SUBMIT_LABEL, fields: [field] },
-    initialValues: candidates.length === 1 ? { [PICK_FIELD_KEY]: candidates[0].label } : {},
-    submit: (values) => {
-      const picked = candidates.find((candidate) => candidate.label === values[PICK_FIELD_KEY]);
-      if (picked === undefined) {
-        throw new ValidationError({ [PICK_FIELD_KEY]: PICK_REQUIRED_MESSAGE });
-      }
-      onPicked(picked.id);
     }
   };
 }
@@ -183,10 +144,17 @@ export function createScreenplayFormCatalog(dependencies: ScreenplayFormDependen
     ],
     [
       SCREENPLAY_FORM_NAMES.pick,
-      (params) => {
-        const projectId = readRecord(params ?? {}).projectId;
-        return createPickForm(dependencies, typeof projectId === 'number' ? projectId : undefined);
-      }
+      (params) =>
+        createWorkPickForm({
+          projects: dependencies.projects,
+          works: dependencies.works,
+          projectId: readPickProjectId(params),
+          isCandidate: (work) => work.canStartScreenplay,
+          title: '生成剧本',
+          description: '只列出创意已确认的作品',
+          emptyMessage: NO_STARTABLE_MESSAGE,
+          onPicked: dependencies.onPicked
+        })
     ]
   ]);
 }

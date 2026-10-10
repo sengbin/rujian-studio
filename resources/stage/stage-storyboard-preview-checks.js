@@ -4,7 +4,7 @@
 // 作者：Lion
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
-// 备注：依赖 stage-storyboard-preview-timeline.js（位置顺序），通过 window.aiStoryboardChecks 暴露；检查项与阈值见 private-docs/rujian-studio/开发文档-vscode/storyboard-animation-design.md 第 8 节。
+// 备注：依赖 stage-storyboard-preview-timeline.js（位置顺序、EPSILON）与 shared/page-format.js（秒数显示），通过 window.aiStoryboardChecks 暴露；检查项与阈值见 private-docs/rujian-studio/开发文档-vscode/storyboard-animation-design.md 第 8 节。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -23,12 +23,10 @@
   /** 镜头时长过短、过长的界线（秒）。 */
   const SHORT_SHOT_SECONDS = 1;
   const LONG_SHOT_SECONDS = 10;
-  const EPSILON = 1e-6;
 
-  /** 秒数显示：最多一位小数，整数不带小数点。 */
-  function formatSeconds(seconds) {
-    return String(Number(seconds.toFixed(1)));
-  }
+  /** 整数不带小数点的秒数显示由页面共用的 pageFormat 提供。 */
+  const { formatSeconds } = window.pageFormat;
+  const { EPSILON } = timelineApi;
 
   /** 横向、纵深位置名称在顺序中的下标。 */
   function xIndex(name) {
@@ -48,13 +46,13 @@
   function checkSounds(shot, items) {
     for (const sound of shot.sounds) {
       if (sound.clipped) {
-        items.push(item(shot, LEVEL_WARNING, 'sound_overflow', `声音超出镜头时长 ${formatSeconds(sound.rawEnd - shot.duration)} 秒，视频里会被截断。`));
+        items.push(item(shot, LEVEL_WARNING, 'sound_overflow', `声音超出镜头时长 ${formatSeconds(sound.rawEnd - shot.duration)}，视频里会被截断。`));
       }
       if (timelineApi.isVoice(sound.kind) && sound.charCount > 0) {
         const given = sound.rawEnd - sound.start;
         const needed = sound.charCount / SPEECH_MAX_CHARS_PER_SECOND;
         if (given < needed - EPSILON) {
-          items.push(item(shot, LEVEL_WARNING, 'speech_too_dense', `这句台词约需 ${formatSeconds(needed)} 秒，只给了 ${formatSeconds(given)} 秒，语速会过快。`));
+          items.push(item(shot, LEVEL_WARNING, 'speech_too_dense', `这句台词约需 ${formatSeconds(needed)}，只给了 ${formatSeconds(given)}，语速会过快。`));
         }
       }
     }
@@ -135,7 +133,7 @@
     const hasVoice = shot.sounds.some((sound) => timelineApi.isVoice(sound.kind));
     if (!hasCharacter && !hasVoice) items.push(item(shot, LEVEL_INFO, 'no_actor', '没有出场角色。'));
     if (shot.duration < SHORT_SHOT_SECONDS - EPSILON || shot.duration > LONG_SHOT_SECONDS + EPSILON) {
-      items.push(item(shot, LEVEL_INFO, 'duration_extreme', `时长 ${formatSeconds(shot.duration)} 秒，请确认是否合适。`));
+      items.push(item(shot, LEVEL_INFO, 'duration_extreme', `时长 ${formatSeconds(shot.duration)}，请确认是否合适。`));
     }
     if (!shot.camera.supported) items.push(item(shot, LEVEL_INFO, 'camera_unsupported', `运镜“${shot.camera.label}”预览未模拟。`));
   }

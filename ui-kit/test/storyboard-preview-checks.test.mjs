@@ -9,9 +9,9 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { IDS, loadScript, makeShot, makeSound, makeStaging, makeView } from './storyboard-preview-fixtures.mjs';
+import { IDS, loadScript, loadScripts, makeShot, makeSound, makeStaging, makeView, TIMELINE_SCRIPTS } from './storyboard-preview-fixtures.mjs';
 
-const timelineWindow = loadScript('stage/stage-storyboard-preview-timeline.js');
+const timelineWindow = loadScripts(['shared/page-format.js', ...TIMELINE_SCRIPTS]);
 const timeline = timelineWindow.aiStoryboardTimeline;
 const checks = loadScript('stage/stage-storyboard-preview-checks.js', timelineWindow).aiStoryboardChecks;
 

@@ -25,7 +25,10 @@ import { readMoveStep, readRecord } from '../../domain/rules/field-readers';
 import { getProductionProfile } from '../../domain/rules/production-profile-rules';
 import { WORK_KIND_LABELS } from '../../domain/rules/work-rules';
 import { canApprove, canCancel, canRetry, isStale, toDisplayStatus } from '../../domain/rules/stage-review-rules';
-import { MAX_SHOTS_LIMIT, normalizeShotEdit, normalizeStoryboardParams } from '../../domain/rules/storyboard-rules';
+import { normalizeShotEdit } from '../../domain/rules/storyboard-edit-rules';
+import { MAX_SHOTS_LIMIT, normalizeStoryboardParams } from '../../domain/rules/storyboard-params-rules';
+import { MAX_SOUNDS_PER_SHOT } from '../../domain/rules/storyboard-shot-fields';
+import { IMAGE_FILE_MAX_BYTES } from '../../domain/rules/image-size';
 import { CutNotice, checkGroupCuts } from '../../domain/rules/shot-cut-rules';
 import { groupMaxSecondsOf, sumSeconds } from '../../domain/rules/shot-group-rules';
 import { evaluateCalibration } from '../../domain/rules/timing-calibration-rules';
@@ -33,6 +36,7 @@ import { ApprovedBeatSheetReader } from '../stages/approved-beat-sheet';
 import { StageRunner } from '../stages/stage-runner';
 import { ProjectService } from './project-service';
 import { syncShotGroups } from './shot-grouping';
+import { readRunParams } from './stage-run-params';
 import { StageActions, StageRunView, StageService, StageVersionItem, toRunView, toVersionItem } from './stage-service';
 import { WorkService } from './work-service';
 
@@ -157,6 +161,8 @@ export interface StoryboardStageView {
   readonly soundKinds: ReadonlyArray<{ readonly kind: SoundKind; readonly label: string }>;
   /** 镜头站位的可选项：横向位置、纵深位置、朝向。 */
   readonly stagingOptions: StagingOptionsView;
+  /** 编辑时的限制（与保存时的校验一致）：每个镜头最多的声音条目数、首帧图片的大小上限（字节）。 */
+  readonly limits: { readonly maxSoundsPerShot: number; readonly firstFrameImageMaxBytes: number };
   /** 上游剧本已被修改或不再是已确认版本。 */
   readonly stale: boolean;
   readonly actions: StageActions;
@@ -394,6 +400,7 @@ export class StoryboardService {
       firstFrameAssets: this.listFirstFrameAssets().map(({ id, kind, name }) => ({ id, kindLabel: ASSET_KIND_LABELS[kind], name })),
       soundKinds: SOUND_KIND_VIEWS,
       stagingOptions: STAGING_OPTION_VIEWS,
+      limits: { maxSoundsPerShot: MAX_SOUNDS_PER_SHOT, firstFrameImageMaxBytes: IMAGE_FILE_MAX_BYTES },
       stale: run.status === 'succeeded' && isStale(run, source),
       actions: {
         canApprove: canApprove(run),
@@ -638,8 +645,7 @@ export function readStoryboardAspectRatio(run: StageRun): string | null {
   return typeof aspectRatio === 'string' && aspectRatio !== '' ? aspectRatio : null;
 }
 
-/** 从记录的输入快照中取出分镜脚本参数；快照结构不符时返回 null。 */
+/** 从记录的输入快照中取出分镜脚本参数；快照里没有参数时返回 null。 */
 export function readStoryboardParams(run: StageRun): StoryboardParams | null {
-  const params = (run.input as { params?: unknown }).params;
-  return typeof params === 'object' && params !== null ? (params as StoryboardParams) : null;
+  return readRunParams<StoryboardParams>(run);
 }

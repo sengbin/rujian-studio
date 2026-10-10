@@ -72,6 +72,10 @@ test('产出页：不属于本作品的版本被拒绝；没有生成时取消�
     assert.ok(denied && !denied.ok && denied.error.kind === 'not-found');
     const invalidId = await sendStage(STAGE_REQUESTS.rawOutput, { id: 'x' });
     assert.ok(invalidId && !invalidId.ok && invalidId.error.kind === 'validation');
+    const invalidLoadId = await sendStage(STAGE_REQUESTS.load, { id: 'x' });
+    assert.ok(invalidLoadId && !invalidLoadId.ok && invalidLoadId.error.kind === 'validation');
+    const nullLoadId = await sendStage(STAGE_REQUESTS.load, { id: null });
+    assert.ok(nullLoadId?.ok, 'id 为 null 表示读取当前版本');
 
     const latest = stages.getCreativeView(work.id).run.id;
     const cancel = await sendStage(STAGE_REQUESTS.cancel, { id: latest });

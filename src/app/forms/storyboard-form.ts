@@ -17,17 +17,17 @@ import {
   AUDIO_MODE_LABELS,
   CONTINUITY_LABELS,
   MAX_SHOTS_LIMIT,
-  SHOT_SECONDS_MAX,
-  SHOT_SECONDS_MIN,
   STORYBOARD_EXTRA_MAX_LENGTH,
   STORYBOARD_STYLE_MAX_LENGTH,
   normalizeStoryboardParams
-} from '../../domain/rules/storyboard-rules';
+} from '../../domain/rules/storyboard-params-rules';
+import { SHOT_SECONDS_MAX, SHOT_SECONDS_MIN } from '../../domain/rules/storyboard-shot-fields';
 import { DEFAULT_GROUP_MAX_SECONDS, GROUP_SECONDS_MAX, GROUP_SECONDS_MIN, groupMaxSecondsOf } from '../../domain/rules/shot-group-rules';
 import { capGroupSeconds, checkStoryboardTarget, describeTargetModel } from '../../domain/rules/storyboard-target-rules';
 import { GenerationProfileService } from '../services/generation-profile-service';
 import { ProjectService } from '../services/project-service';
 import { ProviderService } from '../services/provider-service';
+import { StageStartService } from '../services/stage-start-service';
 import { StoryboardService } from '../services/storyboard-service';
 import { WorkService } from '../services/work-service';
 import { AsyncFormFactory, FormCatalog, FormDefinition, FormFactory, FormValues } from './form-definition';
@@ -35,12 +35,12 @@ import { FormFieldSchema } from './form-schema';
 import {
   TEXT_MODEL_FIELD_KEY,
   TEXT_MODEL_SAVED_NOTE,
-  WorkTextModels,
+  TextModelStates,
   createTextModelField,
   readTextModelKey,
-  startWithWorkTextModel,
   textModelInitialValue
 } from './text-model-field';
+import { createWorkPickForm, readPickProjectId } from './work-pick-form';
 
 /** 分镜脚本表单在表单目录中的名称，页面据此请求打开。 */
 export const STORYBOARD_FORM_NAMES = {
@@ -53,10 +53,12 @@ export interface StoryboardFormDependencies {
   readonly projects: ProjectService;
   readonly works: WorkService;
   readonly storyboards: StoryboardService;
-  /** 文本模型：读取候选与作品当前的选择，保存本次选择。 */
-  readonly textModels: WorkTextModels;
-  /** 作品默认生成参数：目标模型、画幅、分辨率的初始值与保存。 */
-  readonly profiles: Pick<GenerationProfileService, 'getWorkDefaults' | 'saveWorkDefaults'>;
+  /** 文本模型：读取候选与作品当前的选择。 */
+  readonly textModels: TextModelStates;
+  /** 保存作品的文本模型并启动分镜脚本生成，启动后保存作品默认的目标视频参数。 */
+  readonly starts: Pick<StageStartService, 'startStoryboard'>;
+  /** 作品默认生成参数：目标模型、画幅、分辨率的初始值。 */
+  readonly profiles: Pick<GenerationProfileService, 'getWorkDefaults'>;
   /** 可用的视频模型，作为目标模型的选项。 */
   readonly providers: Pick<ProviderService, 'listUsableModels'>;
   /** 生成已开始后调用，参数为已启动的集；用于打开该集（多集时打开各集状态列表）的页面。 */
@@ -66,12 +68,9 @@ export interface StoryboardFormDependencies {
 }
 
 const SUBMIT_LABEL = '开始生成';
-const PICK_SUBMIT_LABEL = '下一步';
-const PICK_FIELD_KEY = 'work';
-const PICK_SEPARATOR = ' › ';
 const NO_STARTABLE_MESSAGE = '没有可生成分镜脚本的作品，请先在“剧本”列表中确认剧本。';
-const PICK_REQUIRED_MESSAGE = '请选择所属作品。';
 const EPISODE_REQUIRED_MESSAGE = '请至少选择一集。';
+const EPISODES_INVALID_MESSAGE = '所选的集格式不正确，请重新选择。';
 const MODEL_INVALID_MESSAGE = '请选择列表中的模型。';
 const TEXT_MODEL_PURPOSE = '生成分镜脚本时';
 /** 目标模型、画幅、分辨率的字段键：保存为作品默认，不属于分镜脚本的生成参数。 */
@@ -130,7 +129,7 @@ function mergeOptions(lists: ReadonlyArray<readonly string[]>): string[] {
  * @param episodeId 指定时只为这一集生成（重新生成、从某集进入）；缺省时多集作品可多选。
  */
 async function createStartForm(dependencies: StoryboardFormDependencies, workId: number, episodeId: number | undefined): Promise<FormDefinition> {
-  const { works, projects, storyboards, textModels, profiles, providers, onStarted } = dependencies;
+  const { works, projects, storyboards, textModels, profiles, providers, starts, onStarted } = dependencies;
   const work = works.getWork(workId);
   storyboards.assertCanStart(workId);
   const statuses = storyboards.listEpisodeStatuses(workId);
@@ -319,13 +318,7 @@ async function createStartForm(dependencies: StoryboardFormDependencies, workId:
       const changes = hasTargets ? readTargetChanges(values, targetValues, models, normalizeStoryboardParams(paramValues)) : {};
       // 画幅留空时由服务取项目默认画幅；没有可选模型时沿用作品默认。
       const aspectRatio = hasTargets ? values[TARGET_KEYS.aspectRatio] || null : defaults.aspectRatio;
-      await startWithWorkTextModel(textModels, workId, textModelState, textModel, async () => {
-        await storyboards.start(workId, ids, paramValues, aspectRatio);
-      });
-      // 生成已启动后再保存默认参数，启动失败时不改动作品默认。
-      if (Object.keys(changes).length > 0) {
-        profiles.saveWorkDefaults(workId, changes);
-      }
+      await starts.startStoryboard({ workId, episodeIds: ids, params: paramValues, aspectRatio, defaultChanges: changes }, textModel);
       onStarted(workId, ids);
     }
   };
@@ -354,49 +347,21 @@ function readTargetChanges(values: FormValues, initial: FormValues, models: read
   };
 }
 
-/** 读取表单传来的多选值（JSON 数组文本）；格式不对时按未选择处理。 */
-function parseChosenLabels(value: string | undefined): string[] {
-  try {
-    const parsed: unknown = JSON.parse(value ?? '[]');
-    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
-  } catch {
-    return [];
-  }
-}
-
 /**
- * 创建“选择作品”表单的定义：只列剧本已确认的作品，选项标签为“项目 › 作品”。
- * @param projectId 限定在该项目内选择；缺省列出全部项目。
+ * 读取表单传来的多选值（JSON 数组文本）；没有传值按未选择处理。
+ * @throws ValidationError 不是字符串数组。
  */
-function createPickForm(dependencies: StoryboardFormDependencies, projectId: number | undefined): FormDefinition {
-  const { projects, works, storyboards, onPicked } = dependencies;
-  const names = new Map(projects.listProjects().map((project) => [project.id, project.name]));
-  const candidates = works
-    .listAllWorks()
-    .filter((work) => (projectId === undefined || work.projectId === projectId) && storyboards.getSummary(work.id).canStart)
-    .map((work) => ({ id: work.id, label: `${names.get(work.projectId) ?? ''}${PICK_SEPARATOR}${work.name}` }));
-  if (candidates.length === 0) {
-    throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: NO_STARTABLE_MESSAGE });
+function parseChosenLabels(value: string | undefined): string[] {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value ?? '[]');
+  } catch {
+    throw new ValidationError({ episodes: EPISODES_INVALID_MESSAGE });
   }
-  const field: FormFieldSchema = {
-    key: PICK_FIELD_KEY,
-    label: '所属作品',
-    description: '只列出剧本已确认的作品',
-    control: 'select',
-    required: true,
-    options: candidates.map((candidate) => candidate.label)
-  };
-  return {
-    schema: { title: '生成分镜脚本', submitLabel: PICK_SUBMIT_LABEL, fields: [field] },
-    initialValues: candidates.length === 1 ? { [PICK_FIELD_KEY]: candidates[0].label } : {},
-    submit: (values) => {
-      const picked = candidates.find((candidate) => candidate.label === values[PICK_FIELD_KEY]);
-      if (picked === undefined) {
-        throw new ValidationError({ [PICK_FIELD_KEY]: PICK_REQUIRED_MESSAGE });
-      }
-      onPicked(picked.id);
-    }
-  };
+  if (!Array.isArray(parsed) || parsed.some((item) => typeof item !== 'string')) {
+    throw new ValidationError({ episodes: EPISODES_INVALID_MESSAGE });
+  }
+  return parsed as string[];
 }
 
 /**
@@ -415,10 +380,17 @@ export function createStoryboardFormCatalog(dependencies: StoryboardFormDependen
     ],
     [
       STORYBOARD_FORM_NAMES.pick,
-      (params) => {
-        const projectId = readRecord(params ?? {}).projectId;
-        return createPickForm(dependencies, typeof projectId === 'number' ? projectId : undefined);
-      }
+      (params) =>
+        createWorkPickForm({
+          projects: dependencies.projects,
+          works: dependencies.works,
+          projectId: readPickProjectId(params),
+          isCandidate: (work) => dependencies.storyboards.getSummary(work.id).canStart,
+          title: '生成分镜脚本',
+          description: '只列出剧本已确认的作品',
+          emptyMessage: NO_STARTABLE_MESSAGE,
+          onPicked: dependencies.onPicked
+        })
     ]
   ]);
 }

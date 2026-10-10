@@ -16,6 +16,7 @@ import {
   StageFacing,
   StageX
 } from '../models/storyboard';
+import { isBlank } from './field-readers';
 
 /** 站位动作文字的最大长度。 */
 export const STAGING_ACTION_MAX_LENGTH = 100;
@@ -32,7 +33,7 @@ export type StagingFields = Omit<ShotStaging, 'entityId'>;
 /** 读取一个枚举字段：空值为 null，不在取值范围内记录问题并返回 null。 */
 function readChoice<T extends string>(record: Record<string, unknown>, key: string, values: readonly T[], label: string, issues: string[]): T | null {
   const raw = record[key];
-  if (raw === undefined || raw === null || raw === '') {
+  if (isBlank(raw)) {
     return null;
   }
   if (typeof raw !== 'string' || !values.includes(raw as T)) {

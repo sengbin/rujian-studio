@@ -11,6 +11,7 @@
 
 (function () {
   const timelineApi = window.aiStoryboardTimeline;
+  const { EPSILON } = timelineApi;
 
   /** 可选的倍速。 */
   const RATES = [0.5, 1, 1.5, 2];
@@ -20,7 +21,6 @@
   const RESTART_THRESHOLD_SECONDS = 1;
   /** 键盘前进、后退的步长（秒）。 */
   const SEEK_STEP_SECONDS = 1;
-  const EPSILON = 1e-6;
 
   /**
    * 创建播放器。
@@ -103,6 +103,7 @@
       notify();
     }
 
+    /** 开始播放；没有镜头或已在播放时忽略，在末尾再点播放从头开始。 */
     function play() {
       if (playing || timeline.shots.length === 0) return;
       // 在末尾再点播放，从头开始。
@@ -113,6 +114,7 @@
       notify();
     }
 
+    /** 暂停播放，保留当前时间；没在播放时忽略。 */
     function pause() {
       if (!playing) return;
       playing = false;
@@ -120,6 +122,7 @@
       notify();
     }
 
+    /** 播放与暂停切换。 */
     function toggle() {
       if (playing) pause();
       else play();
@@ -133,6 +136,7 @@
       notify();
     }
 
+    /** 跳到某个时间（秒），超出范围时夹到 0 到总时长之间，播放状态不变。 */
     function seek(target) {
       time = clampTime(target);
       lastStamp = null;
@@ -161,17 +165,20 @@
       else seek(timeline.shots[index - 1].start);
     }
 
+    /** 跳到第 index 个镜头（从 0 起）的开头；没有这个镜头时忽略。 */
     function seekToShot(index) {
       const shot = timeline.shots[index];
       if (shot) seek(shot.start);
     }
 
+    /** 设置倍速；不在 RATES 里的值忽略。 */
     function setRate(value) {
       if (!RATES.includes(value)) return;
       rate = value;
       notify();
     }
 
+    /** 设置是否循环播放当前镜头。 */
     function setLoopShot(value) {
       loopShot = Boolean(value);
       notify();

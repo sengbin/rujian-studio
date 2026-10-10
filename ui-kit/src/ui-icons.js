@@ -78,6 +78,9 @@
     'alert-triangle': '<path d="M12 9v4" /><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" /><path d="M12 16h.01" />'
   };
 
+  /** 图标相对文字的位置：文字前、文字后；按钮与匹配规则共用。 */
+  window.aiUi.iconPosition = Object.freeze({ start: 'start', end: 'end' });
+
   /** 图标外层 SVG 的公共属性：24×24 画布，2 像素圆角线条，颜色取当前文字颜色。 */
   const SVG_OPEN_TAG =
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"';

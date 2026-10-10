@@ -14,6 +14,8 @@ import { afterEach, test } from 'node:test';
 import { createUiEnvironment, fire } from './ui-environment.mjs';
 
 const RESOURCES_ROOT = fileURLToPath(new URL('../../resources/', import.meta.url));
+/** 设置页按依赖顺序加载的脚本（相对 resources/settings 目录）。 */
+const PAGE_SCRIPTS = ['settings-widgets.js', 'settings-secret-form.js', 'settings-text.js', 'settings-provider.js', 'settings-account.js', 'settings.js'];
 
 let env;
 
@@ -66,7 +68,7 @@ async function setup(queryResult) {
     },
     onEvent: () => undefined
   };
-  window.eval(readFileSync(`${RESOURCES_ROOT}settings/settings.js`, 'utf8'));
+  for (const file of PAGE_SCRIPTS) window.eval(readFileSync(`${RESOURCES_ROOT}settings/${file}`, 'utf8'));
   await new Promise((resolve) => window.setTimeout(resolve, 20));
   return { document, requests };
 }
@@ -171,4 +173,99 @@ test('测试连接：每个接口地址的结果显示在对应标签右侧，�
   } finally {
     LOADED.providers[0].settings = savedSettings;
   }
+});
+
+/** 弹出页（含确认对话框）里文字完全匹配的按钮，取最上层的一个。 */
+const dialogButton = (document, text) => [...document.querySelectorAll('.ui-dialog button')].filter((button) => button.textContent.trim() === text).at(-1);
+
+/** 在页面里按可访问名称找输入框并填入内容。 */
+function typeInto(document, label, value) {
+  const input = document.querySelector(`input[aria-label="${label}"]`);
+  assert.ok(input, `应有输入框：${label}`);
+  input.value = value;
+}
+
+test('访问密钥表单：空输入只提示不请求；保存带公共参数并清空输入；宿主的字段错误显示在字段下；清除确认后状态变为未配置', async () => {
+  const { document, requests } = await setup({ ok: true, message: '', entries: [] });
+  const original = env.window.hostBridge.request;
+  let keyAnswer = { provider: { apiKeyConfigured: true } };
+  env.window.hostBridge.request = async (name, payload) => {
+    if (name === 'settings.providerSetKey' || name === 'settings.providerClearKey') {
+      requests.push([name, JSON.parse(JSON.stringify(payload))]);
+      if (keyAnswer instanceof Error) throw keyAnswer;
+      return keyAnswer;
+    }
+    return original(name, payload);
+  };
+  fire(env, findButton(document, '设置：火山'), 'click');
+  await wait();
+
+  const input = document.querySelector('input[aria-label="火山访问密钥"]');
+  assert.equal(input.placeholder, '已配置，输入新密钥可更换');
+  assert.equal(findButton(document, '更换密钥').textContent, '更换密钥');
+  fire(env, findButton(document, '更换密钥'), 'click');
+  await wait();
+  assert.ok(document.body.textContent.includes('访问密钥不能为空。'));
+  assert.equal(requests.filter(([name]) => name === 'settings.providerSetKey').length, 0);
+
+  typeInto(document, '火山访问密钥', ' abc ');
+  fire(env, findButton(document, '更换密钥'), 'click');
+  await wait();
+  assert.deepEqual(requests.filter(([name]) => name === 'settings.providerSetKey'), [['settings.providerSetKey', { providerId: 1, apiKey: 'abc' }]]);
+  assert.equal(input.value, '');
+  assert.ok(!document.body.textContent.includes('访问密钥不能为空。'));
+  assert.ok(document.body.textContent.includes('已保存'));
+
+  keyAnswer = Object.assign(new Error('校验失败'), { fieldErrors: { apiKey: '密钥格式不对。' } });
+  typeInto(document, '火山访问密钥', 'bad');
+  fire(env, findButton(document, '更换密钥'), 'click');
+  await wait();
+  assert.ok(document.body.textContent.includes('密钥格式不对。'));
+  assert.ok(!document.body.textContent.includes('保存失败'));
+
+  keyAnswer = { provider: { apiKeyConfigured: false } };
+  fire(env, findButton(document, '清除密钥'), 'click');
+  await wait();
+  fire(env, dialogButton(document, '清除'), 'click');
+  await wait();
+  assert.deepEqual(requests.filter(([name]) => name === 'settings.providerClearKey'), [['settings.providerClearKey', { providerId: 1 }]]);
+  assert.equal(input.placeholder, '粘贴访问密钥');
+  assert.equal(findButton(document, '保存密钥').textContent, '保存密钥');
+  assert.equal(findButton(document, '清除密钥').hidden, true);
+  assert.equal(findButton(document, '测试连接').disabled, true);
+});
+
+test('账户密钥表单：两个输入一起提交，宿主指出的字段错误分别显示，保存失败的其他原因显示在状态文字里', async () => {
+  const { document, requests } = await setup({ ok: true, message: '', entries: [] });
+  const original = env.window.hostBridge.request;
+  let keyAnswer = { account: { credentialReady: true } };
+  env.window.hostBridge.request = async (name, payload) => {
+    if (name === 'settings.accountSetKey') {
+      requests.push([name, JSON.parse(JSON.stringify(payload))]);
+      if (keyAnswer instanceof Error) throw keyAnswer;
+      return keyAnswer;
+    }
+    return original(name, payload);
+  };
+  fire(env, findButton(document, '账户密钥：火山'), 'click');
+  await wait();
+
+  typeInto(document, '火山的 AccessKey ID', ' ak ');
+  typeInto(document, '火山的 SecretKey', 'sk');
+  fire(env, findButton(document, '更换密钥'), 'click');
+  await wait();
+  assert.deepEqual(requests.filter(([name]) => name === 'settings.accountSetKey'), [['settings.accountSetKey', { providerId: 1, accessKeyId: 'ak', secretAccessKey: 'sk' }]]);
+  assert.equal(document.querySelector('input[aria-label="火山的 SecretKey"]').value, '');
+  assert.ok(document.body.textContent.includes('已保存'));
+
+  keyAnswer = Object.assign(new Error('校验失败'), { fieldErrors: { accessKeyId: 'ID 不能为空。' } });
+  fire(env, findButton(document, '更换密钥'), 'click');
+  await wait();
+  assert.ok(document.body.textContent.includes('ID 不能为空。'));
+
+  keyAnswer = new Error('网络中断');
+  fire(env, findButton(document, '更换密钥'), 'click');
+  await wait();
+  assert.ok(document.body.textContent.includes('保存失败：网络中断'));
+  assert.ok(!document.body.textContent.includes('ID 不能为空。'));
 });

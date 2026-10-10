@@ -11,7 +11,6 @@ import { ProviderError } from '../../../domain/errors';
 import { VideoCapability } from '../../../domain/models/model-capability';
 import { ModelDescriptor, ProviderDescriptor } from '../../../domain/models/model-provider';
 import {
-  MediaInput,
   ProviderCallContext,
   RemoteJobRef,
   RemoteJobState,
@@ -20,8 +19,10 @@ import {
   VideoJobResult,
   VideoModelProvider
 } from '../../../domain/ports/provider-adapters';
-import { isDurationAllowed } from '../../../domain/rules/model-capability-rules';
-import { ExtraParamSpec, mapExtraParams, readObject, toDataUri, validateExtraParams, validateMediaFiles } from '../shared/provider-payload';
+import { findDescribedModelByCode } from '../shared/provider-model-lookup';
+import { ExtraParamSpec, mapExtraParams, readObject, validateExtraParams } from '../shared/provider-payload';
+import { VideoMediaRules, VideoParameterRules, validateVideoMediaCombination, validateVideoParameters } from '../shared/video-request-validation';
+import { VIDEO_TASK_STATUSES, buildVideoContent } from '../shared/video-task-content';
 import { FetchFunction, VolcengineApiClient, classifyArkErrorCode } from './volcengine-api-client';
 import { VOLCENGINE_PROVIDER, VOLCENGINE_PROVIDER_NAME } from './volcengine-catalog';
 import {
@@ -42,24 +43,23 @@ const CONNECTION_PROBE_PATH = `${TASKS_PATH}/cgt-00000000-0000-0000-0000-0000000
 /** 提交视频任务的总超时（毫秒）：素材以 Base64 内联上传，可能接近 64 MB。 */
 const SUBMIT_TIMEOUT_MS = 180_000;
 
-/** 素材在请求中的角色（content[].role）。 */
-const ROLE_FIRST_FRAME = 'first_frame';
-const ROLE_LAST_FRAME = 'last_frame';
-const ROLE_REFERENCE_IMAGE = 'reference_image';
-const ROLE_REFERENCE_AUDIO = 'reference_audio';
+/** 任务状态与统一状态的对应：在共有状态之外，方舟的任务可能已过期。 */
+const TASK_STATUSES: Readonly<Record<string, RemoteJobStatus>> = { ...VIDEO_TASK_STATUSES, expired: 'expired' };
 
-/** Base64 编码后体积约为原文件的 4/3。 */
-const BASE64_EXPANSION = 4 / 3;
+/** 参数校验规则：时长可不指定（由平台决定），不支持随机种子。 */
+const PARAMETER_RULES: VideoParameterRules = { durationRequired: false, seedUnsupported: true };
 
-/** 任务状态与统一状态的对应。 */
-const TASK_STATUSES: Readonly<Record<string, RemoteJobStatus>> = {
-  queued: 'pending',
-  running: 'running',
-  succeeded: 'succeeded',
-  failed: 'failed',
-  cancelled: 'canceled',
-  expired: 'expired'
-};
+/** 素材校验规则：提示词与素材至少一项，尾帧必须配首帧；参考音频是否可以单独使用取决于模型。 */
+function buildMediaRules(model: VolcengineVideoModel): VideoMediaRules {
+  return {
+    promptRequired: false,
+    lastFrameRequiresFirst: true,
+    audioRequiresReferenceImage: !model.audioOnlyReference,
+    image: { maxBytes: SEEDANCE_IMAGE_MAX_BYTES, formats: null },
+    audio: { maxBytes: SEEDANCE_AUDIO_MAX_BYTES, formats: { mimeTypes: SEEDANCE_AUDIO_MIME_TYPES, label: 'WAV、MP3' } },
+    requestMaxBytes: SEEDANCE_REQUEST_MAX_BYTES
+  };
+}
 
 /** 模型专有参数：键与请求体中键的对应，取值都是开或关。 */
 const EXTRA_PARAMETER_SPECS: Readonly<Record<string, ExtraParamSpec>> = {
@@ -84,17 +84,18 @@ export class VolcengineVideoProvider implements VideoModelProvider {
   }
 
   getCapability(modelCode: string): VideoCapability | undefined {
-    return findModel(modelCode)?.descriptor.capability;
+    return findDescribedModelByCode(VOLCENGINE_VIDEO_MODELS, modelCode)?.descriptor.capability;
   }
 
   validate(request: VideoGenerationRequest): readonly string[] {
-    const model = findModel(request.modelCode);
+    const model = findDescribedModelByCode(VOLCENGINE_VIDEO_MODELS, request.modelCode);
     if (model === undefined) {
       return [`${VOLCENGINE_PROVIDER_NAME}没有模型 ${request.modelCode}。`];
     }
+    const capability = model.descriptor.capability;
     return [
-      ...validateMediaCombination(request, model),
-      ...validateParameters(request, model.descriptor.capability),
+      ...validateVideoMediaCombination(request, capability, buildMediaRules(model)),
+      ...validateVideoParameters(request, capability, PARAMETER_RULES),
       ...validateExtraParams(request.extraParams, EXTRA_PARAMETER_SPECS)
     ];
   }
@@ -149,110 +150,9 @@ export class VolcengineVideoProvider implements VideoModelProvider {
   }
 }
 
-function findModel(modelCode: string): VolcengineVideoModel | undefined {
-  return VOLCENGINE_VIDEO_MODELS.find((model) => model.descriptor.code === modelCode);
-}
-
-/** 校验素材组合与素材本身：首尾帧与参考素材互斥、尾帧必须配首帧、数量、格式与大小。 */
-function validateMediaCombination(request: VideoGenerationRequest, model: VolcengineVideoModel): string[] {
-  const issues: string[] = [];
-  const capability = model.descriptor.capability;
-  const hasFrames = request.firstFrame !== null || request.lastFrame !== null;
-  const hasReferences = request.referenceImages.length > 0 || request.referenceAudios.length > 0;
-
-  if (request.prompt.trim() === '' && !hasFrames && !hasReferences) {
-    issues.push('提示词和素材至少要提供一项。');
-  }
-  if (request.prompt.length > capability.promptMaxLength) {
-    issues.push(`提示词不能超过 ${capability.promptMaxLength} 字（当前 ${request.prompt.length} 字）。`);
-  }
-  if (request.lastFrame !== null && request.firstFrame === null) {
-    issues.push('指定尾帧时必须同时指定首帧。');
-  }
-  if (hasFrames && hasReferences) {
-    issues.push('首帧、尾帧不能与参考图、参考音频同时使用。');
-  }
-  if (request.firstFrame !== null && !capability.firstFrame) {
-    issues.push('该模型不支持首帧。');
-  }
-  if (request.lastFrame !== null && !capability.lastFrame) {
-    issues.push('该模型不支持尾帧。');
-  }
-
-  const frames = [request.firstFrame, request.lastFrame, ...request.referenceImages].filter((media): media is MediaInput => media !== null);
-  issues.push(...validateMediaFiles(frames, 'image/', '图片', SEEDANCE_IMAGE_MAX_BYTES));
-  if (request.referenceImages.length > capability.referenceImagesMax) {
-    issues.push(`参考图最多 ${capability.referenceImagesMax} 张（当前 ${request.referenceImages.length} 张）。`);
-  }
-
-  issues.push(...validateReferenceAudios(request, model));
-
-  const inlineBytes = [...frames, ...request.referenceAudios].reduce((total, media) => total + media.data.byteLength, 0);
-  if (inlineBytes * BASE64_EXPANSION > SEEDANCE_REQUEST_MAX_BYTES) {
-    issues.push(`素材合计超过请求体上限 ${SEEDANCE_REQUEST_MAX_BYTES / 1024 / 1024} MB，请减少或压缩素材。`);
-  }
-  return issues;
-}
-
-/** 校验参考音频：数量、格式、大小，以及 Seedance 2.0 系列不能只传音频。 */
-function validateReferenceAudios(request: VideoGenerationRequest, model: VolcengineVideoModel): string[] {
-  const audios = request.referenceAudios;
-  const limit = model.descriptor.capability.audioInputMax;
-  if (audios.length === 0) {
-    return [];
-  }
-  if (limit === null) {
-    return ['该模型不支持参考音频。'];
-  }
-  const issues = validateMediaFiles(audios, 'audio/', '音频', SEEDANCE_AUDIO_MAX_BYTES);
-  if (audios.some((audio) => !SEEDANCE_AUDIO_MIME_TYPES.includes(audio.mimeType))) {
-    issues.push('参考音频只支持 WAV、MP3 格式。');
-  }
-  if (audios.length > limit.count) {
-    issues.push(`参考音频最多 ${limit.count} 段（当前 ${audios.length} 段）。`);
-  }
-  if (!model.audioOnlyReference && request.referenceImages.length === 0) {
-    issues.push('该模型不能只传参考音频，请同时绑定角色或场景的参考图。');
-  }
-  return issues;
-}
-
-/** 校验画幅、分辨率、时长、声音模式和随机种子是否在模型能力范围内。 */
-function validateParameters(request: VideoGenerationRequest, capability: VideoCapability): string[] {
-  const issues: string[] = [];
-  if (request.aspectRatio !== null && !capability.aspectRatios.includes(request.aspectRatio)) {
-    issues.push(`画幅 ${request.aspectRatio} 不在模型支持的范围内：${capability.aspectRatios.join('、')}。`);
-  }
-  if (request.resolution !== null && !capability.resolutions.includes(request.resolution)) {
-    issues.push(`分辨率 ${request.resolution} 不在模型支持的范围内：${capability.resolutions.join('、')}。`);
-  }
-  if (request.durationSeconds !== null && !isDurationAllowed(capability.duration, request.durationSeconds)) {
-    issues.push(`时长 ${request.durationSeconds} 秒不在模型支持的范围内。`);
-  }
-  if (request.audioMode !== null && !capability.audioModes.includes(request.audioMode)) {
-    issues.push('该模型不支持所选的声音模式。');
-  }
-  if (request.seed !== null) {
-    issues.push('该模型不支持随机种子。');
-  }
-  return issues;
-}
-
-/** 按素材组合构造 content：文本在前，素材按角色标注；首尾帧与参考素材已由校验保证互斥。 */
-function buildContent(request: VideoGenerationRequest): Array<Record<string, unknown>> {
-  const content: Array<Record<string, unknown>> = [];
-  if (request.prompt.trim() !== '') content.push({ type: 'text', text: request.prompt });
-  const image = (media: MediaInput, role: string): Record<string, unknown> => ({ type: 'image_url', image_url: { url: toDataUri(media) }, role });
-  if (request.firstFrame !== null) content.push(image(request.firstFrame, ROLE_FIRST_FRAME));
-  if (request.lastFrame !== null) content.push(image(request.lastFrame, ROLE_LAST_FRAME));
-  for (const reference of request.referenceImages) content.push(image(reference, ROLE_REFERENCE_IMAGE));
-  for (const audio of request.referenceAudios) content.push({ type: 'audio_url', audio_url: { url: toDataUri(audio) }, role: ROLE_REFERENCE_AUDIO });
-  return content;
-}
-
 /** 构造创建任务的请求体；null 的参数不写入，由平台使用默认值；分辨率用小写，水印默认关闭。 */
 function buildRequestBody(request: VideoGenerationRequest): Record<string, unknown> {
-  const body: Record<string, unknown> = { model: request.modelCode, content: buildContent(request), watermark: false };
+  const body: Record<string, unknown> = { model: request.modelCode, content: buildVideoContent(request), watermark: false };
   if (request.resolution !== null) body.resolution = request.resolution.toLowerCase();
   if (request.aspectRatio !== null) body.ratio = request.aspectRatio;
   // 智能时长的取值 -1 与平台一致，直接透传。

@@ -22,7 +22,7 @@ import {
   promptFocus,
   promptKindLabel
 } from '../../domain/rules/asset-prompt-rules';
-import { detectImageMime } from '../../domain/rules/work-rules';
+import { detectImageMime } from '../../domain/rules/image-size';
 import { askModel } from '../stages/ask-model';
 import { SUBMIT_ASSET_PROMPTS_TOOL } from '../stages/output-tools/asset-prompt-output-tools';
 import { wrapMaterial } from '../stages/prompt-templates';

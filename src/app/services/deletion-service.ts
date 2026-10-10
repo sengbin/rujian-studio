@@ -9,8 +9,8 @@
 
 import { NotFoundError } from '../../domain/errors';
 import { GenerationRepository } from '../../domain/ports/generation-repository';
+import { JobScheduler } from '../queue/job-queue';
 import { ProjectService } from './project-service';
-import { JobScheduler } from './generation-service';
 import { ResultFileCleanupDependencies, sweepUnreferencedResults } from './result-file-cleanup';
 import { StageService } from './stage-service';
 import { WorkService } from './work-service';

@@ -20,9 +20,10 @@ import {
   NewAssetFile
 } from '../models/asset';
 import { ASSET_OPTION_SETS, AUDIO_LANGUAGE_OPTIONS } from '../models/option-sets';
+import { BASE64_PATTERN } from './base64-pattern';
 import { FieldErrors, assertNoFieldErrors, readOptionalChoice, readOptionalText, readRecord, readText } from './field-readers';
+import { IMAGE_FILE_MAX_BYTES, detectImageMime } from './image-size';
 import { UploadedFile, getExtension, readImageSide, readUploadedFiles } from './upload-readers';
-import { detectImageMime } from './work-rules';
 
 export const ASSET_NAME_MAX_LENGTH = 50;
 /** 图像类资产单个描述字段的长度上限。 */
@@ -41,11 +42,15 @@ export const ASSET_FILE_FIELD_KEY = 'files';
 export const ASSET_IMAGE_EXTENSIONS: readonly string[] = ['.png', '.jpg', '.jpeg', '.webp'];
 export const ASSET_AUDIO_EXTENSIONS: readonly string[] = ['.mp3', '.wav', '.m4a'];
 export const ASSET_IMAGE_MAX_FILES = 10;
-export const ASSET_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 export const ASSET_AUDIO_MAX_BYTES = 20 * 1024 * 1024;
 export const ASSET_AUDIO_MAX_SECONDS = 60;
 /** 页面生成的缩略图大小上限，超过则忽略该缩略图。 */
 const THUMBNAIL_MAX_BYTES = 256 * 1024;
+
+/** 时长保留两位小数。 */
+function roundToHundredth(seconds: number): number {
+  return Math.round(seconds * 100) / 100;
+}
 
 /** 校验通过的资产内容与文件。 */
 export interface NormalizedAsset {
@@ -64,6 +69,29 @@ export function readAssetKind(value: unknown): AssetKind {
     throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: '资产类型无效。' });
   }
   return value as AssetKind;
+}
+
+/**
+ * 读取可缺省的文件来源：缺省返回 undefined，否则必须是“生成”或“上传”。
+ * @throws ValidationError 文件来源无效。
+ */
+export function readOptionalAssetFileSource(value: unknown): AssetFileSource | undefined {
+  if (value === undefined || value === 'generated' || value === 'upload') {
+    return value;
+  }
+  throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: '文件来源无效。' });
+}
+
+/**
+ * 读取必填的文件来源，必须是“生成”或“上传”。
+ * @throws ValidationError 文件来源缺省或无效。
+ */
+export function readAssetFileSource(value: unknown): AssetFileSource {
+  const source = readOptionalAssetFileSource(value);
+  if (source === undefined) {
+    throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: '文件来源无效。' });
+  }
+  return source;
 }
 
 /**
@@ -233,7 +261,7 @@ export function normalizeVoiceSample(sample: VoiceSampleInput): NormalizedAsset 
         mime: mime as string,
         width: null,
         height: null,
-        durationSeconds: duration !== null && Number.isFinite(duration) && duration > 0 ? Math.round(duration * 100) / 100 : null,
+        durationSeconds: duration !== null && Number.isFinite(duration) && duration > 0 ? roundToHundredth(duration) : null,
         content: sample.content,
         sortOrder: 0
       }
@@ -279,7 +307,7 @@ function readAudioAttributes(source: Record<string, unknown>, errors: FieldError
 /** 读取图片资产上传的图片：最多 10 张，按文件头识别格式；页面生成的缩略图和宽高一并读取。 */
 function readImageFiles(value: unknown, errors: FieldErrors): NewAssetFile[] {
   const key = ASSET_FILE_FIELD_KEY;
-  const uploaded = readUploadedFiles(value, key, '参考图', ASSET_IMAGE_MAX_BYTES, errors);
+  const uploaded = readUploadedFiles(value, key, '参考图', IMAGE_FILE_MAX_BYTES, errors);
   if (uploaded === undefined) {
     return [];
   }
@@ -350,7 +378,7 @@ function readAudioFile(value: unknown, errors: FieldErrors): NewAssetFile[] {
       mime,
       width: null,
       height: null,
-      durationSeconds: Math.round(duration * 100) / 100,
+      durationSeconds: roundToHundredth(duration),
       content: file.content,
       sortOrder: 0
     }
@@ -364,7 +392,7 @@ function readThumbnail(file: UploadedFile, index: number): NewAssetFile | undefi
     return undefined;
   }
   const data = (raw as { data?: unknown }).data;
-  if (typeof data !== 'string' || data.length === 0 || data.length > Math.ceil(THUMBNAIL_MAX_BYTES / 3) * 4 || !/^[A-Za-z0-9+/]*={0,2}$/.test(data)) {
+  if (typeof data !== 'string' || data.length === 0 || data.length > Math.ceil(THUMBNAIL_MAX_BYTES / 3) * 4 || !BASE64_PATTERN.test(data)) {
     return undefined;
   }
   const content = Buffer.from(data, 'base64');

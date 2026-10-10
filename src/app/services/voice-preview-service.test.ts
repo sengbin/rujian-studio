@@ -313,6 +313,17 @@ test('已绑定的音色参考记录了预置音色时，只有预置音色的�
   assert.equal(result.note, null);
 });
 
+test('资产记录的预置音色不在所选模型里：合成报错、不调用模型，读取已保存配音时跳过该说话人', async () => {
+  const { service, adapter } = createFixture({ assetPresetVoice: '不存在的音色' });
+  await assert.rejects(
+    () => service.synthesize(1, request(1, 6)),
+    (error: unknown) => error instanceof ValidationError && error.message.includes('资产的预置音色不在所选模型里，请更换模型或音色')
+  );
+  assert.equal(adapter.submitted.length, 0);
+  assert.deepEqual((await service.restore(1, { episodeId: 1, modelId: 6 })).clips, []);
+  assert.equal((await service.synthesize(1, request(1, 5))).cached, false, '支持参考音频的模型不受预置音色影响');
+});
+
 test('render：fresh 时不读缓存重新调用模型并更新缓存，返回平台给出的时长', async () => {
   const { service, adapter } = createFixture();
   await service.synthesize(1, request(1));

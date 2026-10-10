@@ -18,7 +18,8 @@ import {
   RemoteJobRef,
   RemoteJobState
 } from '../../../domain/ports/provider-adapters';
-import { ExtraParamSpec, mapExtraParams, readObject, toDataUri, validateExtraParams, validateMediaFiles } from '../shared/provider-payload';
+import { findModelByCode } from '../shared/provider-model-lookup';
+import { ExtraParamSpec, mapExtraParams, parseJson, readObject, toDataUri, validateExtraParams, validateMediaFiles } from '../shared/provider-payload';
 import { FetchFunction, MinimaxApiClient } from './minimax-api-client';
 import { MINIMAX_PROVIDER, MINIMAX_PROVIDER_NAME } from './minimax-catalog';
 import {
@@ -55,11 +56,11 @@ export class MinimaxImageProvider implements ImageModelProvider {
   }
 
   getCapability(modelCode: string): ImageCapability | undefined {
-    return findModel(modelCode)?.capability;
+    return findModelByCode(MINIMAX_IMAGE_MODELS, modelCode)?.capability;
   }
 
   validate(request: ImageGenerationRequest): readonly string[] {
-    const model = findModel(request.modelCode);
+    const model = findModelByCode(MINIMAX_IMAGE_MODELS, request.modelCode);
     if (model === undefined) {
       return [`${MINIMAX_PROVIDER_NAME}没有模型 ${request.modelCode}。`];
     }
@@ -91,10 +92,6 @@ export class MinimaxImageProvider implements ImageModelProvider {
     }
     return { status: 'succeeded', result: { imageUrls }, errorCategory: null, errorCode: null, errorMessage: null };
   }
-}
-
-function findModel(modelCode: string): ModelDescriptor<'image'> | undefined {
-  return MINIMAX_IMAGE_MODELS.find((model) => model.code === modelCode);
 }
 
 /** 校验提示词、反向提示词和参考图。 */
@@ -153,13 +150,4 @@ function buildRequestBody(request: ImageGenerationRequest): Record<string, unkno
 function readImageUrls(response: Record<string, unknown>): string[] {
   const imageUrls = readObject(response.data).image_urls;
   return Array.isArray(imageUrls) ? imageUrls.filter((url): url is string => typeof url === 'string' && url !== '') : [];
-}
-
-/** 解析 JSON；不合法时返回 undefined，由调用方按任务引用损坏处理。 */
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return undefined;
-  }
 }

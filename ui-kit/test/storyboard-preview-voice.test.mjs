@@ -9,7 +9,9 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { loadScript } from './storyboard-preview-fixtures.mjs';
+import { loadScript, loadTimelineWindow } from './storyboard-preview-fixtures.mjs';
+
+const { aiStoryboardTimeline } = loadTimelineWindow();
 
 const MODELS = [
   { id: 5, label: '甲 · 语音', supportsReference: true },
@@ -22,6 +24,7 @@ function setup(handlers = {}, windowExtras = {}) {
   const requests = [];
   const win = {
     ...windowExtras,
+    aiStoryboardTimeline,
     hostBridge: {
       request: async (name, payload) => {
         requests.push({ name, payload });
@@ -500,7 +503,7 @@ test('同步播放：跳过配音开头的静音，比留给它的时间长时�
   const line = sound({ id: 1, start: 1, end: 2, estimated: false });
   await voice.load({ workId: 1, episodeId: 7 }, line);
   const clip = voice.readyClip(5, line);
-  assert.equal(clip.lead, 0, '静音已经裁在音频里，播放不需要再定位');
+  assert.equal('lead' in clip, false, '静音已经裁在音频里，已合成结果里没有开头偏移，播放不需要再定位');
   assert.equal(clip.mime, 'audio/wav');
   assert.ok(Math.abs(clip.length - 2.2) < 1e-6, '有效时长含开头 0.05 秒与结尾 0.15 秒余量');
   const wav = Buffer.from(clip.data, 'base64');

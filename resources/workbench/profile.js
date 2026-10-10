@@ -12,7 +12,7 @@
 (function () {
   const PREFERRED_RESOLUTION = '720P';
   const SEED_MAX = 2147483647;
-  const AUDIO_MODE_LABELS = { native: '模型生成声音', none: '无声' };
+  const AUDIO_MODE_LABELS = { native: '模型原生生成', none: '无声' };
   /** 声音内容的显示名称与顺序，与宿主的 VIDEO_AUDIO_ELEMENTS 一致。 */
   const AUDIO_ELEMENT_LABELS = { dialogue: '对白', narration: '旁白', sfx: '音效', music: '配乐' };
   const SOURCE_LABELS = { group: '本组覆盖', episode: '本集覆盖', work: '作品默认', project: '项目默认', default: '未设置，使用默认值', none: '未设置' };
@@ -224,7 +224,7 @@
     panel.fieldsElement.append(wrapper.element);
   }
 
-  /** 声音内容：对白、旁白、音效、配乐四个开关，每个一行；模型不支持的内容置灰；声音模式不是“模型生成声音”时整体置灰。 */
+  /** 声音内容：对白、旁白、音效、配乐四个开关，每个一行；模型不支持的内容置灰；声音模式不是“模型原生生成”时整体置灰。 */
   function addAudioElementsField(resolved, values) {
     const { model } = resolved;
     const nativeOff = resolved.values.audioMode !== 'native';
@@ -240,7 +240,7 @@
     const group = aiUi.h('div', { class: 'wb-switch-list', attrs: { role: 'group', 'aria-label': '声音内容' } }, boxes.map((item) => item.box.element));
     let description;
     if (model.audioElements.length === 0) description = '所选模型不支持原生生成声音内容。';
-    else if (nativeOff) description = '声音设为“模型生成声音”时才传声音内容。';
+    else if (nativeOff) description = '声音设为“模型原生生成”时才传声音内容。';
     else description = `当前生效：${describeElements(effective)}（${SOURCE_LABELS[resolved.sources.audioElements]}）；提交时只传所选类型的声音条目。`;
     const control = { element: group, focusTarget: boxes[0].box.focusTarget, ariaTarget: group, labelable: false };
     appendField('声音内容', description, control, '', stored === null ? null : () => void change('audioElements', null));
@@ -250,7 +250,7 @@
   async function changeElements(boxes) {
     const chosen = boxes.filter((item) => item.box.getValue()).map((item) => item.element);
     if (chosen.length === 0) {
-      showMessage(false, '声音内容至少开启一项；不需要声音时请把声音设为“无声”。');
+      panel.message.show('声音内容至少开启一项；不需要声音时请把声音设为“无声”。', true);
       renderFields();
       return;
     }
@@ -344,7 +344,7 @@
   /** 保存数字输入框的值：空串恢复继承，无法解析或不合法时提示而不保存。 */
   async function changeNumber(field, input, errorText, isValid) {
     if (input.validity.badInput) {
-      showMessage(false, errorText);
+      panel.message.show(errorText, true);
       return;
     }
     const text = input.value.trim();
@@ -354,17 +354,10 @@
     }
     const number = Number(text);
     if (!isValid(number)) {
-      showMessage(false, errorText);
+      panel.message.show(errorText, true);
       return;
     }
     await change(field, number);
-  }
-
-  /** 在面板顶部显示保存结果。 */
-  function showMessage(ok, text) {
-    panel.messageElement.textContent = text;
-    panel.messageElement.className = ok ? 'ui-message status-success' : 'ui-message status-error';
-    panel.messageElement.hidden = false;
   }
 
   /** 修改一个字段并保存；null 表示恢复继承。 */
@@ -373,7 +366,7 @@
     const current = panel;
     const result = await current.host.save(current.scopeControl.getValue(), { [field]: payload });
     if (panel !== current) return;
-    showMessage(result.ok, result.ok ? '已保存' : `保存失败：${result.message}`);
+    current.message.show(result.ok ? '已保存' : `保存失败：${result.message}`, !result.ok);
     renderFields();
   }
 
@@ -387,10 +380,10 @@
     const scopeField = aiUi.field({ label: '应用范围', control: scopeControl });
     scopeField.element.classList.add('wb-profile__scope');
     const hintElement = aiUi.h('p', { class: 'description' });
-    const messageElement = aiUi.h('p', { class: 'ui-message', hidden: true, attrs: { role: 'status' } });
+    const message = aiUi.message();
     const fieldsElement = aiUi.h('div', { class: 'ui-stack wb-profile__fields' });
-    const element = aiUi.h('div', { class: 'wb-profile' }, scopeField.element, hintElement, messageElement, fieldsElement);
-    panel = { host, scopeControl, hintElement, messageElement, fieldsElement, key: '' };
+    const element = aiUi.h('div', { class: 'wb-profile' }, scopeField.element, hintElement, message.element, fieldsElement);
+    panel = { host, scopeControl, hintElement, message, fieldsElement, key: '' };
     renderFields();
     return { element, refresh };
   }

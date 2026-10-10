@@ -1,11 +1,11 @@
 /*
  * ------------------------------------------------------------------------
  * 名称：ui-dialog.css
- * 说明：界面组件库的对话框样式：Windows 风格标题栏、模态遮罩、消息、删除确认提示和可调整大小的弹出页面。
+ * 说明：界面组件库的对话框样式：Windows 风格标题栏、模态遮罩、删除确认提示和可调整大小的弹出页面。
  * 作者：Lion
  * 邮箱：chengbin@3578.cn
  * 日期：2026-09-30
- * 备注：所有选择器以 ui- 开头；依赖 ui-tokens.css；颜色统一使用 rgb() 写法。
+ * 备注：所有选择器以 ui- 开头；依赖 ui-tokens.css；消息正文的段落与要点列表样式在 ui-feedback.css；颜色统一使用 rgb() 写法。
  * ------------------------------------------------------------------------
  */
 
@@ -183,20 +183,6 @@
     var(--choice-mark-border) 76% 83%,
     transparent 83%
   );
-}
-
-/* 消息内容 */
-.ui-message p {
-  margin: 0 0 var(--space-md);
-}
-
-.ui-message p:last-child {
-  margin-bottom: 0;
-}
-
-.ui-message__details {
-  margin: 0 0 var(--space-md);
-  padding-left: 20px;
 }
 
 /* 删除确认提示：红色背景，醒目地要求输入名称 */
