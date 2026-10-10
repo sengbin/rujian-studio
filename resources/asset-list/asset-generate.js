@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：asset-generate.js
 // 说明：生成图片/音频对话框（F13）：按所选模型的能力选择图片数量、画幅、分辨率或音频的语言与音色，提交后产生新版本。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
 // 备注：请求名称与 src/app/pages/asset-list-handlers.ts 一致；字段随所选模型联动，因此不走表单引擎；必须先于 asset-list.js 加载；依赖 shared/page-format.js（pageFormat）；对外是 window.aiAssetGenerate.open；收到 models.changed 事件时重新读取模型清单并刷新模型下拉。

@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：project-list.js
 // 说明：项目列表页脚本：用界面组件库渲染项目表格，处理搜索、在页内弹出页面中新建与编辑、带名称确认的删除。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
 // 备注：请求与事件名称与 src/app/pages/project-list-handlers.ts、src/app/forms/project-form.ts 一致；依赖 form/form-runtime.js（aiForm）与 shared/page-format.js（pageFormat）。

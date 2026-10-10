@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-art-figure.js
 // 说明：分镜动画的角色小人矢量插画：脸（肤色、头发、眼睛、鼻子、嘴）、小人的头（可换成资产图头像）与整个小人（影子、腿、手臂、躯干与头）。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：依赖 stage-storyboard-preview-draw.js，通过 window.aiStoryboardArtFigure 暴露，由 stage-storyboard-preview-art.js 汇总，非人类角色在 stage-storyboard-preview-creatures.js；尺寸单位 u 为“画面高度的 1% × 纵深缩放”；颜色固定，不随主题变化。

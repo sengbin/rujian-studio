@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-modes.js
 // 说明：分镜动画的两种对照视图的绘制：镜头对照（上一镜结尾、本镜开头、本镜结尾并排）与调度俯视图（5×3 站位网格上的走位轨迹、朝向和上一镜终点）。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
 // 备注：只接收画布上下文与 stage-storyboard-preview-timeline.js 产出的数据，不读取视图、不依赖页面；颜色固定，不随主题变化；通过 window.aiStoryboardModes 暴露，依赖 stage-storyboard-preview-renderer.js 与 stage-storyboard-preview-draw.js。

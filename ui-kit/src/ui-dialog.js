@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：ui-dialog.js
 // 说明：界面组件库的对话框：模态/非模态对话框、确认、提示、删除确认和可调整大小的弹出页面。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
 // 备注：依赖 ui-core.js、ui-icons.js、ui-button.js；关闭按钮与底部按钮的图标由这两者提供；删除确认还依赖 ui-input-controls.js；用法见 private-docs/rujian-studio/开发文档-vscode/ui-components.md。

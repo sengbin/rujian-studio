@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-screenplay-list.js
 // 说明：剧本阶段左侧的列表导航：剧本包正文、集、实体三组条目（可编辑时集与实体带“添加”按钮，超出参考时长容差的集标红），以及选中条目的定位规则（findItem）。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 stage-screenplay.js 拆出；对外是 window.aiScreenplayList（条目类型与新增定位值常量、findItem、render）；集与实体的 ref 由宿主给出，页面只原样回传；必须先于 stage-screenplay.js 加载。

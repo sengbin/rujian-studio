@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：settings-widgets.js
 // 说明：模型设置页各区域共用的小控件：保存状态文字（保存中、已保存、保存失败）、字段标签右侧的测试结果文字、带所属对象名称的开关、从错误载荷里取字段错误提示。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 settings.js 拆出；对外是 window.aiSettingsWidgets；必须先于 settings-secret-form.js、settings-text.js、settings-provider.js、settings-account.js 与 settings.js 加载。

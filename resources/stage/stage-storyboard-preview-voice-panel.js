@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-voice-panel.js
 // 说明：分镜动画预览的台词配音面板：声音模型选择、播放时同步配音、合成与重新合成、声音行里的试听与“生成音色”入口，以及已合成配音的读回。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 stage-storyboard-preview.js 拆出，通过 window.aiStoryboardPreviewVoicePanel.create(ctx) 创建；配音状态存放在页面状态的 state.voice，页面级的声音模型状态由 stage-storyboard-preview-voice.js 共享；依赖 -voice.js、-voice-draft.js 与 aiUi 组件库，样式在 stage-storyboard-preview.css。

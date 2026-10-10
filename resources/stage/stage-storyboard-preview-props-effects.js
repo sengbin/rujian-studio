@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-props-effects.js
 // 说明：分镜动画的扩展特效图形：爆炸、烟花、发射（子弹、箭）、枪口火光、光束、激光、阴影、水花与挥砍。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：依赖 stage-storyboard-preview-draw.js 与 stage-storyboard-preview-art.js，通过 art.registerEffects 登记到特效图形表（图形名称与归类关键词见 stage-storyboard-preview-rules.js 的 EFFECT_RULES）；绘制函数的参数见 stage-storyboard-preview-art-effects.js 的 EFFECTS；颜色基本固定。

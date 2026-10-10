@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：volcengine-signature.ts
 // 说明：火山引擎 OpenAPI 的 HMAC-SHA256 请求签名：用 AccessKey/SecretKey 为请求生成带 Authorization 的完整请求头。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-09
 // 备注：签名流程为规范请求 → 待签字符串 → 逐级派生签名密钥（日期、地域、服务、request）；参与签名的头为 content-type、host、x-content-sha256、x-date；时间可注入以便测试。

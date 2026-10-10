@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-art-backdrops.js
 // 说明：分镜动画的场景背景矢量插画：按场景类型与时间画室内、街道、森林、洞穴、海边、旷野、太空、水下、天空、沙漠、雪地、高山、废墟、村庄与通用背景，再叠加时间色调，并提供墙上的窗户。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：依赖 stage-storyboard-preview-draw.js 与 stage-storyboard-preview-art-props.js（沙漠、村庄背景里摆的道具），通过 window.aiStoryboardArtBackdrops 暴露，由 stage-storyboard-preview-art.js 汇总；厨房、卫生间、卧室、医院、教室、商店背景由 stage-storyboard-preview-props-backdrops.js 经 registerBackdrops 登记；颜色固定，不随主题变化。

@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：asset-categories.js
 // 说明：资产分类管理弹出页：列出当前资产类型的全部分类（含资产数量），在其上再弹出创建、编辑分类的表单，带影响提示地删除分类。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
 // 备注：请求与表单名称与 src/app/pages/asset-category-handlers.ts、src/app/forms/asset-category-form.ts 一致；依赖 form/form-runtime.js（aiForm）与 shared/page-format.js（pageFormat）；分类数据由资产列表页加载后传入，创建、编辑、删除后宿主推送变化事件，列表页重新加载并调用 refresh 更新本页；对外是 window.aiAssetCategories 的 open、refresh。

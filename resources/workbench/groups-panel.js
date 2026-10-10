@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：groups-panel.js
 // 说明：工作台左栏的镜头组列表：每组一行（序号、状态、镜头数与总时长），底部是镜头总数与按填写的单组最长时长重新分组。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 workbench.js 拆出；对外是 window.aiWorkbenchGroups.create(host)，返回 render(selectedId)；必须先于 workbench.js、晚于 job-display.js 加载；“重新分组”填写的时长由本面板保存，用户没改过时跟随当前模型与分镜脚本设定。

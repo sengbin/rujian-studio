@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-stage-view.js
 // 说明：分镜动画预览的舞台区：状态行与错误提示、预览视图（舞台、镜头对照、调度俯视图）切换、画布尺寸适配与绘制、资产缩略图加载、画布无障碍文字。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 stage-storyboard-preview.js 拆出，通过 window.aiStoryboardPreviewStageView.create(ctx) 创建，并导出空状态文字 EMPTY_LOADING、EMPTY_UNAVAILABLE 供信息栏共用；依赖 stage-storyboard-preview-timeline.js、-renderer.js、-modes.js 与 aiUi 组件库，样式在 stage-storyboard-preview.css。

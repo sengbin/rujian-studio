@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：asset-list.js
 // 说明：资产列表页脚本：列出某种资产类型的全部资产（资产不属于项目），按名称关键字和分类（全部、未分类、各分类）筛选，表格带分类列，工具栏的“分类管理”弹出分类管理页，新建资产时先选择上传还是 AI 生成并进入对应表单，在页内弹出页面中编辑资产，显示资产使用的文件来源（上传、生成的版本）并可在两者间切换，生成来源的资产显示提示词与图片（音频）生成状态、发起提示词生成与图片（音频）生成并打开版本层，上传来源的资产没有这些入口，带使用情况提示地删除资产。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
 // 备注：请求与事件名称与 src/app/pages/asset-list-handlers.ts、src/app/forms/asset-form.ts 一致；依赖 form/form-runtime.js（aiForm）、shared/page-format.js（pageFormat）、asset-list/asset-generate.js（aiAssetGenerate）、asset-list/asset-versions.js（aiAssetVersions）与 asset-list/asset-categories.js（aiAssetCategories）。

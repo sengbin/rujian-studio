@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：form-runtime-linkage.test.mjs
 // 说明：表单引擎字段联动的 DOM 测试：按来源字段的值显示或隐藏字段（visibleWhen）、下拉选项随来源字段逐级变化（optionsByValue），以及隐藏字段不参与校验、提交时仍带值。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-08
 // 备注：使用 jsdom 加载组件库与 resources/form/form-runtime.js，宿主用假实现并记录提交的值。

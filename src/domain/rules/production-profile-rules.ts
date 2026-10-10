@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：production-profile-rules.ts
 // 说明：制作方案注册表：作品体量（制作方案）与节拍模板的内置定义和查询。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
 // 备注：设计见 private-docs/rujian-studio/开发文档-vscode/production-profile-design.md 第 5、11、15 节；新增体量只需在这里追加记录；电视剧、电影只占位（supported 为 false，没有节拍模板）。

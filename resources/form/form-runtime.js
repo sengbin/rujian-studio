@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：form-runtime.js
 // 说明：表单引擎：向宿主打开表单，在页内弹出页面中用界面组件库渲染控件，负责即时校验、唯一性检查、提交与放弃修改确认。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
 // 备注：请求名称与 src/app/forms/form-handlers.ts 一致；依赖 shared/page-format.js（pageFormat.decodeBase64，须先于本文件加载）；字段值一律以文本传输（多选为 JSON 数组文本）；页面通过 aiForm.open 使用；字段可随另一个字段的值联动：说明（descriptionByValue）、值（valueByValue）、显示与隐藏（visibleWhen，隐藏的字段不校验、提交时仍带值）、下拉选项（optionsByValue，可逐级联动）；收到 models.changed 事件（名称与 src/app/pages/model-events.ts 一致）后，向宿主重新取表单定义，更新下拉选项与说明、增删字段，保留用户已填的内容。

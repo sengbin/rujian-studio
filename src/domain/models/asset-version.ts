@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：asset-version.ts
 // 说明：资产生成版本的领域模型：每次提交给图像、音频模型产生一个版本，同时记录任务状态、请求快照、失败原因与结果文件。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
 // 备注：对应 asset_versions、asset_version_files 表，字段含义见 private-docs/rujian-studio/开发文档-vscode/database-design.md 4.9；快照不得出现密钥。

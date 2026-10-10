@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-header.js
 // 说明：阶段产出层的头部与进度区：作品信息、版本下拉、状态文字、操作按钮，以及生成进度、失败与取消提示、上游变更提示与阶段汇总。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 stage.js 拆出，通过 window.aiStageHeader.create(ctx) 创建，返回的两个渲染函数接收当前视图作为参数；按钮的行为由 ctx 注入（来自 stage-actions.js）；依赖 shared/page-format.js（pageFormat）与 aiUi 组件库，必须在 stage.js 之前加载。

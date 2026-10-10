@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：strict-json-schema.ts
 // 说明：严格 JSON Schema 模式（strict）的公共处理：把工具参数的 Schema 转成严格模式要求的形式，并去掉模型为可选字段填入的 null。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
 // 备注：严格模式要求每个对象的所有属性都列入 required、additionalProperties 为 false，可选字段只能写成允许 null 的类型；方舟文档只列出 type、enum、properties、items、anyOf 等关键字，数值与长度范围等关键字可能被直接报错，转换时去掉（范围由各解析器校验）；工具定义不把 null 当作有意义的取值，所以结果里的 null 一律视为“未填”。

@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：asset-versions.js
 // 说明：资产版本弹出层（P8）：查看某个资产的图片、音频生成版本，勾选图片后采用为资产使用的文件（采用即改用生成来源，上传的文件仍然保留），删除、取消、重试版本，并补生成缩略图。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
 // 备注：请求名称与 src/app/pages/asset-list-handlers.ts 一致；依赖 asset-generate.js（aiAssetGenerate）、form/form-runtime.js（aiForm）与 shared/page-format.js（pageFormat）；缩略图在这里用 canvas 生成并回传，宿主不引入图像库；对外是 window.aiAssetVersions 的 open、refresh、viewImage（弹出页查看原图，列表预览也用）。

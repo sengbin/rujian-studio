@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：settings.js
 // 说明：模型设置页脚本：顶部是文本生成设置（全局默认文本模型、小说分段方式、每段字数上限），下面是服务商列表，点“设置”弹出该服务商的设置页（启用、访问密钥、设置项、模型开关、价格与能力），服务商列表的每一行还带账户余额与用量（点按钮查询），全部即时保存。本文件只保存页面数据并装配各区域，各区域的绘制在下面列出的子脚本里。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
 // 备注：请求名称与 src/app/pages/settings-handlers.ts 一致；依赖 shared/page-format.js（pageFormat）；每个字段旁显示“保存中…”“已保存”“保存失败”；访问密钥只发送给宿主，不回显；“测试连接”用宿主已保存的密钥和设置发起，对每个接口地址各测一次，结果显示在该地址的标签右侧；共用的状态文字与开关命名由 settings/settings-widgets.js（aiSettingsWidgets）提供，访问密钥与账户密钥的表单由 settings/settings-secret-form.js（aiSettingsSecretForm）提供，“文本生成”区由 settings/settings-text.js（aiSettingsText）提供，服务商设置页由 settings/settings-provider.js（aiSettingsProvider）提供，账户余额、用量与账户密钥由 settings/settings-account.js（aiSettingsAccount）提供，这些脚本都必须先于本文件加载（按 widgets、secret-form、text、provider、account 的顺序）。

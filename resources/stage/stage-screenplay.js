@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-screenplay.js
 // 说明：剧本阶段的产出内容：左侧列表（剧本包正文、集、实体）、右侧编辑区、集与实体的新增和删除、集的上移下移、重新抽取、重新标注，原创文稿的集还有结构标注编辑，以及生成结束后的汇总。本文件只保存选中状态并装配各部分，列表、编辑器与改编清单在下面列出的子脚本里。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
 // 备注：向 stage.js 的外壳登记；请求名称与 src/app/pages/stage-handlers.ts、表单名称与 src/app/forms/screenplay-form.ts 一致；集与实体的 ref 由宿主给出，页面只原样回传；只读原因、保存按钮状态、已确认版本被编辑时的确认、偏差文案与汇总列表写法来自 stage-editor-common.js（aiStageEditor），左侧列表来自 stage-screenplay-list.js（aiScreenplayList），三种条目的编辑器来自 stage-screenplay-editors.js（aiScreenplayEditors），改编取舍清单来自 stage-screenplay-adaptation.js（aiScreenplayAdaptation），这些脚本都必须先于本文件加载。

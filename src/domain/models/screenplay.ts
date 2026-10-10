@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：screenplay.ts
 // 说明：剧本阶段的领域模型：生成参数、剧本包、从正文抽取的集与实体、集正文的结构标注，以及已合并到作品的集与实体记录。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
 // 备注：对应 screenplays、episodes、script_entities 表；实体的设定字段按类型区分，见 private-docs/rujian-studio/开发文档-vscode/database-design.md 4.5。

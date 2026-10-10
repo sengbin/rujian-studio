@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：ui-audio-preview.js
 // 说明：界面组件库的试听控件：一个带图标的试听按钮，点击后才读取音频内容并播放，播放时图标变为停止，再点击停止；列表、版本预览和选择页等多处共用。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
 // 备注：依赖 ui-core.js、ui-button.js；音频以 data: 地址播放，页面 CSP 需允许 media-src data:（createPageHtml 已包含）；同一页同一时间只试听一个；用法见 private-docs/rujian-studio/开发文档-vscode/ui-components.md。

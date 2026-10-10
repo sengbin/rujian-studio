@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：tail-frames.js
 // 说明：尾帧截取：向宿主查询需要截取尾帧的结果视频，用 <video> 与 <canvas> 截取最后一帧上传，让等待“上一组尾帧作首帧”的任务继续。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
 // 备注：请求名称与 src/app/pages/workbench-handlers.ts 一致；视频以 Base64 经消息传来（解码用 pageFormat.decodeBase64），转成 blob 地址播放（CSP 需允许 media-src blob:）；对外是 window.aiTailFrames.sync；截取失败时上报宿主（任务随之失败），上报没有成功时下一次同步会再试；只防同一时刻重复截取同一个结果。

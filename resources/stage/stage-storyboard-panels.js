@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-panels.js
 // 说明：分镜脚本阶段镜头编辑区三个页签的内容：“调度”（出场实体，以及出场角色、道具、特效的起点、终点、朝向与动作）、“镜头”（场次、时长、景别、机位、运镜、转场、连续性、首帧来源（含本地指定图片的预览与更换））与“画面与声音”（画面描述、声音条目）；每个页签返回元素与收集字段值的函数。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
 // 备注：由 stage-storyboard.js 调用，必须先于它加载，通过 window.aiStoryboardPanels 暴露；收集的字段随 stage.saveShot、stage.addShot 请求提交，需与 src/app/services/storyboard-service.ts 的镜头字段一致；样式在 stage-storyboard.css。

@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：settings-provider.js
 // 说明：模型设置页的服务商设置区（点服务商列表的“设置”弹出）：标题与启用开关、访问密钥（保存、清除、测试连接）、设置项（接口地址等，每个地址可单独显示测试结果）、按类型分页签的模型表（启用开关、价格、能力），全部即时保存。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 settings.js 拆出；请求名称与 src/app/pages/settings-handlers.ts 一致；对外是 window.aiSettingsProvider.create(host)，返回 render(provider)；必须晚于 settings-widgets.js 与 settings-secret-form.js、先于 settings.js 加载；“测试连接”用宿主已保存的密钥和设置发起，对每个接口地址各测一次，结果显示在该地址的标签右侧；访问密钥只发送给宿主，不回显。

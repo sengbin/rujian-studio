@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：model-capability.ts
 // 说明：模型类型（文本、图像、音频、视频）与按类型区分的模型能力描述：上下文、画幅、分辨率、时长、首尾帧、参考素材、声音等。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
 // 备注：字段含义与 private-docs/rujian-studio/开发文档-vscode/database-design.md 4.6 一致；入库的 JSON 使用 snake_case 键，转换见 rules/model-capability-rules.ts。

@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-actions.js
 // 说明：阶段产出层的操作集合：确认采用、取消生成、重试、重新生成、查看原始输出、切换版本。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 stage.js 拆出，通过 window.aiStageActions.create(ctx) 创建；视图、固定版本等页面状态仍由 stage.js 持有，通过 ctx 里的访问器读写；请求名称与 src/app/pages/stage-handlers.ts 一致；依赖 aiUi 组件库，必须在 stage.js 之前加载。

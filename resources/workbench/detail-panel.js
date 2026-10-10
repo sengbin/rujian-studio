@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：detail-panel.js
 // 说明：工作台中栏的镜头组详情：头部是固定标题与“编辑镜头”；内容依次是组标题与摘要（含出场实体概览）、镜头列表（可拆分与合并镜头组）、生成状态（最新一次任务、历史记录、结果操作）。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 workbench.js 拆出；对外是 window.aiWorkbenchDetail.create(host)，返回 render(group, index)；必须先于 workbench.js、晚于 job-display.js 加载；依赖 shared/page-format.js（pageFormat）。

@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：work-list.js
 // 说明：作品列表页脚本：列出某种素材来源下所有项目的作品（或跨来源的剧本、分镜视图），按项目与名称关键字筛选，在页内弹出页面中新建、编辑作品、生成剧本与分镜脚本，弹出创意、剧本、分镜脚本产出层，带名称确认地删除作品。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-01
 // 备注：请求与事件名称与 src/app/pages/work-list-handlers.ts、src/app/forms/work-form.ts、src/app/forms/screenplay-form.ts、src/app/forms/storyboard-form.ts 一致；依赖 form/form-runtime.js（aiForm）、stage/stage.js（aiStage）与 shared/page-format.js（pageFormat）。

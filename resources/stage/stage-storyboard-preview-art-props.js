@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-art-props.js
 // 说明：分镜动画的道具图形表：每种图形登记绘制函数、高度和“会说话时脸的位置”，并提供画道具（带影子）与画资产缩略图方块的函数。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：依赖 stage-storyboard-preview-draw.js，通过 window.aiStoryboardArtProps 暴露，由 stage-storyboard-preview-art.js 汇总；扩展的图形由 stage-storyboard-preview-props-*.js 经 registerProps 登记；图形名称与归类关键词见 stage-storyboard-preview-rules.js 的 OBJECT_RULES；道具以脚下中点为锚点，单位 u 为“画面高度的 1% × 纵深缩放”，每种图形约 12u 宽。

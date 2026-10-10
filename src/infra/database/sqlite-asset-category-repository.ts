@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：sqlite-asset-category-repository.ts
 // 说明：资产分类数据访问的 SQLite 实现。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-03
 // 备注：删除分类依赖 assets.category_id 的 ON DELETE SET NULL，归入该分类的资产自动变为未分类。

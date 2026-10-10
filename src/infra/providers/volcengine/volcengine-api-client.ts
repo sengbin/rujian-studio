@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：volcengine-api-client.ts
 // 说明：火山方舟的 HTTP 客户端：带鉴权的 JSON 请求（POST、GET、DELETE）与对话接口的流式请求，并把 HTTP 状态和错误码统一转换为 ProviderError；提供测试连接。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-05
 // 备注：继承 BaseProviderApiClient（见 shared/base-provider-api-client.ts）；方舟用 Bearer 访问密钥鉴权；错误响应为 {"error":{"code","message"}}；超时、网络错误脱敏与流式读取由共用的传输层完成（见 shared/provider-http-transport.ts）；语音合成不走方舟接口，见 volcengine-speech-client.ts。

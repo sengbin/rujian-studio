@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：ui-button.js
 // 说明：界面组件库的按钮：主要、次要、危险三种样式，每个按钮带与文字匹配的图标，并提供“添加”“修改”“删除”预设。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
 // 备注：依赖 ui-core.js、ui-icons.js、ui-icon-rules.js；图标为 Tabler 内联 SVG，颜色跟随文字，按文字含义自动匹配；用法见 private-docs/rujian-studio/开发文档-vscode/ui-components.md。

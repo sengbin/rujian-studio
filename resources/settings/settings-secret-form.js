@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：settings-secret-form.js
 // 说明：模型设置页的密钥表单：一个或多个密码输入框，加“保存密钥”“清除密钥”按钮和“已配置/未配置”状态文字；保存后在原位更新状态，不重绘整个分区。服务商的访问密钥与账户查询用的 AccessKey/SecretKey 都用它构造。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 settings.js 里 renderApiKey 与 renderAccountKey 的重复部分抽出；对外是 window.aiSettingsSecretForm.create(options)；必须晚于 settings-widgets.js、先于 settings-provider.js 与 settings-account.js 加载；密钥只发送给宿主，不回显；保存或清除成功后调用 options.onChanged，由页面决定是否重绘。

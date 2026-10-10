@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：ui-file-picker.js
 // 说明：界面组件库的文件选择控件：选择一个或多个文件，读取为 Base64，显示文件列表并支持上移、下移、移除。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
 // 备注：依赖 ui-core.js、ui-button.js、ui-dialog.js（查看原图）、ui-audio-preview.js（音频文件的试听）；类型、数量、大小不符的文件不会加入，原因显示在控件下方；用法见 private-docs/rujian-studio/开发文档-vscode/ui-components.md。

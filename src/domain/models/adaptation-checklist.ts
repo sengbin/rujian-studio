@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：adaptation-checklist.ts
 // 说明：结构性改编清单的领域模型：模型分析出的可取舍项（支线、人物合并、场次跳过等）和用户的勾选状态。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
 // 备注：设计见 private-docs/rujian-studio/开发文档-vscode/production-profile-design.md 第 4.3 节；对应 adaptation_checklists、adaptation_options 表；勾选只触发本地重算，不调用模型。

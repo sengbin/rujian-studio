@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-review-rules.ts
 // 说明：阶段记录的确认规则：能否启动、确认采用、编辑后回到待确认、下游是否过期、展示状态。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
 // 备注：纯函数，不访问存储；规则来源 private-docs/rujian-studio/开发文档-vscode/ARCHITECTURE.md 6.3 与 private-docs/rujian-studio/开发文档-vscode/database-design.md 第 7 节。

@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-bestiary.js
 // 说明：分镜动画的动物与微生物扩展：鸟类（鸡、鸭、鹅、猫头鹰、鹦鹉、企鹅、鹰、孔雀、鸵鸟）、水生动物（鲨、鲸与海豚、章鱼、水母、蟹虾、海星）、昆虫与节肢动物（蝴蝶、蜜蜂、瓢虫、蚂蚁、蜘蛛、蜻蜓、蜗牛、虫、甲虫），以及病毒、细菌、真菌、变形虫。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
 // 备注：依赖 stage-storyboard-preview-draw.js 与 stage-storyboard-preview-creatures.js，通过它的 register 登记种类，种类的归类关键词见 stage-storyboard-preview-rules.js 的 SPECIES_RULES；每个图形返回头部位置与总高度（单位 u），有资产图时头部换成圆形头像；颜色沿用角色的识别色，少数有固定配色（企鹅、瓢虫、鹅等）。

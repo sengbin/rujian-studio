@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：settings-text.js
 // 说明：模型设置页的“文本生成”区：全局默认文本模型，以及对所有文本模型通用的小说分段方式与每段字数上限，全部即时保存并在字段旁反馈保存状态。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 settings.js 拆出；请求名称与 src/app/pages/settings-handlers.ts 一致；对外是 window.aiSettingsText.render(view)；必须晚于 settings-widgets.js、先于 settings.js 加载；文本模型在服务商设置页中启用。

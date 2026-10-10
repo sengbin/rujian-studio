@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-props-backdrops.js
 // 说明：分镜动画的室内场景背景扩展：厨房、卫生间、卧室、医院、教室、商店。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：依赖 stage-storyboard-preview-draw.js 与 stage-storyboard-preview-art.js，通过 art.registerBackdrops 登记（场景类型与归类关键词见 stage-storyboard-preview-rules.js 的 SCENE_SETTING_RULES）；颜色固定，不随主题变化。

@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：storyboard-preview-page.test.mjs
 // 说明：分镜动画预览层（P10）的页面测试：打开与加载、播放控制、时间线跳转、键盘、检查列表跳转与编辑、数据刷新后保持位置、不可预览与加载失败的状态、重复打开、历史版本标记，以及从分镜脚本产出层的入口打开。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
 // 备注：使用 jsdom 加载组件库与 resources/stage 下的预览脚本，宿主请求用假的 hostBridge 应答；jsdom 没有 Canvas，用空操作的假上下文代替，绘制本身在 storyboard-preview-renderer.test.mjs 中检查；放在 ui-kit/test 是因为 npm test 只收集这里的页面测试。

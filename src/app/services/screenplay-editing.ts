@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：screenplay-editing.ts
 // 说明：剧本编辑策略的契约（ScreenplayEditor：编辑一集、编辑实体、新增、删除、调整集的顺序）与两种策略共用的检查：定位值读取、数量上限、至少保留一集、结构标注的取舍、读取抽取结果。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：入参已由 ScreenplayService 读取并校验；策略只负责写入各自的存储：合并之前写剧本包上的抽取结果（package-screenplay-editor.ts），合并之后写作品的集和实体（merged-screenplay-editor.ts）。

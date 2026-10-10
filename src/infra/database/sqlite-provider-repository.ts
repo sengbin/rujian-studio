@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：sqlite-provider-repository.ts
 // 说明：模型服务商、模型与模型能力数据访问的 SQLite 实现。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
 // 备注：服务商设置在 providers.settings_json，能力在 model_capabilities.capability_json（snake_case 键）；密钥不入库。

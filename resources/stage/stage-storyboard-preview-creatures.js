@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-creatures.js
 // 说明：分镜动画的非人类角色矢量图形：动物（松鼠、刺猬、鼠、兔、猫、狗、狼、狐、熊、鹿、马、牛、羊、猪、蛙、鸟、蝙蝠、鱼、蛇、昆虫等）与奇幻角色（僵尸、神仙、精灵、怪物、邪灵、恶魔、机器人），人类仍用 stage-storyboard-preview-art.js 的小人。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
 // 备注：依赖 stage-storyboard-preview-draw.js 与 stage-storyboard-preview-art.js；种类由 stage-storyboard-preview-rules.js 的 classifyCharacterDetail 判断；人形的奇幻角色在小人基础上换肤色并加装饰，动物按种类的参数表画侧视图；颜色沿用角色的识别色；有资产图时头部换成圆形头像；尺寸单位 u 为“画面高度的 1% × 纵深缩放”；通过 window.aiStoryboardCreatures 暴露，扫展种类由 stage-storyboard-preview-bestiary.js 经 register 登记。

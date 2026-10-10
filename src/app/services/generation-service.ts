@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：generation-service.ts
 // 说明：视频生成应用服务（门面）：把工作台的请求分派给各职责单元——视图读取、提交管线、镜头组编辑、尾帧接力、任务结果；自身只持有依赖、装配这些单元并委托。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
 // 备注：一个镜头组一次生成一个多镜头视频；只有已确认采用的分镜脚本才能生成；每次提交产生新任务，失败原因与历史都保留；已有生成记录的组不能拆分或合并；同一镜头组同时只有一个进行中的任务。各单元：workbench-view-reader（视图）、generation-submission 与 generation-planning（提交与按组规划）、generation-group-editor（分组编辑）、generation-tail-frame 与 generation-first-frame（尾帧与首帧）、generation-results（结果）。

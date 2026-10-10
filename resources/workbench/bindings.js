@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：bindings.js
 // 说明：实体绑定面板（F9，“绑定素材”步骤）：顶部是绑定进度和“按名称自动匹配”，下面每个实体一行（名称、类型、绑定状态和“选择资产”），点开弹出页选择形象资产、设为主资产、解除、新建资产，角色实体可选择音色参考音频并试听；列表只显示所选镜头组出场的实体，按名称自动匹配也只针对这些实体。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
 // 备注：请求名称与 src/app/pages/binding-handlers.ts 一致；依赖 shared/page-format.js（pageFormat）；必须先于 workbench.js 加载；对外只有 window.aiBindings.create()，返回面板元素与 setEpisode、setEntities、refresh。

@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：json-text-generation-settings.ts
 // 说明：文本生成设置的桌面实现：读写数据目录下的 JSON 设置文件，含全局默认文本模型、小说分段方式与每段字数上限。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：每次读取都取文件最新值，修改后下一次生成立即生效；键名为 text.defaultModel、novel.splitMode、novel.maxSegmentChars。

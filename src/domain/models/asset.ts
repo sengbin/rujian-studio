@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：asset.ts
 // 说明：资产的领域模型：资产类型、按类型区分的描述字段、资产与资产文件记录、列表项与使用情况。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
 // 备注：对应 assets、asset_files 表；描述字段在库里以 snake_case 键保存（见 private-docs/rujian-studio/开发文档-vscode/database-design.md 4.5），表单使用 camelCase 键。

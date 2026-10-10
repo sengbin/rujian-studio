@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：sqlite-narrator-voice-repository.ts
 // 说明：作品旁白音色数据访问的 SQLite 实现。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
 // 备注：work_narrator_voices 以作品为主键，设置时直接替换。

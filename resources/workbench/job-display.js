@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：job-display.js
 // 说明：工作台里生成任务与镜头组状态的展示规则：状态文字与样式、结果与参数的说明文字、失败原因、任务耗时（进行中的任务由定时器每秒刷新）。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 workbench.js 拆出，只有纯展示逻辑、不持有页面状态；对外是 window.aiWorkbenchJobs；必须先于 detail-panel.js、groups-panel.js、queue-panel.js、job-actions.js 与 workbench.js 加载；describeJobParams 与 describeJobFields 在调用时使用 aiProfile.describeElements；依赖 shared/page-format.js（pageFormat）。

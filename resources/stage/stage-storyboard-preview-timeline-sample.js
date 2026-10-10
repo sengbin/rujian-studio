@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-timeline-sample.js
 // 说明：分镜动画时间线的采样（纯逻辑）：按任意时刻采样出一帧的绘制数据（角色位置与走位、字幕与说话状态、运镜与景别取景、转场叠加），并给出调度俯视图、镜头对照与取景之外的角色所需的数据。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：不依赖 DOM，依赖 stage-storyboard-preview-timeline.js（编译与基础函数），把 sampleFrame、buildTopView、comparePanels、framedOut 加到 window.aiStoryboardTimeline 上；规则见 private-docs/rujian-studio/开发文档-vscode/storyboard-animation-design.md 第 6 节；渲染在 stage-storyboard-preview-renderer.js，对照视图在 stage-storyboard-preview-modes.js。

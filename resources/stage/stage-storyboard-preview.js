@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview.js
 // 说明：分镜动画预览层（P10）：把某一集的分镜脚本播放成简化动画；本文件只保留页面状态、各界面单元的装配与生命周期（打开、关闭、读取、刷新、加载序号）。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
 // 备注：通过 aiStoryboardPreview.open({ workId, episodeId, runId?, shotId? }) 打开，同一（作品、集）只有一个预览层；数据沿用 stage.load 请求（带 withImages 以取得实体的资产缩略图）与 stage.changed 事件（名称与 src/app/pages/stage-handlers.ts 一致）；界面拆成 stage-storyboard-preview-stage-view.js（舞台区）、-controls.js（播放控制）、-timeline-view.js（时间线）、-info-panel.js（信息栏）、-voice-panel.js（台词配音面板），各自以“工厂函数 + 注入上下文（页面状态 state、播放器、回调）”创建，页面状态由本文件持有；其余依赖 stage-storyboard-preview-rules/timeline/timeline-sample/checks/draw/art*/props-*/creatures/bestiary/renderer/modes/player/voice/voice-draft.js、shared/page-format.js（阶段状态）、组件库与 stage.js（aiStage.open 用于“在分镜里编辑”）；没有音色的角色与旁白在声音列表里提供“生成音色”入口（对话框在 stage-storyboard-preview-voice-draft.js），生成的临时音色可直接用于配音试听，采用后绑定并重新读取分镜；样式在 stage-storyboard-preview.css；设计见 private-docs/rujian-studio/开发文档-vscode/storyboard-animation-design.md。

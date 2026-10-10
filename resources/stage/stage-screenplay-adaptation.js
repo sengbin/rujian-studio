@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-screenplay-adaptation.js
 // 说明：剧本阶段的“改编取舍清单”面板：创意内容明显超出目标时长时，列出可取舍的支线、人物合并与场次，勾选后顶部实时显示预计总时长，确认后才生成剧本正文。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 stage-screenplay.js 拆出；请求名称与 src/app/pages/stage-handlers.ts 一致；对外是 window.aiScreenplayAdaptation.create(context)，返回 render(view)；同一版本内以本地勾选为准，换版本或确认后按宿主的状态重置；必须晚于 stage-editor-common.js、先于 stage-screenplay.js 加载。

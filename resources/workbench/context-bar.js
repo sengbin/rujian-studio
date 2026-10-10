@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：context-bar.js
 // 说明：工作台顶部的上下文栏：项目、作品、分集三个下拉和当前生效的生成配置；内容没有变化时保持原样，避免后台刷新关闭用户打开的下拉。同时提供“作品标识:集标识”这种集选择值的拆分与拼接。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 workbench.js 拆出；对外是 window.aiWorkbenchContext（create、parseEpisodeKey、selectableWorks、episodeKeyOf）；必须先于 workbench.js 加载；render 时使用 aiProfile.summarize，依赖 shared/page-format.js（pageFormat）。

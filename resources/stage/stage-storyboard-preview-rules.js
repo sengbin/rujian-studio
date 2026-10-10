@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-rules.js
 // 说明：分镜动画的关键词归类规则（纯逻辑）：运镜、景别、转场，场景的地点与时间，道具与特效的图形，角色的种类、性别与年龄；规则表是“先到先得”，具体的词排在笼统的词之前。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：不依赖 DOM，通过 window.aiStoryboardRules 暴露，timeline 再原样导出这些归类函数；单字词只认名称末字（人名样式的名称除外），设定里要有“是/一只…”这类引导词，规则见 private-docs/rujian-studio/开发文档-vscode/storyboard-animation-design.md 第 6 节；对应的图形在 stage-storyboard-preview-art/props/creatures/bestiary.js 里登记。

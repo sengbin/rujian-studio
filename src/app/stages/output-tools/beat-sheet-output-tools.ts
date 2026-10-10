@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：beat-sheet-output-tools.ts
 // 说明：节拍表阶段输出的工具定义：模型必须通过工具返回各节拍的剧情内容，参数的 JSON Schema 约束输出结构。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
 // 备注：字段含义与 beat-sheet-rules 的 parseBeatSheet 一致；拒绝生成用可选的 refused 字段表达，所以顶层不设 required。

@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-checks.js
 // 说明：分镜动画的质量检查（纯逻辑）：根据编译后的时间线找出声音超出镜头时长、台词过长、人声重叠、说话人没有站位、位置衔接不上等问题，供预览层的检查列表与时间线标记使用。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
 // 备注：依赖 stage-storyboard-preview-timeline.js（位置顺序、EPSILON）与 shared/page-format.js（秒数显示），通过 window.aiStoryboardChecks 暴露；检查项与阈值见 private-docs/rujian-studio/开发文档-vscode/storyboard-animation-design.md 第 8 节。

@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：app-protocol.ts
 // 说明：注册并处理自定义协议 rujian-app://：为页面 iframe 提供页面 HTML 和静态资源。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：registerAppProtocolScheme 必须在 app ready 之前调用；地址解析与路径边界校验见 app-request.ts。

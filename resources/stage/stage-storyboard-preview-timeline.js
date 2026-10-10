@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-timeline.js
 // 说明：分镜动画的时间线编译（纯逻辑）：把分镜脚本阶段视图编译为带镜头时间、站位坐标、声音时间、景别、运镜与转场的时间线，并提供定位、位置恢复、调度描述与采样要用的基础函数。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
 // 备注：不依赖 DOM，通过 window.aiStoryboardTimeline 暴露，依赖 stage-storyboard-preview-rules.js（关键词归类，归类函数由这里原样导出）；采样（sampleFrame、buildTopView、comparePanels、framedOut）在 stage-storyboard-preview-timeline-sample.js，它把这些函数加到同一个对象上；规则见 private-docs/rujian-studio/开发文档-vscode/storyboard-animation-design.md 第 6 节；渲染在 stage-storyboard-preview-art*.js 与 stage-storyboard-preview-renderer.js，对照视图在 stage-storyboard-preview-modes.js，检查在 stage-storyboard-preview-checks.js。

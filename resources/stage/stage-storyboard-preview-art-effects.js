@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-art-effects.js
 // 说明：分镜动画的特效图形表：火焰、烟、雨、雪、光芒、闪电、法阵、爱心、音符、风、泡泡、落叶、黑雾、冲击波与火花，并提供按名称画特效和登记扩展特效的函数。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：依赖 stage-storyboard-preview-draw.js，通过 window.aiStoryboardArtEffects 暴露，由 stage-storyboard-preview-art.js 汇总；扩展特效由 stage-storyboard-preview-props-effects.js 经 registerEffects 登记到同一张表；图形名称与归类关键词见 stage-storyboard-preview-rules.js 的 EFFECT_RULES；颜色基本固定，认不出的名称画成火花（取实体的识别色）。

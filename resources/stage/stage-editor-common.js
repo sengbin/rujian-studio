@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-editor-common.js
 // 说明：各阶段产出内容（创意、节拍表、剧本、分镜脚本）编辑区共用的规则：不能编辑时的原因文案、保存按钮的“有修改才可点、保存后显示已保存”状态、已确认版本被编辑时的确认对话框、参考值偏差的文案、“最多列出 5 项再补总数”的写法。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 stage-creative.js、stage-beat-sheet.js、stage-screenplay.js、stage-storyboard.js 里重复的实现抽出；对外是 window.aiStageEditor；必须在 stage.js 之后、各阶段脚本之前加载；视图里的 run.display 与 actions.canEdit、actions.editNeedsConfirm 由宿主给出。

@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：qianwen-text-provider.ts
 // 说明：千问AI平台文本适配器：通过 OpenAI 兼容的对话接口生成文本；没有图片时用严格 JSON Schema 模式返回结构化结果，带图片时强制模型调用输出工具。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
 // 备注：使用流式输出降低长内容生成超时的风险；多模态输入不支持 json_schema（会降级为 json_object），所以带图片的请求仍用工具调用，强制指定工具时必须关闭思考（enable_thinking 为 false）；JSON Schema 模式不设 max_tokens（文档要求，避免 JSON 被截断）；输出被截断（finish_reason 为 length）时直接报错，不使用不完整的结果。

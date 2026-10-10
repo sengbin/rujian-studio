@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：settings-account.js
 // 说明：模型设置页服务商列表里的账户部分：余额与用量的查询（点按钮查询，结果只在本页显示，重绘后仍保留上次结果）、每行的操作按钮（设置、查询余额、查询用量、账户密钥），以及需要单独账户密钥（AccessKey ID 与 SecretKey）的弹出页。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 settings.js 拆出；请求名称与 src/app/pages/settings-handlers.ts 一致；对外是 window.aiSettingsAccount.create(host)，返回 renderResultCell、renderActions、resetBoxes；必须晚于 settings-widgets.js 与 settings-secret-form.js、先于 settings.js 加载；账户密钥只发送给宿主，不回显。

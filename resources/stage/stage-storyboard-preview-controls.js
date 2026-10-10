@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-controls.js
 // 说明：分镜动画预览的播放控制：播放、上一镜、下一镜、回到开头、循环当前镜头、倍速、时间显示、画面显示选项，以及舞台上的键盘操作。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 stage-storyboard-preview.js 拆出，通过 window.aiStoryboardPreviewControls.create(ctx) 创建；控件只调用播放器，显示选项变化后通过 paint 回调让舞台重画；依赖 stage-storyboard-preview-player.js（倍速档位）与 aiUi 组件库，样式在 stage-storyboard-preview.css。

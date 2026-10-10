@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-props-items.js
 // 说明：分镜动画的武器与杂物道具图形：炸弹、火箭、大炮、弓箭、盾、工具、绳、食物、蛋糕、骨头、行李箱、衣服、药、瓶、眼镜、望远镜、奖杯、灯笼、手电筒、篝火。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：依赖 stage-storyboard-preview-draw.js 与 stage-storyboard-preview-art.js，通过 art.registerProps 登记（图形名称与归类关键词见 stage-storyboard-preview-rules.js 的 OBJECT_RULES）；每个图形登记绘制函数、高度和会说话时脸的位置（缺脸的位置时按高度估算）；只用画布路径与填充，颜色固定或取实体的识别色；道具以脚下中点为锚点，单位 u 为“画面高度的 1% × 纵深缩放”。

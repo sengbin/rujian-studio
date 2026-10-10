@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-renderer.js
 // 说明：分镜动画的舞台绘制：把一帧采样数据画到 Canvas 2D 上，包括背景、站位网格、走位轨迹与朝向、角色、道具、特效、动作气泡、镜头信息卡、画面描述条、字幕、音效与音乐标签、取景框、转场叠加和空状态。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
 // 备注：只接收画布上下文与采样结果，不读取视图、不依赖页面；尺寸都按画面高度的比例计算；舞台颜色固定，不随主题变化；插画在 stage-storyboard-preview-art.js，有资产缩略图时由页面通过 options.images 传入；通过 window.aiStoryboardRenderer 暴露，规则见 private-docs/rujian-studio/开发文档-vscode/storyboard-animation-design.md 第 7 节。

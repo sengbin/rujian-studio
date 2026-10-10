@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-timeline-view.js
 // 说明：分镜动画预览的时间线视图：镜头分段、镜头组标记、声音泳道、播放头，以及点击和拖动进度条跳转。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 stage-storyboard-preview.js 拆出，通过 window.aiStoryboardPreviewTimelineView.create(ctx) 创建；时间线数据与检查结果读自页面状态，跳转通过播放器完成；依赖 stage-storyboard-preview-checks.js、shared/page-format.js 与 aiUi 组件库，样式在 stage-storyboard-preview.css。

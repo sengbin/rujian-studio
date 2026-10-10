@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-info-panel.js
 // 说明：分镜动画预览的信息栏：按页签显示当前镜头的基本信息、画面描述、调度、声音，以及整集的质量检查列表。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 stage-storyboard-preview.js 拆出，通过 window.aiStoryboardPreviewInfoPanel.create(ctx) 创建；声音行里的配音控件由配音面板提供（ctx.voiceControl）；依赖 stage-storyboard-preview-timeline.js、-checks.js、-stage-view.js（空状态文字）、shared/page-format.js 与 aiUi 组件库（ui-tabs），样式在 stage-storyboard-preview.css。

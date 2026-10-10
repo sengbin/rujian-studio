@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-player.js
 // 说明：分镜动画的播放时钟：维护当前时间、播放状态、倍速与循环当前镜头，驱动逐帧推进，提供跳转、上一镜、下一镜等操作。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
 // 备注：不依赖 DOM，时间源与帧调度可注入以便测试，通过 window.aiStoryboardPlayer 暴露；时间线由 stage-storyboard-preview-timeline.js 编译，随数据刷新可用 setTimeline 替换。

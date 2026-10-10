@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：sidebar.js
 // 说明：侧栏页面脚本：菜单按钮的按下视觉状态，把点击交给应用主进程，以及底部状态条的刷新。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
 // 备注：请求名称与 src/sidebar/sidebar-handlers.ts 一致；依赖 shared/host-bridge.js、shared/page-format.js 与界面组件库。

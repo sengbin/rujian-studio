@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：sqlite-adaptation-checklist-repository.ts
 // 说明：结构性改编清单数据访问的 SQLite 实现：adaptation_checklists 保存基线与确认状态，adaptation_options 保存取舍项与勾选状态。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
 // 备注：保存时整体覆盖（先删清单，取舍项随外键级联删除，再写入）。

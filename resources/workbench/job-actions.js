@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：job-actions.js
 // 说明：工作台上对生成任务与结果视频的操作：取消任务、打开、导出、在文件夹中显示结果视频、采用某个结果版本、读取并弹出一组的结果版本页。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 workbench.js 拆出；请求名称与 src/app/pages/workbench-handlers.ts 一致；对外是 window.aiWorkbenchActions.create(host)；必须先于 workbench.js、晚于 job-display.js 与 versions.js 加载；依赖 shared/page-format.js（pageFormat）。

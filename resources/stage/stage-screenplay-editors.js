@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-screenplay-editors.js
 // 说明：剧本阶段右侧编辑区里三种条目的编辑器：剧本包正文（标题与梗概只读、正文可改）、集（标题、梗概、目标时长、本集剧本正文，原创文稿还有结构标注）、实体（名称、别名、摘要、按类型区分的设定、是否启用）。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
 // 备注：从 stage-screenplay.js 拆出；请求名称与 src/app/pages/stage-handlers.ts 一致；对外是 window.aiScreenplayEditors（buildTextEditor、buildEpisodeEditor、buildEntityEditor），每个编辑器返回 { fields, collect, refresh, request, note }，由 stage-screenplay.js 负责保存按钮、新增与删除；必须先于 stage-screenplay.js 加载。

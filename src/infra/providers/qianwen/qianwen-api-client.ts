@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：qianwen-api-client.ts
 // 说明：千问AI平台（DashScope 原生接口）的 HTTP 客户端：带鉴权的 JSON 请求与 OpenAI 兼容接口的流式请求，并把 HTTP 状态和错误码统一转换为 ProviderError；提供测试连接。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
 // 备注：继承 BaseProviderApiClient（见 shared/base-provider-api-client.ts）；超时、网络错误脱敏与流式读取由共用的传输层完成（见 shared/provider-http-transport.ts）；图片、视频、音频走原生接口，使用“接口地址”设置，文本走 OpenAI 兼容接口，使用单独的“文本接口地址”设置。

@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard-preview-voice-draft.js
 // 说明：分镜动画预览里的“生成音色”对话框：说话人（角色或旁白）还没有音色时，按剧本里的音色描述让声音模型生成一段试听音色，满意后采用，保存为声音资产并绑定。
-// 作者：Lion
+// 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-07
 // 备注：通过 window.aiStoryboardVoiceDraft.open(options) 打开，同一时间只有一个；请求都经 aiStoryboardVoice 发出（名称与 src/app/pages/voice-preview-handlers.ts 一致）；每次生成都会调用声音模型并产生费用，只在用户点击“生成试听”“换一个”时才请求；试听音色只暂存在宿主内存里，动画预览把它当作临时音色播放，点“采用并绑定”后才写入声音资产与绑定；只有预置音色的模型不能按描述生成，改为选预置音色；依赖 aiUi 组件库、shared/page-format.js（pageFormat.errorText）与 stage-storyboard-preview-voice.js，样式在 stage-storyboard-preview.css。
