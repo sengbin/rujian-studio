@@ -41,7 +41,7 @@
   gap: var(--space-md);
   align-items: center;
   min-height: var(--row-height);
-  padding: 2px var(--space-md);
+  padding: var(--space-xxs) var(--space-md);
 }
 
 .ui-file-picker__item + .ui-file-picker__item {

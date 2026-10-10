@@ -225,7 +225,10 @@ export interface SubmitPreview {
 /** 一个可用的视频模型及其所属服务商。 */
 type UsableVideoModel = Awaited<ReturnType<ProviderService['listUsableModels']>>[number];
 
-/** 可用的视频模型转工作台的模型选项。 */
+/**
+ * 可用的视频模型转工作台的模型选项。
+ * @param usableModel 可用的视频模型及其服务商名称。
+ */
 export function toWorkbenchModel({ model, providerName }: UsableVideoModel): WorkbenchModel {
   const capability = model.capability as VideoCapability;
   return {
@@ -282,7 +285,11 @@ export function toJobView(job: VideoJobRecord, result: VideoResultRecord | undef
   };
 }
 
-/** 一个镜头组显示的任务：最新的若干条，并始终包含采用的结果所属的任务（较早的采用版本不能被截断掉）。 */
+/**
+ * 一个镜头组显示的任务：最新的若干条，并始终包含采用的结果所属的任务（较早的采用版本不能被截断掉）。
+ * @param groupJobs 镜头组的任务记录。
+ * @param selectedJobId 采用的结果所属任务标识，没有时为 undefined。
+ */
 export function pickVisibleJobs(groupJobs: readonly VideoJobRecord[], selectedJobId: number | undefined): VideoJobRecord[] {
   const visible = groupJobs.slice(0, MAX_JOBS_PER_GROUP);
   const selectedJob = groupJobs.find((job) => job.id === selectedJobId);
@@ -303,7 +310,11 @@ export function describeStaleTail(groupJobs: readonly VideoJobRecord[], selected
   return '上一组后来改用了其他版本，本组采用的视频是接在上一组旧版本的尾帧之后生成的，画面可能不连贯，建议重新生成。';
 }
 
-/** 没有已确认的分镜脚本时，说明为什么不能生成。 */
+/**
+ * 没有已确认的分镜脚本时，说明为什么不能生成。
+ * @param status 生成状态。
+ * @param reviewStatus 审阅状态。
+ */
 export function describeBlockReason(status: string, reviewStatus: string): string {
   if (status === 'running') return '分镜脚本正在生成，完成并确认采用后才能生成视频。';
   if (status === 'failed' || status === 'canceled') return '分镜脚本没有生成成功，请先到“分镜”列表重新生成。';

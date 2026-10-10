@@ -28,8 +28,10 @@ export interface NovelSegment {
 /** 每段字符数上限允许的最小值。 */
 export const MIN_SEGMENT_CHARS = 500;
 
+/** 章节标题行：第 N 章、回、节、卷、集、部，或 Chapter N，或 1 到 3 个 # 开头的标题，整行不超过 60 个字符。 */
 const CHAPTER_HEADING =
   /^[ \t\u3000]*(?:第[零〇一二三四五六七八九十百千万两\d]+[章回节卷集部]|chapter\s+[\dIVXLC]+|#{1,3}\s+\S)[^\n]{0,60}$/i;
+/** 句末标点，强制切分时优先在这里断开。 */
 const SENTENCE_END = /[。！？!?…”"]/;
 
 interface Section {

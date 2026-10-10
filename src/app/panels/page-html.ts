@@ -8,7 +8,7 @@
 // ------------------------------------------------------------------------
 
 import { APP_PROTOCOL, ShellTheme } from '../shell/shell-channels';
-import { createNonce, escapeHtml } from './html-utils';
+import { createNonce, escapeHtml } from './html-safety';
 
 /** 页面 CSP 放行的来源：应用自定义协议。 */
 export const APP_PAGE_CSP_SOURCE = `${APP_PROTOCOL}:`;
@@ -57,7 +57,7 @@ ${styleTags}
     </div>
     <div id="page-toolbar" class="page-header__toolbar"></div>
   </header>
-  <div id="app"></div>
+  <main id="app" class="page-main"></main>
 ${scriptTags}
 </body>
 </html>`;

@@ -11,7 +11,7 @@ import { NotFoundError } from '../../domain/errors';
 import { AssetRepository } from '../../domain/ports/asset-repository';
 
 /** 参考文件的类型与内容。 */
-export interface ReferenceFileData {
+export interface ReferenceFilePayload {
   readonly mime: string;
   /** Base64 内容（不带前缀）。 */
   readonly data: string;
@@ -22,7 +22,7 @@ export interface ReferenceFileData {
  * @param emptyMessage 资产没有参考文件时的提示。
  * @throws NotFoundError 资产没有参考文件。
  */
-export function readFirstReferenceFile(assets: Pick<AssetRepository, 'listReferenceFiles'>, assetId: number, emptyMessage: string): ReferenceFileData {
+export function readFirstReferenceFile(assets: Pick<AssetRepository, 'listReferenceFiles'>, assetId: number, emptyMessage: string): ReferenceFilePayload {
   const [file] = assets.listReferenceFiles(assetId);
   if (file === undefined) {
     throw new NotFoundError(emptyMessage);

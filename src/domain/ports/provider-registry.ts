@@ -49,12 +49,18 @@ export class ProviderRegistry {
     return [...this.descriptors.values()];
   }
 
-  /** 按代码取得服务商声明；没有登记返回 undefined。 */
+  /**
+   * 按代码取得服务商声明；没有登记返回 undefined。
+   * @param providerCode 服务商代码。
+   */
   findProvider(providerCode: string): ProviderDescriptor | undefined {
     return this.descriptors.get(providerCode);
   }
 
-  /** 某服务商登记的全部适配器，按登记顺序。 */
+  /**
+   * 某服务商登记的全部适配器，按登记顺序。
+   * @param providerCode 服务商代码。
+   */
   listAdapters(providerCode: string): AnyModelProvider[] {
     return [...this.adapters.values()].filter((adapter) => adapter.provider.code === providerCode);
   }

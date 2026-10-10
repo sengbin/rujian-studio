@@ -10,7 +10,7 @@
 import { INTERRUPTED_MESSAGE, NotFoundError, TextGenerationError, ValidationError, FORM_LEVEL_ERROR_KEY } from '../../domain/errors';
 import { StageRun, StageTarget } from '../../domain/models/stage-run';
 import { StageRunRepository } from '../../domain/ports/stage-run-repository';
-import { TextGenerationPort, TextGenerationSource, TextModelInfo } from '../../domain/ports/text-generation-port';
+import { TextGenerationPort, TextGenerationSource, TextModelIdentity } from '../../domain/ports/text-generation-port';
 import { UPSTREAM_STAGE, assertCanStart, canRetry } from '../../domain/rules/stage-review-rules';
 import { InvalidOutputError } from './structured-generation';
 import { StageWorkflow } from './stage-workflow';
@@ -48,6 +48,7 @@ export class StageRunner {
 
   /**
    * 启动一次阶段生成：校验输入与前置条件，创建“运行中”的记录并在后台执行。
+   * @param request 启动请求（作品、阶段、参数与确认状态）。
    * @returns 新创建的记录。
    * @throws ValidationError 输入不合法、上游未确认或同一目标正在生成。
    * @throws TextGenerationError 没有可用的文本模型。
@@ -81,6 +82,7 @@ export class StageRunner {
 
   /**
    * 重试失败或已取消的记录：从已保存的进度与产出继续，不产生新版本。
+   * @param runId 失败或已取消的阶段记录标识。
    * @throws NotFoundError 记录不存在。
    * @throws ValidationError 记录不是失败或已取消，或同一目标正在生成。
    */
@@ -144,6 +146,7 @@ export class StageRunner {
 
   /**
    * 取消正在生成的记录。
+   * @param runId 阶段记录标识。
    * @returns 是否找到了正在执行的生成。
    */
   cancel(runId: number): boolean {
@@ -157,6 +160,7 @@ export class StageRunner {
 
   /**
    * 取消正在生成的记录并等待它结束（已写入最终状态）。
+   * @param runId 阶段记录标识。
    * @returns 是否找到了正在执行的生成。
    */
   async cancelAndWait(runId: number): Promise<boolean> {
@@ -204,7 +208,7 @@ export class StageRunner {
    * 在后台启动执行：先登记再开始，结束时（无论成功、失败还是意外抛出）先移除登记再放行等待者，
    * 保证执行期间的取消能找到它，也不会出现已结束仍在登记中的记录。
    */
-  private launch(run: StageRun, workflow: StageWorkflow, model: TextModelInfo, text: TextGenerationPort): void {
+  private launch(run: StageRun, workflow: StageWorkflow, model: TextModelIdentity, text: TextGenerationPort): void {
     const controller = new AbortController();
     let finish!: () => void;
     const done = new Promise<void>((resolve) => {
@@ -226,7 +230,7 @@ export class StageRunner {
   }
 
   /** 执行工作流，并把结果记录为成功、失败或已取消；不向外抛出异常。 */
-  private async execute(run: StageRun, workflow: StageWorkflow, model: TextModelInfo, text: TextGenerationPort, signal: AbortSignal): Promise<void> {
+  private async execute(run: StageRun, workflow: StageWorkflow, model: TextModelIdentity, text: TextGenerationPort, signal: AbortSignal): Promise<void> {
     const { runs } = this.dependencies;
     try {
       await workflow.execute({

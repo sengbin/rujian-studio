@@ -1,0 +1,65 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：ui-list.css
+ * 说明：界面组件库的可选择列表样式：列表容器与列表项的悬停、按下、选中和焦点反馈。
+ * 作者：sengbin
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-11
+ * 备注：所有选择器以 ui- 开头；依赖 ui-tokens.css；项内部的排版由页面决定。
+ * ------------------------------------------------------------------------
+ */
+
+/* 列表容器与列表项：多处共用；项内部的排版由页面自己决定，选中、悬停、按下、焦点反馈在这里统一 */
+.ui-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--list-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-list__item {
+  padding: var(--list-item-padding-y) var(--list-item-padding-x);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--table-border);
+  border-radius: var(--list-item-radius);
+  cursor: pointer;
+  transition: background-color var(--hover-duration) ease, border-color var(--hover-duration) ease;
+}
+
+.ui-list__item:hover {
+  background: var(--option-hover-bg);
+}
+
+.ui-list__item:active {
+  background: var(--option-active-bg);
+}
+
+.ui-list__item:focus-visible {
+  outline: 1px solid var(--focus-border);
+  outline-offset: 1px;
+}
+
+/* 选中项：选中底色加 3px 的内侧左标记，选中状态不只靠颜色区分 */
+.ui-list__item[aria-current="true"] {
+  background: var(--option-selected-bg);
+  border-color: var(--focus-border);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.ui-list__item[aria-current="true"]:hover {
+  background: var(--option-selected-hover-bg);
+}
+
+.ui-list__item[aria-current="true"]:active {
+  background: var(--option-selected-active-bg);
+}
+
+/* 设置了 display 的控件会盖过 hidden 属性，这里让它们在没有页面基础样式的页面里也能正常隐藏 */
+.ui-list[hidden] {
+  display: none !important;
+}

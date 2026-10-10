@@ -31,6 +31,12 @@ const PROMPT_MAX_LENGTH = 1500;
 /** 两个模型共有的画幅。 */
 const COMMON_ASPECT_RATIOS = ['1:1', '16:9', '4:3', '3:2', '2:3', '3:4', '9:16'];
 
+/** MiniMax 提供的图像模型。 */
+export const MINIMAX_IMAGE_MODELS: readonly ModelDescriptor<'image'>[] = [
+  { code: 'image-01', displayName: 'MiniMax 图像 01', kind: 'image', capability: minimaxImageCapability([...COMMON_ASPECT_RATIOS, '21:9']) },
+  { code: 'image-01-live', displayName: 'MiniMax 图像 01 Live', kind: 'image', capability: minimaxImageCapability(COMMON_ASPECT_RATIOS) }
+];
+
 /** 构造图像模型的能力：不支持反向提示词，没有分辨率档位。 */
 function minimaxImageCapability(aspectRatios: readonly string[]): ImageCapability {
   return {
@@ -42,9 +48,3 @@ function minimaxImageCapability(aspectRatios: readonly string[]): ImageCapabilit
     promptMaxLength: PROMPT_MAX_LENGTH
   };
 }
-
-/** MiniMax 提供的图像模型。 */
-export const MINIMAX_IMAGE_MODELS: readonly ModelDescriptor<'image'>[] = [
-  { code: 'image-01', displayName: 'MiniMax 图像 01', kind: 'image', capability: minimaxImageCapability([...COMMON_ASPECT_RATIOS, '21:9']) },
-  { code: 'image-01-live', displayName: 'MiniMax 图像 01 Live', kind: 'image', capability: minimaxImageCapability(COMMON_ASPECT_RATIOS) }
-];

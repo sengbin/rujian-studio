@@ -84,7 +84,10 @@ interface CancelableCall {
   readonly context: ProviderCallContext;
 }
 
-/** 由模型调用构造取消函数；服务商不支持取消时返回 undefined。 */
+/**
+ * 由模型调用构造取消函数；服务商不支持取消时返回 undefined。
+ * @param call 服务商调用函数。
+ */
 export function createRemoteCanceller(call: CancelableCall): RemoteCanceller | undefined {
   const { adapter, modelCode, context } = call;
   const cancel = adapter.cancel;
@@ -189,6 +192,7 @@ export abstract class BaseRemoteJobQueue<TRecord extends RemoteJobRecord, TResul
 
   /**
    * 启动定时处理：立即处理一轮，之后每隔 intervalMs 处理一轮。
+   * @param intervalMs 处理间隔，单位为毫秒。
    * @returns 停止函数：停止定时器、不再开始新的一轮处理，并等待正在进行的一轮处理结束。
    */
   start(intervalMs: number): () => Promise<void> {
@@ -228,6 +232,7 @@ export abstract class BaseRemoteJobQueue<TRecord extends RemoteJobRecord, TResul
 
   /**
    * 取消进行中的任务：生成中的任务若服务商支持取消则同时取消远端任务；不支持时只停止本地跟踪，远端任务可能仍会继续并计费。
+   * @param id 任务标识。
    * @returns remoteCanceled 为 true 表示已通知服务商取消；通知失败时本地取消仍然成功，失败原因放在 remoteCancelError 里。
    * @throws NotFoundError 任务不存在，或已经结束。
    */

@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
-// 备注：依赖 ui-core.js；样式见 ui-controls.css 的 ui-list、ui-list__item；项内排版由页面自己的类名决定。
+// 备注：依赖 ui-core.js；样式见 ui-list.css 的 ui-list、ui-list__item；项内排版由页面自己的类名决定。
 // ------------------------------------------------------------------------
 
 'use strict';

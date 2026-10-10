@@ -23,7 +23,9 @@ import { SHOT_SECONDS_MAX, SHOT_SECONDS_MIN, SOUND_KINDS } from './storyboard-sh
 /** 镜头总数上限的取值范围；不填时取最大值。 */
 export const MAX_SHOTS_LIMIT = 200;
 
+/** 分镜补充要求的长度上限。 */
 export const STORYBOARD_EXTRA_MAX_LENGTH = 2000;
+/** 分镜画面风格的长度上限。 */
 export const STORYBOARD_STYLE_MAX_LENGTH = 50;
 
 /** 连贯策略、声音模式的选项，界面显示文字与键一一对应。 */
@@ -33,6 +35,7 @@ export const CONTINUITY_LABELS: Readonly<Record<ContinuityStrategy, string>> = {
   prev_tail: '尾帧接首帧',
   ai: '由 AI 判断是否接尾帧'
 };
+/** 声音模式的界面名称。 */
 export const AUDIO_MODE_LABELS: Readonly<Record<AudioMode, string>> = {
   none: '无声',
   native: '模型原生生成'
@@ -109,14 +112,17 @@ export function normalizeStoryboardParams(rawInput: unknown): StoryboardParams {
   const decimal = { min: SHOT_SECONDS_MIN, max: SHOT_SECONDS_MAX, maxDecimals: 1 };
   const minShotSeconds = readOptionalDecimal(source, { key: 'minShotSeconds', label: '单镜头最短时长', ...decimal }, errors);
   const maxShotSeconds = readOptionalDecimal(source, { key: 'maxShotSeconds', label: '单镜头最长时长', ...decimal }, errors);
+  // 单镜头时长的范围：最长不能小于最短。
   if (minShotSeconds !== null && maxShotSeconds !== null && maxShotSeconds < minShotSeconds) {
     errors.maxShotSeconds = '单镜头最长时长不能小于最短时长。';
   }
+  // 单组最长时长留空取默认值；填了就必须是范围内的整数。
   const rawGroupMax = source.groupMaxSeconds;
   const hasGroupMax = !(rawGroupMax === undefined || rawGroupMax === null || (typeof rawGroupMax === 'string' && rawGroupMax.trim() === ''));
   const groupMaxSeconds = hasGroupMax
     ? readInteger(source, { key: 'groupMaxSeconds', label: '单组最长时长', required: true, min: GROUP_SECONDS_MIN, max: GROUP_SECONDS_MAX }, errors)
     : DEFAULT_GROUP_MAX_SECONDS;
+  // 单组时长合法时才比较单镜头时长：一个镜头必须能放进一组，所以不能超过单组最长。
   if (errors.groupMaxSeconds === undefined) {
     if (maxShotSeconds !== null && maxShotSeconds > groupMaxSeconds && errors.maxShotSeconds === undefined) {
       errors.maxShotSeconds = `单镜头最长时长不能大于单组最长时长（${groupMaxSeconds} 秒），一个镜头必须能放进一组。`;
@@ -125,6 +131,7 @@ export function normalizeStoryboardParams(rawInput: unknown): StoryboardParams {
       errors.minShotSeconds = `单镜头最短时长不能大于单组最长时长（${groupMaxSeconds} 秒）。`;
     }
   }
+  // 镜头总数上限留空表示不限制。
   const rawMaxShots = source.maxShots;
   const hasMaxShots = !(rawMaxShots === undefined || rawMaxShots === null || (typeof rawMaxShots === 'string' && rawMaxShots.trim() === ''));
   const maxShots = hasMaxShots
@@ -132,6 +139,7 @@ export function normalizeStoryboardParams(rawInput: unknown): StoryboardParams {
     : null;
   const continuity = readLabeledChoice<ContinuityStrategy>(source, 'continuity', '镜头连贯策略', CONTINUITY_LABELS, 'cut', errors);
   const audioMode = readLabeledChoice<AudioMode>(source, 'audioMode', '声音模式', AUDIO_MODE_LABELS, 'native', errors);
+  // 没有提交声音内容时默认全选；有声模式下至少要选一项。
   const elements = source.audioElements === undefined ? [...SOUND_KINDS] : readSoundKinds(source.audioElements, errors);
   if (audioMode !== 'none' && elements.length === 0 && errors.audioElements === undefined) {
     errors.audioElements = '请至少选择一项声音内容。';
@@ -141,6 +149,7 @@ export function normalizeStoryboardParams(rawInput: unknown): StoryboardParams {
     { key: 'extra', label: '补充要求', required: false, maxLength: STORYBOARD_EXTRA_MAX_LENGTH },
     errors
   );
+  // 全部字段校验完才统一报错，让用户一次看到所有问题。
   assertNoFieldErrors(errors);
   return {
     visualStyle,

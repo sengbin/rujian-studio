@@ -87,7 +87,7 @@ test('音色生成的请求：先校验作品归属再转交服务，归属不�
 });
 
 test('请求名称与界面脚本一致', () => {
-  const script = readFileSync(path.join(__dirname, '..', '..', '..', 'resources', 'stage', 'stage-storyboard-preview-voice.js'), 'utf8');
+  const script = readFileSync(path.join(__dirname, '..', '..', '..', 'resources', 'stage', 'storyboard-preview', 'stage-storyboard-preview-voice.js'), 'utf8');
   for (const name of Object.values(VOICE_PREVIEW_REQUESTS)) {
     assert.ok(script.includes(`'${name}'`), `界面脚本里缺少 ${name}`);
   }

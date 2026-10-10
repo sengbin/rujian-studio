@@ -56,6 +56,8 @@ export class SidebarActionRegistry {
 
   /**
    * 执行点击动作。
+   * @param itemId 菜单项标识。
+   * @param target 点击的目标（主入口或尾部操作）。
    * @returns 是否有已注册的动作并已执行。
    */
   run(itemId: string, target: SidebarTarget): boolean {

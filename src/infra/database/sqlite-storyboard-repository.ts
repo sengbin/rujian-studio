@@ -87,6 +87,7 @@ interface StoredFirstFrame {
   readonly filePath: string;
 }
 
+/** 把声音条目的数据库行转换为声音记录。 */
 function toSound(row: SoundRow): SoundRecord {
   return {
     id: row.id,

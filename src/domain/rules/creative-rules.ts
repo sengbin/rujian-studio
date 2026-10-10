@@ -29,16 +29,26 @@ export const CHAPTER_MAX_WORDS_CEILING = 100000;
 /** 章节数上限的最大值。 */
 export const MAX_CHAPTERS_LIMIT = 100;
 
+/** 每章字数下限的默认值。 */
 export const DEFAULT_CHAPTER_MIN_WORDS = 100;
+/** 每章字数上限的默认值。 */
 export const DEFAULT_CHAPTER_MAX_WORDS = 2500;
+/** 章节数上限的默认值。 */
 export const DEFAULT_MAX_CHAPTERS = 20;
 
+/** 创意文字灵感的长度上限。 */
 export const CREATIVE_IDEA_MAX_LENGTH = 2000;
+/** 题材、基调等手动输入文字的长度上限。 */
 export const CREATIVE_CHOICE_MAX_LENGTH = 50;
+/** “必须保留的内容”的长度上限。 */
 export const CREATIVE_PRESERVE_MAX_LENGTH = 1000;
+/** 创意补充要求的长度上限。 */
 export const CREATIVE_EXTRA_MAX_LENGTH = 2000;
+/** 章节标题的长度上限。 */
 export const CHAPTER_TITLE_MAX_LENGTH = 100;
+/** 大纲里单章概要的长度上限。 */
 export const OUTLINE_SUMMARY_MAX_LENGTH = 500;
+/** 作品总概要的长度上限。 */
 export const SUMMARY_MAX_LENGTH = 2000;
 
 /** 节拍参考模式在界面中的名称，表单的单选项使用它。 */
@@ -47,11 +57,16 @@ export const BEAT_REFERENCE_LABELS: Readonly<Record<BeatReferenceMode, string>> 
   reference: '参考节拍表'
 };
 
+/** 匹配一个中日韩汉字，按字计数。 */
 const CJK_CHARACTER = /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/g;
+/** 匹配一个拉丁字母或数字词（含词内的连字符与撇号），按词计数。 */
 const LATIN_WORD = /[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g;
 
 /** 参考节拍表模式下节拍表尚未确认的提示。 */
 export const BEAT_REFERENCE_UNCONFIRMED_MESSAGE = '参考节拍表需要先确认节拍表。';
+
+/** 人工编辑保存的章节正文长度上限。 */
+export const CHAPTER_CONTENT_MAX_LENGTH = 100000;
 
 /**
  * 确认参考节拍表模式有已确认的节拍表；自由创作不需要。
@@ -116,6 +131,7 @@ export function normalizeCreativeParams(rawInput: unknown, forcedMode?: BeatRefe
   const extra = optional('extra', '补充要求', CREATIVE_EXTRA_MAX_LENGTH);
   const beatReferenceMode = forcedMode ?? readBeatReferenceMode(source, errors);
 
+  // 最多字数必须比最少字数多出一个最小间隔，否则章节长度没有可写的范围。
   if (
     errors.chapterMinWords === undefined &&
     errors.chapterMaxWords === undefined &&
@@ -140,6 +156,7 @@ function readSources(item: unknown, seq: number, segmentCount: number, issues: s
   if (segmentCount === 0) {
     return [];
   }
+  // 小说素材要求每章标注依据的原文分段序号，序号必须在分段范围内。
   const value = isRecord(item) ? item.sources : undefined;
   const valid =
     Array.isArray(value) &&
@@ -165,6 +182,7 @@ export function parseOutline(raw: unknown, params: CreativeParams, segmentCount 
     throw new GeneratedOutputError(['大纲必须是包含 chapters 数组的 JSON，例如 {"chapters":[{"title":"…","summary":"…"}]}。']);
   }
 
+  // 章节数超过上限时让模型合并章节，不静默截断。
   const issues: string[] = [];
   if (items.length === 0) {
     issues.push('大纲至少需要 1 章。');
@@ -173,6 +191,7 @@ export function parseOutline(raw: unknown, params: CreativeParams, segmentCount 
   }
 
   const outline: ChapterOutlineItem[] = [];
+  // 逐章校验标题、梗概与依据，序号按顺序从 1 分配。
   items.forEach((item, index) => {
     const seq = index + 1;
     const title = isRecord(item) && typeof item.title === 'string' ? item.title.trim() : '';
@@ -203,6 +222,7 @@ export function parseChapter(raw: unknown, seq: number): ChapterDraft {
     throw new GeneratedOutputError(['章节必须是包含 title 和 content 的 JSON 对象。']);
   }
 
+  // 只检查格式；字数不在设定范围内也接受，由界面在生成后提示。
   const issues: string[] = [];
   const title = typeof raw.title === 'string' ? raw.title.trim() : '';
   const content = typeof raw.content === 'string' ? raw.content.trim() : '';
@@ -234,9 +254,6 @@ export function parseSummary(raw: unknown): string {
   }
   return summary;
 }
-
-/** 人工编辑保存的章节正文长度上限。 */
-export const CHAPTER_CONTENT_MAX_LENGTH = 100000;
 
 /**
  * 校验并规范化用户手动编辑保存的一章：只检查格式与长度，字数范围只在界面提示，不阻止保存。

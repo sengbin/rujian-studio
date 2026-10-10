@@ -177,8 +177,8 @@ export class SqliteWorkRepository implements WorkRepository {
   private readFile(fileName: string, filePath: string): Buffer {
     try {
       return this.files.read(filePath);
-    } catch {
-      throw new Error(`素材文件“${fileName}”已丢失，请重新上传。`);
+    } catch (error) {
+      throw new Error(`素材文件“${fileName}”已丢失，请重新上传。`, { cause: error });
     }
   }
 

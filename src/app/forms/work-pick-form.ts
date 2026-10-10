@@ -14,9 +14,13 @@ import { WorkListItem, WorkService } from '../services/work-service';
 import { FormDefinition } from './form-definition';
 import { FormFieldSchema } from './form-schema';
 
+/** 选择作品表单的提交按钮文字。 */
 const PICK_SUBMIT_LABEL = '下一步';
+/** 选择作品字段的表单键。 */
 const PICK_FIELD_KEY = 'work';
+/** 选项文字里项目名与作品名之间的分隔符。 */
 const PICK_SEPARATOR = ' › ';
+/** 没有选择作品时的校验提示。 */
 const PICK_REQUIRED_MESSAGE = '请选择所属作品。';
 
 /** “选择作品”表单的定制部分。 */
@@ -39,6 +43,7 @@ export interface WorkPickOptions {
 
 /**
  * 读取打开“选择作品”表单的参数 { projectId? }。
+ * @param params 打开表单的参数，格式未经校验。
  * @returns 项目标识；没有传时为 undefined。
  * @throws ValidationError 参数不是对象，或项目标识不是整数。
  */
@@ -49,6 +54,7 @@ export function readPickProjectId(params: unknown): number | undefined {
 
 /**
  * 创建“选择作品”表单的定义：只列符合条件的作品，选项标签为“项目 › 作品”。
+ * @param options 可选作品与项目名称等创建选项。
  * @throws ValidationError 没有符合条件的作品。
  */
 export function createWorkPickForm(options: WorkPickOptions): FormDefinition {

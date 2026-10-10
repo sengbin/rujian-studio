@@ -187,9 +187,6 @@
   window.hostBridge.onEvent(EVENT_CHANGED, () => void loadProjects(false));
   window.hostBridge.onEvent(EVENT_ACTION, handleRequest);
   // 页面打开前已登记的请求（如侧栏点“创建项目”），加载完成后主动取走。
-  window.hostBridge
-    .request(REQUEST_TAKE_PENDING_ACTION)
-    .then(handleRequest)
-    .catch(() => undefined);
+  void window.pageFormat.takePendingRequest(REQUEST_TAKE_PENDING_ACTION, handleRequest, (result) => result);
   void loadProjects();
 })();

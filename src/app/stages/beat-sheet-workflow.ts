@@ -46,7 +46,9 @@ export const BEAT_SHEET_PROMPT_VARIABLES: Readonly<Record<string, readonly strin
   'beat-sheet-assign': ['material', 'beatStructure', 'extra', 'sourcesRule', 'sourcesExample']
 };
 
+/** 当前支持的体量类型，用于校验参数。 */
 const FORMAT_TYPES: readonly ProductionFormatType[] = listSupportedFormats().map((profile) => profile.formatType);
+/** 作品素材来源的全部取值，用于校验参数。 */
 const SOURCE_TYPES: readonly WorkSourceType[] = ['text', 'image', 'novel', 'original'];
 
 /** 作品素材来源转为素材整理的来源：原创文稿的原稿与小说一样分段处理。 */

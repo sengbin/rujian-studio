@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：向 stage.js 的外壳登记；请求名称与 src/app/pages/stage-handlers.ts、重新生成表单名称与 src/app/forms/work-form.ts 一致；只读原因、保存按钮状态、已确认版本被编辑时的确认、偏差文案与汇总列表写法来自 stage-editor-common.js（aiStageEditor），必须先于本文件加载。
+// 备注：向 stage.js 的外壳登记；请求名称与 src/app/pages/stage-handlers.ts、重新生成表单名称与 src/app/forms/work-form.ts 一致；只读原因、保存按钮状态、已确认版本被编辑时的确认、偏差文案与汇总列表写法来自 stage-editing.js（aiStageEditor），必须先于本文件加载。
 // ------------------------------------------------------------------------
 
 'use strict';

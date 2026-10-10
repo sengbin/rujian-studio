@@ -66,6 +66,7 @@
       if (options.onConfiguredChange) options.onConfiguredChange(configured);
     }
 
+    /** 保存输入的密钥并显示保存结果。 */
     async function save() {
       // 回车触发不受按钮禁用的限制，保存中必须自己拒绝重入。
       if (isSaving) return;
@@ -103,6 +104,7 @@
       }
     }
 
+    /** 确认后清除已保存的密钥。 */
     async function clear() {
       const confirmed = await aiUi.confirm({
         title: options.clearConfirm.title,

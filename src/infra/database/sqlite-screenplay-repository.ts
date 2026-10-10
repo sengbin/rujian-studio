@@ -81,6 +81,7 @@ function toScreenplay(row: ScreenplayRow): Screenplay {
   };
 }
 
+/** 把集的数据库行转换为集记录。 */
 function toEpisode(row: EpisodeRow): EpisodeRecord {
   return {
     id: row.id,
@@ -93,6 +94,7 @@ function toEpisode(row: EpisodeRow): EpisodeRecord {
   };
 }
 
+/** 把实体的数据库行转换为实体记录。 */
 function toEntity(row: EntityRow): EntityRecord {
   return {
     id: row.id,

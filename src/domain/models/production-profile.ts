@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：设计见 private-docs/rujian-studio/开发文档-vscode/production-profile-design.md 第 4.1 节；新增体量只需在注册表追加记录，不在工作流里写分支。
+// 备注：设计见 private-docs/rujian-studio/开发文档/production-profile-design.md 第 4.1 节；新增体量只需在注册表追加记录，不在工作流里写分支。
 // ------------------------------------------------------------------------
 
 /** 作品体量/制作方案类型；series、feature_film 目前只注册占位。 */

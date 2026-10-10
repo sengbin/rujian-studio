@@ -65,7 +65,10 @@ export interface ScreenplayEditor {
   deleteEntity(run: StageRun, ref: number): void;
 }
 
-/** 读取请求中的定位值：非负整数。 */
+/**
+ * 读取请求中的定位值：非负整数。
+ * @param rawInput 界面提交的定位值，未经校验。
+ */
 export function readRef(rawInput: unknown): number {
   const ref = readRecord(rawInput).ref;
   if (typeof ref !== 'number' || !Number.isInteger(ref) || ref < 0) {
@@ -74,27 +77,41 @@ export function readRef(rawInput: unknown): number {
   return ref;
 }
 
-/** 数量已达上限时不能再新增。 */
+/**
+ * 数量已达上限时不能再新增。
+ * @param count 当前数量。
+ * @param limit 允许的最大数量。
+ * @param label 数量的名称，用于提示文字，如“集”“实体”。
+ */
 export function assertBelowLimit(count: number, limit: number, label: string): void {
   if (count >= limit) {
     throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: `${label}数量已达上限 ${limit}，不能再新增。` });
   }
 }
 
-/** 至少保留 1 集，不能删到只剩零集。 */
+/**
+ * 至少保留 1 集，不能删到只剩零集。
+ * @param count 删除前的集数。
+ */
 export function assertKeepsOneEpisode(count: number): void {
   if (count <= 1) {
     throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: '至少保留 1 集，不能删除。' });
   }
 }
 
-/** 集已经在最前或最后、不能再移动时的提示。 */
+/**
+ * 集已经在最前或最后、不能再移动时的提示。
+ * @param step 移动方向，正数向后、负数向前。
+ */
 export function describeMoveBoundary(step: number): string {
   return step < 0 ? '已经是第一集，不能再前移。' : '已经是最后一集，不能再后移。';
 }
 
 /**
  * 编辑保存一集后的结构标注：原来没有标注则仍然没有；正文被修改则标注失效、返回 undefined；否则合并提交的标注修改（没有提交则保持原样）。
+ * @param current 保存前的集草稿。
+ * @param editedText 编辑后的集正文。
+ * @param rawInput 界面提交的内容，未经校验。
  */
 export function resolveSegments(current: EpisodeDraft, editedText: string, rawInput: unknown): readonly TextSegment[] | undefined {
   if (current.segments === undefined || editedText !== current.screenplayText) {
@@ -105,6 +122,8 @@ export function resolveSegments(current: EpisodeDraft, editedText: string, rawIn
 
 /**
  * 读取剧本包上尚未合并的抽取结果。
+ * @param screenplays 剧本仓库。
+ * @param runId 阶段记录标识。
  * @throws NotFoundError 还没有抽取集和实体。
  */
 export function requireStructure(screenplays: Pick<ScreenplayRepository, 'find'>, runId: number): ScreenplayStructure {

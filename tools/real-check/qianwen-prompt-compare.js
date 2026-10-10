@@ -81,6 +81,7 @@ function buildCurrentPrompt(shots, capability, options, style) {
   return snapshot.prompt;
 }
 
+/** 解析命令行参数，没有给出的取 DEFAULTS。 */
 function parseArguments(argv) {
   const options = { ...DEFAULTS, yes: false, dryRun: false, out: null, style: '电影感，青蓝色调，雨夜氛围' };
   for (let index = 0; index < argv.length; index += 1) {
@@ -112,6 +113,7 @@ async function waitForTask(provider, ref, context, options) {
   }
 }
 
+/** 运行入口：解析参数，按需调用千问并输出对比结果。 */
 async function main() {
   const options = parseArguments(process.argv.slice(2));
   const { QIANWEN_VIDEO_MODELS } = require('../../.test-build/infra/providers/qianwen/qianwen-catalog');

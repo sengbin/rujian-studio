@@ -19,6 +19,7 @@ import {
   RemoteJobState
 } from '../../../domain/ports/provider-adapters';
 import { readDeliveryRates } from '../../../domain/rules/voice-delivery-rules';
+import { findVoiceByLabel, validateAudioContent } from '../shared/audio-request-validation';
 import { findModelByCode } from '../shared/provider-model-lookup';
 import { readObject, validateExtraParams } from '../shared/provider-payload';
 import { SyncResultStore } from '../shared/sync-result-store';
@@ -33,8 +34,7 @@ import {
   MINIMAX_SPEECH_MIME_TYPE,
   MINIMAX_SPEECH_PATH,
   MINIMAX_SPEECH_SAMPLE_RATE,
-  MINIMAX_VOICES,
-  MinimaxVoice
+  MINIMAX_VOICES
 } from './minimax-audio-catalog';
 import { MINIMAX_PROVIDER, MINIMAX_PROVIDER_NAME } from './minimax-catalog';
 
@@ -78,7 +78,7 @@ export class MinimaxAudioProvider implements AudioModelProvider {
     if (capability === undefined) {
       return [`${MINIMAX_PROVIDER_NAME}没有模型 ${request.modelCode}。`];
     }
-    return [...validateContent(request, capability), ...validateExtraParams(request.extraParams, {})];
+    return [...validateAudioContent(request, capability), ...validateExtraParams(request.extraParams, {})];
   }
 
   async submit(request: AudioGenerationRequest, context: ProviderCallContext): Promise<RemoteJobRef> {
@@ -99,48 +99,9 @@ export class MinimaxAudioProvider implements AudioModelProvider {
   }
 }
 
-/** 校验音频类型、要朗读的文字、语言、音色、时长和参考音频。 */
-function validateContent(request: AudioGenerationRequest, capability: AudioCapability): string[] {
-  const issues: string[] = [];
-  if (!capability.audioKinds.includes(request.audioKind)) {
-    issues.push(`该模型不能生成${request.audioKind}类型的音频，支持：${capability.audioKinds.join('、')}。`);
-  }
-  if (request.prompt.trim() === '') {
-    issues.push('提示词不能为空。');
-  }
-  if (request.prompt.length > capability.promptMaxLength) {
-    issues.push(`提示词不能超过 ${capability.promptMaxLength} 字（当前 ${request.prompt.length} 字）。`);
-  }
-  if (request.durationSeconds !== null) {
-    issues.push('该模型不支持指定时长，时长由内容决定。');
-  }
-  if (request.language !== null && !capability.languages.includes(request.language)) {
-    issues.push(`语言 ${request.language} 不在模型支持的范围内：${capability.languages.join('、')}。`);
-  }
-  if (request.voice !== null && !capability.voices.includes(request.voice)) {
-    issues.push(`该模型不支持预置音色 ${request.voice}。`);
-  }
-  if (request.referenceAudio !== null) {
-    issues.push('该模型不支持参考音频。');
-  }
-  return issues;
-}
-
-/** 按显示名称取音色；未指定（null）用默认音色，指定了却不在目录里则报错（校验阶段已拦截）。 */
-function resolveVoice(label: string | null): MinimaxVoice {
-  if (label === null) {
-    return MINIMAX_DEFAULT_VOICE;
-  }
-  const found = MINIMAX_VOICES.find((candidate) => candidate.label === label);
-  if (found === undefined) {
-    throw new ProviderError('invalid_request', `该模型不支持预置音色 ${label}。`);
-  }
-  return found;
-}
-
 /** 构造请求体：音色按显示名称换算成平台的音色标识，未指定时用默认音色；说话方式换算为语速与音量；返回音频地址。 */
 function buildRequestBody(request: AudioGenerationRequest): Record<string, unknown> {
-  const voice = resolveVoice(request.voice);
+  const voice = findVoiceByLabel(MINIMAX_VOICES, MINIMAX_DEFAULT_VOICE, request.voice);
   const { speechRate, loudnessRate } = readDeliveryRates(request.delivery ?? '');
   const body: Record<string, unknown> = {
     model: request.modelCode,

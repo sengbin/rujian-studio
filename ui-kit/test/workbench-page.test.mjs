@@ -266,13 +266,13 @@ test('配置参数：应用范围是三个选项的分段开关，声音内容�
   const { document } = await setup();
   document.querySelectorAll('.wb-steps__tab')[1].click();
   assert.deepEqual(
-    [...document.querySelectorAll('.wb-profile__scope [role="radio"]')].map((radio) => radio.textContent.trim()),
+    [...document.querySelectorAll('.ui-choice-group--segmented [role="radio"]')].map((radio) => radio.textContent.trim()),
     ['作品默认', '本集', '本镜头组']
   );
-  const switches = [...document.querySelectorAll('.wb-switch-list [role="switch"]')];
+  const switches = [...document.querySelectorAll('.ui-switch-list [role="switch"]')];
   assert.equal(switches.length, 4);
   assert.deepEqual(
-    [...document.querySelectorAll('.wb-switch-list .ui-switch-row__label')].map((label) => label.textContent),
+    [...document.querySelectorAll('.ui-switch-list .ui-switch-row__label')].map((label) => label.textContent),
     ['对白', '旁白', '音效', '配乐']
   );
   assert.equal(document.querySelectorAll('select, input[type="checkbox"], input[type="radio"]').length, 0);

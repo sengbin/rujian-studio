@@ -21,26 +21,10 @@ interface TemplateSpec {
   readonly seconds: readonly [min: number, max: number, defaultValue: number];
 }
 
-/** 由简写生成完整的节拍模板，节拍序号按顺序从 1 开始。 */
-function defineTemplate(spec: TemplateSpec, beats: readonly BeatSpec[]): BeatTemplate {
-  const [minSeconds, maxSeconds, defaultSeconds] = spec.seconds;
-  return {
-    id: spec.id,
-    formatType: spec.formatType,
-    label: spec.label,
-    summary: spec.summary,
-    minSeconds,
-    maxSeconds,
-    defaultSeconds,
-    items: beats.map(([label, purpose, targetRatio], index) => ({ seq: index + 1, label, purpose, targetRatio }))
-  };
-}
-
 /** 单个短视频的默认模板标识。 */
 export const DEFAULT_SHORT_VIDEO_TEMPLATE_ID = 'short_video_single_hook';
 /** 多集短片的默认模板标识。 */
 export const DEFAULT_SHORT_DRAMA_TEMPLATE_ID = 'short_drama_episode';
-
 /** 单个短视频的节拍模板。 */
 const SHORT_VIDEO_TEMPLATES: readonly BeatTemplate[] = [
   defineTemplate(
@@ -189,7 +173,6 @@ const SHORT_VIDEO_TEMPLATES: readonly BeatTemplate[] = [
     ]
   )
 ];
-
 /** 多集短片（单集）的节拍模板；节拍表以故事的第一集为对象。 */
 const SHORT_DRAMA_TEMPLATES: readonly BeatTemplate[] = [
   defineTemplate(
@@ -294,6 +277,20 @@ const SHORT_DRAMA_TEMPLATES: readonly BeatTemplate[] = [
     ]
   )
 ];
-
 /** 全部节拍模板：先按形态分组，组内第一个是该形态的默认模板。 */
 export const BEAT_TEMPLATES: readonly BeatTemplate[] = [...SHORT_VIDEO_TEMPLATES, ...SHORT_DRAMA_TEMPLATES];
+
+/** 由简写生成完整的节拍模板，节拍序号按顺序从 1 开始。 */
+function defineTemplate(spec: TemplateSpec, beats: readonly BeatSpec[]): BeatTemplate {
+  const [minSeconds, maxSeconds, defaultSeconds] = spec.seconds;
+  return {
+    id: spec.id,
+    formatType: spec.formatType,
+    label: spec.label,
+    summary: spec.summary,
+    minSeconds,
+    maxSeconds,
+    defaultSeconds,
+    items: beats.map(([label, purpose, targetRatio], index) => ({ seq: index + 1, label, purpose, targetRatio }))
+  };
+}

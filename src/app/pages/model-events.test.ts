@@ -34,7 +34,7 @@ test('服务商或文本模型设置变化时推送事件，取消订阅后不�
 
 test('事件名称与监听它的界面脚本一致', () => {
   const resources = path.join(__dirname, '..', '..', '..', 'resources');
-  for (const file of ['form/form-runtime.js', 'asset-list/asset-generate.js', 'workbench/workbench.js', 'stage/stage-storyboard-preview-voice.js']) {
+  for (const file of ['form/form-runtime.js', 'asset-list/asset-generate.js', 'workbench/workbench.js', 'stage/storyboard-preview/stage-storyboard-preview-voice.js']) {
     assert.ok(readFileSync(path.join(resources, file), 'utf8').includes(`'${MODEL_EVENTS.changed}'`), `${file} 里缺少 ${MODEL_EVENTS.changed}`);
   }
 });

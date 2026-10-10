@@ -63,11 +63,14 @@ interface FileRow {
   readonly file_path?: string;
 }
 
+/** 查询资产版本的公共 SELECT 部分，带出生成模型的显示名称。 */
 const VERSION_SELECT = `SELECT v.*, m.display_name AS model_name
   FROM asset_versions v JOIN models m ON m.id = v.model_id`;
 
+/** 查询版本文件时读取的列，不含文件路径（路径只在需要读文件时取）。 */
 const FILE_COLUMNS = 'id, version_id, role, file_name, mime, width, height, duration_seconds, size_bytes, sort_order, is_adopted';
 
+/** 把资产版本的数据库行转换为版本记录。 */
 function toVersion(row: VersionRow): AssetVersionRecord {
   return {
     id: row.id,
@@ -90,6 +93,7 @@ function toVersion(row: VersionRow): AssetVersionRecord {
   };
 }
 
+/** 把版本文件的数据库行转换为文件记录。 */
 function toFile(row: FileRow): AssetVersionFile {
   return {
     id: row.id,

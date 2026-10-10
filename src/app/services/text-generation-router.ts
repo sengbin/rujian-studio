@@ -15,7 +15,7 @@ import {
   TextGenerationPort,
   TextGenerationRequest,
   TextGenerationSource,
-  TextModelInfo
+  TextModelIdentity
 } from '../../domain/ports/text-generation-port';
 import { TextGenerationSettingsStore } from '../../domain/ports/text-generation-settings-store';
 import { WorkTextModelRepository } from '../../domain/ports/work-text-model-repository';
@@ -66,7 +66,7 @@ class RoutedTextPort implements TextGenerationPort {
     private readonly requestedKey: string | null
   ) {}
 
-  async resolveModel(): Promise<TextModelInfo> {
+  async resolveModel(): Promise<TextModelIdentity> {
     const model = this.selectModel();
     let call: ResolvedTextCall;
     try {

@@ -71,12 +71,15 @@ export const CREATIVE_PROMPT_VARIABLES: Readonly<Record<string, readonly string[
   ]
 };
 
+/** 创意阶段支持的素材来源，不含原创文稿（它直接导入，不经创意生成）。 */
 const SOURCE_TYPES: readonly CreativeSourceType[] = ['text', 'image', 'novel'];
+/** 素材来源在提示词里的称呼。 */
 const SOURCE_KIND_LABELS: Readonly<Record<CreativeSourceType, string>> = {
   text: '文字灵感',
   image: '灵感图片',
   novel: '小说原文'
 };
+/** 写下一章时附带的上一章结尾字数，用来衔接情节。 */
 const PREVIOUS_ENDING_CHARS = 300;
 /** 恢复进度时发现素材或分段设置与上次不一致（或无法确认一致）、丢弃旧进度从头开始时给用户的提示。 */
 const RESTART_NOTICE = '素材或分段设置与上次不一致，已丢弃之前的进度从头开始';

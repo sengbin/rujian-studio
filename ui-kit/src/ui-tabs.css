@@ -1,0 +1,116 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：ui-tabs.css
+ * 说明：界面组件库的页签样式：下划线页签，以及带副文字的步骤页签变体。
+ * 作者：sengbin
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-11
+ * 备注：所有选择器以 ui- 开头；依赖 ui-tokens.css；多个页面共用，页面只负责放置位置。
+ * ------------------------------------------------------------------------
+ */
+
+/* 下划线标出选中项，后面可跟数量；多个页面共用，页面只负责放置位置（外边距、滚动） */
+.ui-tabs {
+  display: flex;
+  flex: none;
+  align-items: center;
+  border-bottom: 1px solid var(--tabs-line, var(--divider));
+}
+
+.ui-tab {
+  position: relative;
+  flex: none;
+  min-height: var(--tab-height);
+  padding: 0 var(--tab-padding-x);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--tab-font-size);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: background-color var(--hover-duration) ease;
+}
+
+.ui-tab:hover {
+  background: var(--option-hover-bg);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.ui-tab:focus-visible {
+  outline: 1px solid var(--focus-border);
+  outline-offset: -2px;
+}
+
+.ui-tab[aria-selected="true"] {
+  color: var(--text);
+  font-weight: var(--font-weight-strong);
+}
+
+.ui-tab[aria-selected="true"]::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--tab-indicator-height);
+  background: var(--accent);
+  border-radius: var(--tab-indicator-height) var(--tab-indicator-height) 0 0;
+  content: '';
+}
+
+.ui-tab__count {
+  margin-left: var(--space-xs);
+  color: var(--tab-count-color);
+  font-size: var(--tab-count-font-size);
+  font-weight: var(--font-weight-regular);
+}
+
+.ui-tab__count:empty {
+  display: none;
+}
+
+/* 步骤页签（variant: 'steps'）：页签等宽排成一行，每个页签纵向排列标题与副文字，选中项用底色加底部强调线表示；适用于分步骤的流程，如生成工作台右栏 */
+.ui-tabs--steps {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  min-height: var(--panel-header-height);
+}
+
+.ui-tabs--steps .ui-tab {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-width: 0;
+  padding: var(--space-sm) var(--space-page);
+  color: var(--text);
+  text-align: left;
+  border-bottom: var(--tab-indicator-height) solid transparent;
+  transition: background-color var(--hover-duration) ease, border-color var(--hover-duration) ease;
+}
+
+.ui-tabs--steps .ui-tab:hover {
+  border-radius: 0;
+}
+
+.ui-tabs--steps .ui-tab:active {
+  background: var(--option-active-bg);
+}
+
+.ui-tabs--steps .ui-tab[aria-selected="true"],
+.ui-tabs--steps .ui-tab[aria-selected="true"]:hover,
+.ui-tabs--steps .ui-tab[aria-selected="true"]:active {
+  background: var(--option-selected-bg);
+  border-bottom-color: var(--accent);
+  font-weight: inherit;
+}
+
+.ui-tabs--steps .ui-tab[aria-selected="true"]::after {
+  display: none;
+}
+
+/* 设置了 display 的控件会盖过 hidden 属性，这里让它们在没有页面基础样式的页面里也能正常隐藏 */
+.ui-tabs[hidden],
+.ui-tab[hidden] {
+  display: none !important;
+}

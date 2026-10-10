@@ -83,7 +83,9 @@ export const SCREENPLAY_PROMPT_VARIABLES: Readonly<Record<string, readonly strin
   'screenplay-annotate': ['episodeTitle', 'characters', 'context', 'segments']
 };
 
+/** 当前支持的体量类型，用于校验参数。 */
 const FORMAT_TYPES: readonly ProductionFormatType[] = listSupportedFormats().map((profile) => profile.formatType);
+/** 剧本的忠实度取值：改编、逐字保留。 */
 const FIDELITIES: readonly ScreenplayFidelity[] = ['adapted', 'verbatim'];
 /** 生成正文与抽取两个基础步骤；保真模式在其后按集增加标注步骤。 */
 const BASE_STEPS = 2;

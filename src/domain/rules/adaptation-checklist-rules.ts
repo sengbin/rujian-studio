@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：设计见 private-docs/rujian-studio/开发文档-vscode/production-profile-design.md 第 7.1、7.2、7.4 节；勾选变化只做本地重算，不调用模型；模型估算的节省字数只是参考，预计总时长以这里的重算为准。
+// 备注：设计见 private-docs/rujian-studio/开发文档/production-profile-design.md 第 7.1、7.2、7.4 节；勾选变化只做本地重算，不调用模型；模型估算的节省字数只是参考，预计总时长以这里的重算为准。
 // ------------------------------------------------------------------------
 
 import { GeneratedOutputError } from '../errors';
@@ -14,6 +14,7 @@ import { evaluateCalibration } from './timing-calibration-rules';
 
 /** 取舍项文字字段的长度上限。 */
 export const ADAPTATION_LABEL_MAX_LENGTH = 100;
+/** 取舍项原因说明的长度上限。 */
 export const ADAPTATION_REASON_MAX_LENGTH = 500;
 /** 一份清单最多的取舍项数。 */
 export const ADAPTATION_OPTIONS_MAX = 50;
@@ -22,6 +23,7 @@ const AFFECTED_REFS_MAX = 20;
 /** 单个定位标识的长度上限，只允许章节、场景或人物名称这类短文本。 */
 const AFFECTED_REF_MAX_LENGTH = 40;
 
+/** 改编取舍项的全部类型，用于校验模型返回。 */
 const OPTION_KINDS: readonly AdaptationOptionKind[] = ['subplot', 'character_merge', 'scene_skip', 'other'];
 
 /** 取舍项类型的界面名称。 */

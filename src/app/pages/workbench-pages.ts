@@ -14,7 +14,7 @@ import { registerFormHandlers } from '../forms/form-handlers';
 import { createStoryboardFormCatalog } from '../forms/storyboard-form';
 import { MessageRouter } from '../messaging/message-router';
 import { WORKBENCH_PAGE_RESOURCES } from '../panels/page-resources';
-import { PanelManager } from '../panels/panel-manager';
+import { PanelTabs } from '../panels/panel-tabs';
 import { AssetCategoryService } from '../services/asset-category-service';
 import { AssetCreationService } from '../services/asset-creation-service';
 import { AssetGenerationService } from '../services/asset-generation-service';
@@ -31,8 +31,11 @@ import { watchModelChanges } from './model-events';
 import { registerVoicePreviewHandlers } from './voice-preview-handlers';
 import { WORKBENCH_EVENTS, WorkbenchHost, WorkbenchServices, registerWorkbenchHandlers } from './workbench-handlers';
 
+/** 生成工作台的标签键，同一键只打开一个标签。 */
 const WORKBENCH_PANEL_KEY = 'workbench';
+/** 生成工作台的标题。 */
 const WORKBENCH_TITLE = '生成工作台';
+/** 生成工作台的描述，显示在标题后面。 */
 const WORKBENCH_DESCRIPTION = '按镜头组为已确认的分镜脚本生成视频，一组一次生成一个多镜头视频；生成失败时显示平台返回的具体原因，修改后可再次生成。';
 
 /** 工作台页依赖的服务。 */
@@ -58,7 +61,7 @@ export class WorkbenchPages {
   constructor(
     private readonly services: WorkbenchPageServices,
     private readonly host: WorkbenchHost,
-    private readonly panels: PanelManager
+    private readonly panels: PanelTabs
   ) {}
 
   /** 打开工作台；已打开时聚焦。 */

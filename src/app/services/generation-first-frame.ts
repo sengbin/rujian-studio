@@ -42,6 +42,7 @@ export class FirstFrameResolver {
 
   /**
    * 解析指定图片首帧：取资产的第一张参考图。
+   * @param assetId 作为首帧的资产标识；null 表示没有指定。
    * @returns 资产图片文件标识；资产或图片不可用时返回说明原因的文字。
    */
   resolveAssetImage(assetId: number | null): ResolvedFirstFrameImage | string {
@@ -59,6 +60,7 @@ export class FirstFrameResolver {
 
   /**
    * 解析镜头本地指定的首帧图片：确认图片记录存在且磁盘文件可读。
+   * @param image 镜头本地指定的首帧图片；null 表示没有指定。
    * @returns 图片引用；图片不可用时返回说明原因的文字。
    */
   resolveLocalImage(image: ShotFirstFrameImage | null): ResolvedFirstFrameImage | string {

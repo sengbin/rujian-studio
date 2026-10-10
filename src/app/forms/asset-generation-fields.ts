@@ -41,12 +41,23 @@ export interface AssetRunState {
   readonly textModel: WorkTextModelState;
 }
 
+/** 文本模型字段说明里的用途前缀。 */
 const TEXT_MODEL_PURPOSE = '生成提示词时';
+/** 文本模型字段说明的后缀：只对本次生成有效，“仅创建”不会用到。 */
 const TEXT_MODEL_NOTE = '；仅对本次生成有效，“仅创建”不会用到';
+/** 没有启用任何文本模型时，“生成提示词”相关选项的不可用说明。 */
 const AI_UNAVAILABLE_NOTE = '当前没有启用任何文本模型，无法使用这一项。';
+/** “仅创建”按钮的行为说明。 */
 const CREATE_ONLY_NOTE = '点“仅创建”只保存设定，不生成。';
+/** 生成数量留空时的占位文字。 */
 const COUNT_PLACEHOLDER = '默认 1 张';
+/** 参数留空时的占位文字，表示由模型决定。 */
 const MODEL_DECIDES_PLACEHOLDER = '由模型决定';
+
+/** 需要出图（音频）模型与参数的生成方式。 */
+const RUN_MODES: readonly GenerateMode[] = ['direct', 'promptAndRun'];
+/** 需要文本模型的生成方式。 */
+const AI_MODES: readonly GenerateMode[] = ['prompt', 'promptAndRun'];
 
 /** 出图（音频）动作的称呼：图像类叫“出图”，音频叫“生成音频”。 */
 function verbOf(kind: AssetKind): string {
@@ -58,16 +69,14 @@ function nounOf(kind: AssetKind): string {
   return kind === 'audio' ? '音频' : '图像';
 }
 
-/** 三种生成方式在界面上的文字。 */
+/**
+ * 三种生成方式在界面上的文字。
+ * @param kind 资产类型，音频与图像的文字不同。
+ */
 export function generateModeLabels(kind: AssetKind): Readonly<Record<GenerateMode, string>> {
   const verb = verbOf(kind);
   return { direct: `直接${verb}`, prompt: 'AI 生成提示词', promptAndRun: `AI 生成提示词并${verb}` };
 }
-
-/** 需要出图（音频）模型与参数的生成方式。 */
-const RUN_MODES: readonly GenerateMode[] = ['direct', 'promptAndRun'];
-/** 需要文本模型的生成方式。 */
-const AI_MODES: readonly GenerateMode[] = ['prompt', 'promptAndRun'];
 
 /**
  * 音频类型的表单文字（或键）转音频类型。
@@ -249,6 +258,8 @@ export function createGenerationInitialValues(kind: AssetKind, state: AssetRunSt
 
 /**
  * 读取提交的生成方式。
+ * @param kind 资产类型。
+ * @param values 表单提交的字段值。
  * @throws ValidationError 没有选择生成方式或选项无效。
  */
 export function readGenerateMode(kind: AssetKind, values: FormValues): GenerateMode {
@@ -286,6 +297,8 @@ export function readFollowUp(
 
 /**
  * 确认有可用的文本模型；没有时不能选择带 AI 的生成方式。
+ * @param kind 资产类型。
+ * @param state 资产生成相关的运行状态，含可用的文本模型。
  * @throws ValidationError 没有启用任何文本模型。
  */
 export function assertTextModelAvailable(kind: AssetKind, state: AssetRunState): void {
@@ -298,6 +311,8 @@ export function assertTextModelAvailable(kind: AssetKind, state: AssetRunState):
 
 /**
  * 确认已填的设定足够按模板拼出提示词（用于直接出图）。
+ * @param kind 资产类型。
+ * @param values 表单提交的字段值。
  * @throws ValidationError 表单内容不合法，或设定不足以拼出提示词。
  */
 export function assertDirectPromptReady(kind: AssetKind, values: FormValues): void {

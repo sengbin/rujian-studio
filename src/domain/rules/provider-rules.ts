@@ -31,7 +31,10 @@ export function providerApiKeySecretKey(providerCode: string): string {
   return `${API_KEY_SECRET_PREFIX}.${providerCode}.apiKey`;
 }
 
-/** 账户查询密钥（AccessKey ID 与 SecretKey）在密钥存储中的名称。 */
+/**
+ * 账户查询密钥（AccessKey ID 与 SecretKey）在密钥存储中的名称。
+ * @param providerCode 服务商代码。
+ */
 export function providerAccountSecretKeys(providerCode: string): { readonly accessKeyId: string; readonly secretAccessKey: string } {
   return {
     accessKeyId: `${API_KEY_SECRET_PREFIX}.${providerCode}.accessKeyId`,

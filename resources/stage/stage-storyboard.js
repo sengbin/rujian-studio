@@ -1,10 +1,10 @@
 // ------------------------------------------------------------------------
 // 名称：stage-storyboard.js
-// 说明：分镜脚本阶段的产出内容（工作区布局）：头部汇总、左侧镜头导航、右侧镜头编辑区（“调度”“镜头”“画面与声音”三个页签）、底部保存与前后切换，以及生成结束后的汇总。
+// 说明：分镜脚本阶段的产出内容（工作区布局）：头部汇总、左侧镜头导航、右侧镜头编辑区（调度、镜头、画面与声音三个页签）、底部保存与前后切换。
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：向 stage.js 的外壳登记；只读原因、已确认版本被编辑时的确认与偏差文案来自 stage-editor-common.js（aiStageEditor），必须先于本文件加载；页签内容由 stage-storyboard-panels.js（aiStoryboardPanels）提供，必须先于本文件加载；样式在 stage-storyboard.css；请求名称与 src/app/pages/stage-handlers.ts、表单名称与 src/app/forms/storyboard-form.ts 一致；镜头的 ref 就是镜头标识，页面原样回传；支持在末尾新增、删除镜头以及与相邻镜头互换位置（上移、下移）；打开时可由 aiStage.open 的 focus 参数（镜头标识）定位到所选镜头：选中、滚动到可见；头部“分镜动画”与镜头编辑区“从此镜头预览”打开 stage-storyboard-preview.js 提供的预览层（aiStoryboardPreview.open，点击时才取用）。
+// 备注：向 stage.js 登记；依赖 stage-editing.js 与 stage-storyboard-panels.js，二者须先于本文件加载；请求名称与 src/app/pages/stage-handlers.ts 一致，镜头的 ref 就是镜头标识；可由 aiStage.open 的 focus 参数定位到所选镜头；“分镜动画”按钮打开 aiStoryboardPreview 提供的预览层。
 // ------------------------------------------------------------------------
 
 'use strict';

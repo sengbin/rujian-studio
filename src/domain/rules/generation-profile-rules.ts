@@ -27,9 +27,11 @@ const GROUP_ONLY_FIELD_LABELS: Readonly<Record<string, string>> = { durationSeco
 
 /** 声音内容、随机种子不合法时的说明，提交请求与保存参数共用。 */
 export const AUDIO_ELEMENTS_ERROR_TEXT = '声音内容不合法，请从对白、旁白、音效、配乐中至少选择一项；不需要声音时请把声音模式设为无声。';
+/** 随机种子不合法时的校验提示。 */
 export const SEED_ERROR_TEXT = `随机种子必须是 0 到 ${SEED_MAX} 之间的整数。`;
 /** 负向清单、提示词改写不合法时的说明。 */
 export const NEGATIVE_LIST_ERROR_TEXT = `负向清单必须是不超过 ${NEGATIVE_LIST_MAX_LENGTH} 字的文本。`;
+/** 提示词改写取值不合法时的校验提示。 */
 export const PROMPT_EXTEND_ERROR_TEXT = '提示词改写只能是开启或关闭。';
 
 /** 画幅、分辨率的最大长度。 */
@@ -151,6 +153,7 @@ export function readAudioElements(value: unknown): readonly VideoAudioElement[] 
 
 /**
  * 读取负向清单：null 原样返回（恢复继承）；文本去掉首尾空白，可以为空串，不得超过长度上限。
+ * @param value 提交的负向清单。
  * @returns 规范化后的清单；不合法时为 undefined。
  */
 export function readNegativeList(value: unknown): string | null | undefined {
@@ -160,7 +163,10 @@ export function readNegativeList(value: unknown): string | null | undefined {
   return text.length > NEGATIVE_LIST_MAX_LENGTH ? undefined : text;
 }
 
-/** 值是否是合法的随机种子：0 至 SEED_MAX 的整数。 */
+/**
+ * 值是否是合法的随机种子：0 至 SEED_MAX 的整数。
+ * @param value 待检查的随机种子。
+ */
 export function isValidSeed(value: unknown): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= SEED_MAX;
 }
@@ -182,7 +188,11 @@ export function assertChangesAllowedInScope(scope: ProfileScope, changes: Profil
   assertNoFieldErrors(errors);
 }
 
-/** 把修改应用到已保存的值，返回新值。 */
+/**
+ * 把修改应用到已保存的值，返回新值。
+ * @param current 已保存的参数值。
+ * @param changes 要应用的修改。
+ */
 export function applyProfileChanges(current: ProfileValues, changes: ProfileChanges): ProfileValues {
   return { ...current, ...changes };
 }

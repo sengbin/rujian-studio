@@ -66,7 +66,10 @@ export class ProviderAccountService {
     return this.query(rawInput, 'balance');
   }
 
-  /** 查询各模型的用量，参数与错误同 queryBalance。 */
+  /**
+   * 查询各模型的用量，参数与错误同 queryBalance。
+   * @param rawInput 界面提交的查询参数（服务商代码），未经校验。
+   */
   async queryUsage(rawInput: unknown): Promise<AccountQueryResult> {
     return this.query(rawInput, 'usage');
   }

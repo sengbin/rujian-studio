@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { PromptTemplates } from '../../domain/ports/prompt-templates';
 
+/** 模板名称的合法格式：小写字母、数字和连字符，防止路径穿越。 */
 const TEMPLATE_NAME = /^[a-z0-9-]+$/;
 
 /** 从目录中读取模板文件的实现。 */

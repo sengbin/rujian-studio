@@ -187,6 +187,7 @@ export interface StoryboardServiceDependencies {
   readonly now?: () => Date;
 }
 
+/** 声音类型的界面选项（类型与名称），按标签表的顺序。 */
 const SOUND_KIND_VIEWS = (Object.keys(SOUND_KIND_LABELS) as SoundKind[]).map((kind) => ({ kind, label: SOUND_KIND_LABELS[kind] }));
 
 /** 实体视图里提示文字的长度上限。 */
@@ -205,16 +206,17 @@ export interface StagingOptionsView {
   readonly facing: readonly StagingOptionView[];
 }
 
-/** 把标签表转成下拉选项，顺序与标签表一致。 */
-function toOptionViews(labels: Readonly<Record<string, string>>): StagingOptionView[] {
-  return Object.entries(labels).map(([value, label]) => ({ value, label }));
-}
-
+/** 站位的界面选项：横向位置、纵深和朝向，取值与名称来自领域模型的标签表。 */
 const STAGING_OPTION_VIEWS: StagingOptionsView = {
   x: toOptionViews(STAGE_X_LABELS),
   depth: toOptionViews(STAGE_DEPTH_LABELS),
   facing: toOptionViews(STAGE_FACING_LABELS)
 };
+
+/** 把标签表转成下拉选项，顺序与标签表一致。 */
+function toOptionViews(labels: Readonly<Record<string, string>>): StagingOptionView[] {
+  return Object.entries(labels).map(([value, label]) => ({ value, label }));
+}
 
 /** 分镜脚本应用服务。 */
 export class StoryboardService {
@@ -222,6 +224,7 @@ export class StoryboardService {
 
   /**
    * 检查作品能否开始生成分镜脚本：剧本必须已确认，且已有集。表单打开时先检查，避免用户填完才报错。
+   * @param workId 作品标识。
    * @throws NotFoundError 作品不存在。
    * @throws ValidationError 剧本还没有已确认的版本，或还没有集。
    */
@@ -236,13 +239,19 @@ export class StoryboardService {
     }
   }
 
-  /** 列出作品各集的分镜脚本状态，按集序号升序；作品还没有集时为空。 */
+  /**
+   * 列出作品各集的分镜脚本状态，按集序号升序；作品还没有集时为空。
+   * @param workId 作品标识。
+   */
   listEpisodeStatuses(workId: number): EpisodeStoryboardStatus[] {
     const { screenplays } = this.dependencies;
     return screenplays.listEpisodes(workId).map((episode) => this.describeEpisode(workId, episode));
   }
 
-  /** 汇总作品的分镜脚本进度，用于作品列表。 */
+  /**
+   * 汇总作品的分镜脚本进度，用于作品列表。
+   * @param workId 作品标识。
+   */
   getSummary(workId: number): StoryboardSummary {
     const statuses = this.listEpisodeStatuses(workId);
     const canStart = this.dependencies.runs.findCurrent({ workId, stage: 'screenplay', episodeId: null }) !== undefined;
@@ -307,6 +316,7 @@ export class StoryboardService {
 
   /**
    * 按已确认的节拍表建议镜头参数，作为“生成分镜脚本”表单的初始值：单镜头时长范围与镜头总数。
+   * @param workId 作品标识。
    * @returns 建议值；作品没有已确认的节拍表时为 undefined。
    */
   suggestShotDefaults(workId: number): ShotDefaults | undefined {
@@ -613,7 +623,11 @@ export class StoryboardService {
   }
 }
 
-/** 一集分镜脚本阶段的目标。 */
+/**
+ * 一集分镜脚本阶段的目标。
+ * @param workId 作品标识。
+ * @param episodeId 集标识。
+ */
 export function storyboardTarget(workId: number, episodeId: number): StageTarget {
   return { workId, stage: 'storyboard_script', episodeId };
 }
@@ -632,20 +646,29 @@ function toStoryboardReference(totalSeconds: number, beatSheet: BeatSheet): Stor
   };
 }
 
-/** 这一集分镜脚本的整体画面风格：生成时填写的风格，没有则用生成时的项目风格；都没有为 null。 */
+/**
+ * 这一集分镜脚本的整体画面风格：生成时填写的风格，没有则用生成时的项目风格；都没有为 null。
+ * @param run 分镜脚本阶段记录。
+ */
 export function readStoryboardStyle(run: StageRun): string | null {
   const projectStyle = (run.input as { projectStyle?: unknown }).projectStyle;
   const style = readStoryboardParams(run)?.visualStyle ?? (typeof projectStyle === 'string' ? projectStyle : null);
   return style === null || style.trim() === '' ? null : style.trim();
 }
 
-/** 从记录的输入快照中取出目标画幅；没有或不是文本时返回 null。 */
+/**
+ * 从记录的输入快照中取出目标画幅；没有或不是文本时返回 null。
+ * @param run 分镜脚本阶段记录。
+ */
 export function readStoryboardAspectRatio(run: StageRun): string | null {
   const aspectRatio = (run.input as { aspectRatio?: unknown }).aspectRatio;
   return typeof aspectRatio === 'string' && aspectRatio !== '' ? aspectRatio : null;
 }
 
-/** 从记录的输入快照中取出分镜脚本参数；快照里没有参数时返回 null。 */
+/**
+ * 从记录的输入快照中取出分镜脚本参数；快照里没有参数时返回 null。
+ * @param run 分镜脚本阶段记录。
+ */
 export function readStoryboardParams(run: StageRun): StoryboardParams | null {
   return readRunParams<StoryboardParams>(run);
 }

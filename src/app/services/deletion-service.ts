@@ -31,6 +31,7 @@ export class DeletionService {
 
   /**
    * 取消作品名下进行中的生成并等待结束，然后删除作品及其下全部内容。
+   * @param workId 作品标识。
    * @throws NotFoundError 作品不存在。
    */
   async deleteWork(workId: number): Promise<void> {
@@ -43,6 +44,7 @@ export class DeletionService {
 
   /**
    * 取消项目下全部作品进行中的生成并等待结束，然后删除项目及其下全部内容。
+   * @param projectId 项目标识。
    * @throws NotFoundError 项目不存在。
    */
   async deleteProject(projectId: number): Promise<void> {

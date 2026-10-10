@@ -18,6 +18,7 @@ import {
   RemoteJobRef,
   RemoteJobState
 } from '../../../domain/ports/provider-adapters';
+import { validateAudioContent } from '../shared/audio-request-validation';
 import { findDescribedModelByCode } from '../shared/provider-model-lookup';
 import { mapExtraParams, parseJson, readObject, toDataUri, validateExtraParams, validateMediaFiles } from '../shared/provider-payload';
 import { FetchFunction, QianwenApiClient } from './qianwen-api-client';
@@ -97,36 +98,14 @@ export class QianwenAudioProvider implements AudioModelProvider {
   }
 }
 
-/** 校验音频类型、提示词、语言、音色、时长和参考音频。 */
+/** 在公共校验（类型、提示词、语言、音色、时长、模型是否支持参考音频）之外，检查参考音频的素材与提示词引用。 */
 function validateContent(request: AudioGenerationRequest, model: QianwenAudioModel): string[] {
-  const issues: string[] = [];
   const capability = model.descriptor.capability;
-  if (!capability.audioKinds.includes(request.audioKind)) {
-    issues.push(`该模型不能生成${request.audioKind}类型的音频，支持：${capability.audioKinds.join('、')}。`);
-  }
-  if (request.prompt.trim() === '') {
-    issues.push('提示词不能为空。');
-  }
-  if (request.prompt.length > capability.promptMaxLength) {
-    issues.push(`提示词不能超过 ${capability.promptMaxLength} 字（当前 ${request.prompt.length} 字）。`);
-  }
-  if (request.durationSeconds !== null) {
-    issues.push('该模型不支持指定时长，时长由内容决定。');
-  }
-  if (request.language !== null && !capability.languages.includes(request.language)) {
-    issues.push(`语言 ${request.language} 不在模型支持的范围内：${capability.languages.join('、')}。`);
-  }
-  if (request.voice !== null && !capability.voices.includes(request.voice)) {
-    issues.push(`该模型不支持预置音色 ${request.voice}。`);
-  }
-  if (request.referenceAudio !== null) {
-    if (!capability.referenceAudio) {
-      issues.push('该模型不支持参考音频。');
-    } else {
-      issues.push(...validateMediaFiles([request.referenceAudio], 'audio/', '音频', AUDIO_REFERENCE_MAX_BYTES));
-      if (!request.prompt.includes(FIRST_VOICE_MARK)) {
-        issues.push(`提示词中需要用 ${FIRST_VOICE_MARK} 引用参考音频。`);
-      }
+  const issues = validateAudioContent(request, capability);
+  if (request.referenceAudio !== null && capability.referenceAudio) {
+    issues.push(...validateMediaFiles([request.referenceAudio], 'audio/', '音频', AUDIO_REFERENCE_MAX_BYTES));
+    if (!request.prompt.includes(FIRST_VOICE_MARK)) {
+      issues.push(`提示词中需要用 ${FIRST_VOICE_MARK} 引用参考音频。`);
     }
   }
   return issues;

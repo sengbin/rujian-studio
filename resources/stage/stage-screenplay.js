@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：向 stage.js 的外壳登记；请求名称与 src/app/pages/stage-handlers.ts、表单名称与 src/app/forms/screenplay-form.ts 一致；集与实体的 ref 由宿主给出，页面只原样回传；只读原因、保存按钮状态、已确认版本被编辑时的确认、偏差文案与汇总列表写法来自 stage-editor-common.js（aiStageEditor），左侧列表来自 stage-screenplay-list.js（aiScreenplayList），三种条目的编辑器来自 stage-screenplay-editors.js（aiScreenplayEditors），改编取舍清单来自 stage-screenplay-adaptation.js（aiScreenplayAdaptation），这些脚本都必须先于本文件加载。
+// 备注：向 stage.js 的外壳登记；请求名称与 src/app/pages/stage-handlers.ts、表单名称与 src/app/forms/screenplay-form.ts 一致；集与实体的 ref 由宿主给出，页面只原样回传；只读原因、保存按钮状态、已确认版本被编辑时的确认、偏差文案与汇总列表写法来自 stage-editing.js（aiStageEditor），左侧列表来自 stage-screenplay-list.js（aiScreenplayList），三种条目的编辑器来自 stage-screenplay-editors.js（aiScreenplayEditors），改编取舍清单来自 stage-screenplay-adaptation.js（aiScreenplayAdaptation），这些脚本都必须先于本文件加载。
 // ------------------------------------------------------------------------
 
 'use strict';

@@ -9,7 +9,7 @@
  * ------------------------------------------------------------------------
  */
 
-/* 工具栏里的分类筛选下拉（搜索框见 shared/theme.css 的 .page-search） */
+/* 工具栏里的分类筛选下拉（搜索框见 shared/page-base.css 的 .page-search） */
 .assets-filter {
   flex: 0 0 auto;
   width: 170px;
@@ -26,11 +26,11 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: var(--space-xxs);
 }
 
 /* 操作列：两行按钮，行内沿用表格对按钮的间距 */
-.ui-table .asset-actions {
+.asset-actions {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -42,7 +42,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: var(--space-xxs);
 }
 
 /* 分类管理弹出页：顶部操作条、操作结果提示和分类表格 */

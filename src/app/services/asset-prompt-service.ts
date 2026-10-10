@@ -37,7 +37,9 @@ export const ASSET_PROMPT_VARIABLES: Readonly<Record<string, readonly string[]>>
 /** 信息不足、无法生成提示词时的提示。 */
 export const NO_PROMPT_DETAIL_MESSAGE = '请先填写名称，并至少填写一项描述（图像类也可以添加一张参考图），再生成提示词。';
 
+/** 同一资产的提示词正在生成时，拒绝再次发起的提示。 */
 const ALREADY_RUNNING_MESSAGE = '提示词正在生成中。';
+/** 提示词生成成功、后续自动出图失败时的提示前缀。 */
 const FOLLOW_UP_FAILED_PREFIX = '提示词已生成，但自动出图失败：';
 
 /** 提示词生成成功后接着执行的动作（如自动提交出图）；抛出错误时失败原因记在资产的提示词状态上。 */
@@ -108,6 +110,7 @@ export class AssetPromptService {
   /**
    * 取消正在进行的提示词生成：先把状态落库为“已取消”（界面显示“已取消”，重启后不会被改写成别的失败原因），再中止后台任务；
    * 任务被中止后不会再写回结果。没有进行中的任务时不做任何事。
+   * @param assetId 资产标识。
    */
   cancel(assetId: number): void {
     const controller = this.running.get(assetId);

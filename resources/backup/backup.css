@@ -22,7 +22,7 @@ body.backup-page {
 }
 
 /* 内容宽度受限，避免大屏上一行过长 */
-.backup-page #app {
+.backup-page .page-main {
   display: flex;
   flex-direction: column;
   gap: var(--backup-card-gap);

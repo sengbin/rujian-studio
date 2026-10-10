@@ -1,0 +1,146 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：ui-button.css
+ * 说明：界面组件库的按钮样式：次要、主要、危险、强调、紧凑、纯图标和禁用态。
+ * 作者：sengbin
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-11
+ * 备注：所有选择器以 ui- 开头；依赖 ui-tokens.css；图标尺寸见 ui-icons.css。
+ * ------------------------------------------------------------------------
+ */
+
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--btn-gap);
+  min-width: 0;
+  min-height: 0;
+  height: var(--btn-height);
+  padding: 0 var(--btn-padding-x);
+  color: var(--button-secondary-text);
+  font: inherit;
+  font-size: var(--btn-font-size);
+  font-weight: var(--font-weight-regular);
+  white-space: nowrap;
+  background: var(--button-secondary-bg);
+  border: 0;
+  border-radius: var(--btn-radius);
+  cursor: pointer;
+  transition: background-color var(--hover-duration) ease, color var(--hover-duration) ease;
+}
+
+.ui-button:hover {
+  background: var(--button-secondary-hover-bg);
+}
+
+.ui-button:active {
+  background: var(--button-secondary-active-bg);
+}
+
+.ui-button:focus-visible {
+  outline: 1px solid var(--focus-border);
+  outline-offset: 1px;
+}
+
+.ui-button--primary {
+  color: var(--accent-foreground);
+  background: var(--accent);
+}
+
+.ui-button--primary:hover {
+  background: var(--accent-hover);
+}
+
+.ui-button--primary:active {
+  background: var(--accent-active);
+}
+
+.ui-button--danger {
+  color: var(--button-danger-text);
+  background: var(--button-danger-bg);
+}
+
+.ui-button--danger:hover {
+  background: var(--button-danger-hover-bg);
+}
+
+.ui-button--danger:active {
+  background: var(--button-danger-active-bg);
+}
+
+/* 强调色按钮：用于会替换当前内容、需要和普通次要按钮区分的特殊操作；
+   不用红色（danger 专用于删除），复用状态色里的警示黄 */
+.ui-button--accent {
+  color: var(--button-accent-text);
+  background: var(--button-accent-bg);
+}
+
+.ui-button--accent:hover {
+  background: var(--button-accent-hover-bg);
+}
+
+.ui-button--accent:active {
+  background: var(--button-accent-active-bg);
+}
+
+/* 按功能分类：添加、修改、删除各自的内边距与最小宽度由总控里的 --btn-add-*、--btn-edit-*、--btn-delete-* 控制；必须写在紧凑按钮和纯图标按钮之前，让后者覆盖 */
+.ui-button--add {
+  min-width: var(--btn-add-min-width);
+  padding: 0 var(--btn-add-padding-x);
+}
+
+.ui-button--edit {
+  min-width: var(--btn-edit-min-width);
+  padding: 0 var(--btn-edit-padding-x);
+}
+
+.ui-button--delete {
+  min-width: var(--btn-delete-min-width);
+  padding: 0 var(--btn-delete-padding-x);
+}
+
+/* 紧凑按钮（表格行内操作）：高度、字号、圆角与普通按钮一致，只有最小宽度不同 */
+.ui-button--compact {
+  min-width: var(--btn-compact-min-width);
+}
+
+.ui-button__icon {
+  width: var(--btn-icon-size);
+  height: var(--btn-icon-size);
+}
+
+/* 纯图标按钮：方形，文字只作为可访问名称 */
+.ui-button--icon-only,
+.ui-button--compact.ui-button--icon-only {
+  width: var(--btn-height);
+  min-width: 0;
+  padding: 0;
+}
+
+/* 切换按钮处于按下状态（aria-pressed）：用选中底色区分，不只靠颜色时由页面同步按钮文字或图标 */
+.ui-button[aria-pressed="true"] {
+  background: var(--option-selected-bg);
+}
+
+.ui-button[aria-pressed="true"]:hover:not(:disabled) {
+  background: var(--option-selected-hover-bg);
+}
+
+.ui-button[aria-pressed="true"]:active:not(:disabled) {
+  background: var(--option-selected-active-bg);
+}
+
+/* 禁用态：各样式统一为灰色，去掉悬停与按下反馈 */
+.ui-button:disabled,
+.ui-button:disabled:hover,
+.ui-button:disabled:active {
+  color: var(--disabled-text);
+  background: var(--disabled-bg);
+  cursor: default;
+}
+
+/* 设置了 display 的控件会盖过 hidden 属性，这里让它们在没有页面基础样式的页面里也能正常隐藏 */
+.ui-button[hidden] {
+  display: none !important;
+}

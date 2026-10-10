@@ -33,11 +33,10 @@ const config: ForgeConfig = {
   ],
   plugins: [
     new VitePlugin({
-      // `build` can specify multiple entry builds, which can be Main process, Preload scripts, Worker process, etc.
-      // If you are familiar with Vite configuration, it will look really familiar.
+      // 主进程与预加载脚本各有一个构建入口。
       build: [
         {
-          // `entry` is just an alias for `build.lib.entry` in the corresponding file of `config`.
+          // entry 等同于对应 Vite 配置里的 build.lib.entry。
           entry: 'src/main.ts',
           config: 'vite.main.config.mts',
           target: 'main',
@@ -55,8 +54,7 @@ const config: ForgeConfig = {
         },
       ],
     }),
-    // Fuses are used to enable/disable various Electron functionality
-    // at package time, before code signing the application
+    // 打包时、代码签名之前，开关 Electron 的部分功能（Fuses）。
     new FusesPlugin({
       version: FuseVersion.V1,
       [FuseV1Options.RunAsNode]: false,

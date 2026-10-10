@@ -54,7 +54,9 @@ export interface BeatSheetFormDependencies {
   readonly onStarted: (workId: number) => void;
 }
 
+/** 提交按钮文字。 */
 const SUBMIT_LABEL = '开始生成';
+/** 文本模型字段说明里的用途前缀。 */
 const TEXT_MODEL_PURPOSE = '生成节拍表时';
 /** 灵感是主要输入，多行文本最多长到 8 行。 */
 const IDEA_MAX_ROWS = 8;

@@ -26,6 +26,7 @@ import {
   readSoundContent
 } from './storyboard-shot-fields';
 
+/** 实体类型的全部取值，用于校验模型引用的实体。 */
 const ENTITY_KINDS = Object.keys(ENTITY_KIND_LABELS) as EntityKind[];
 
 /** 生成分镜脚本时需要的信息：生成参数、可引用的实体。 */
@@ -61,6 +62,7 @@ function parseEntityRef(
     issues.push(`${label}的 ${field} 每项必须包含 kind（${ENTITY_KINDS.join('、')}）和 name。`);
     return undefined;
   }
+  // 只能引用剧本里已有的实体，模型编造的名称要如实反馈，让它修正。
   const entity = resolveEntity(entities, kind as EntityKind, name);
   if (entity === undefined) {
     issues.push(`${label}引用了不存在的${ENTITY_KIND_LABELS[kind as EntityKind]}“${name}”，只能引用剧本中已有的实体。`);
@@ -87,6 +89,7 @@ function parseStaging(
     issues.push(`${label}的站位条目不能超过 ${MAX_STAGING_PER_SHOT} 条。`);
     return [];
   }
+  // 有站位的实体自动加入出场实体，同一实体重复时后面的覆盖前面的。
   return collectStaging(
     value,
     (item) => parseEntityRef(item, entities, label, issues, 'staging'),
@@ -105,6 +108,7 @@ function parseSounds(
   issues: string[]
 ): SoundDraft[] {
   const { params, entities } = context;
+  // 声音模式为无声时，整体忽略模型给出的声音条目。
   if (params.audioMode === 'none' || value === undefined || value === null) {
     return [];
   }
@@ -125,6 +129,7 @@ function parseSounds(
       issues.push(`${soundLabel}的 kind 必须是以下之一：${params.audioElements.join('、')}。`);
       return;
     }
+    // 对白必须有说话人，说话人要是剧本里已有的角色，并算作本镜头的出场实体。
     let speakerEntityId: number | null = null;
     if (kind === 'dialogue') {
       const speaker = textOf(record, 'speaker');
@@ -149,6 +154,7 @@ function parseSounds(
 
 /** 解析镜头的首帧来源：按连贯策略决定，由 AI 判断时读取模型给出的值。 */
 function parseFirstFrame(record: Record<string, unknown>, seq: number, params: StoryboardParams, label: string, issues: string[]): FirstFrameMode {
+  // 不连贯、组间硬切和第 1 个镜头都不接上一镜头的尾帧；由 AI 判断时模型在第 1 个镜头选 prev_tail 要报问题。
   if (params.continuity === 'none' || params.continuity === 'cut' || seq === 1) {
     if (seq === 1 && params.continuity === 'ai' && record.firstFrameMode === 'prev_tail') {
       issues.push(`${label}是第 1 个镜头，没有上一镜头，firstFrameMode 不能是 prev_tail。`);
@@ -158,6 +164,7 @@ function parseFirstFrame(record: Record<string, unknown>, seq: number, params: S
   if (params.continuity === 'prev_tail') {
     return 'prev_tail';
   }
+  // 由 AI 判断时，模型只能在 none 与 prev_tail 两种取值里选。
   const mode = record.firstFrameMode;
   if (mode === undefined || mode === null || mode === 'none') {
     return 'none';
@@ -175,6 +182,7 @@ function parseShot(item: unknown, index: number, context: StoryboardContext, iss
   const label = `第 ${seq} 个镜头`;
   const record = isRecord(item) ? item : {};
 
+  // 文本字段只校验长度，只有画面描述（prompt）必填。
   const sceneLabel = readShotText(record, 'sceneLabel', label, SHOT_LABEL_MAX_LENGTH, false, issues);
   const shotSize = readShotText(record, 'shotSize', label, SHOT_LABEL_MAX_LENGTH, false, issues);
   const cameraAngle = readShotText(record, 'cameraAngle', label, SHOT_LABEL_MAX_LENGTH, false, issues);
@@ -183,6 +191,7 @@ function parseShot(item: unknown, index: number, context: StoryboardContext, iss
   const continuityNote = readShotText(record, 'continuityNote', label, SHOT_NOTE_MAX_LENGTH, false, issues);
   const prompt = readShotText(record, 'prompt', label, SHOT_PROMPT_MAX_LENGTH, true, issues);
 
+  // 时长必须落在参数限定的范围内；超出时记问题，并先用下限占位，由调用方整体报错。
   const minSeconds = params.minShotSeconds ?? SHOT_SECONDS_MIN;
   const maxSeconds = Math.min(params.maxShotSeconds ?? SHOT_SECONDS_MAX, groupMaxSecondsOf(params));
   const rawDuration = record.durationSeconds;
@@ -193,6 +202,7 @@ function parseShot(item: unknown, index: number, context: StoryboardContext, iss
     durationSeconds = rawDuration;
   }
 
+  // 出场实体：省略视为没有，不是数组要报问题，逐项解析并去重。
   const entityIds = new Set<number>();
   const rawEntities = record.entities;
   if (rawEntities !== undefined && rawEntities !== null) {
@@ -207,6 +217,7 @@ function parseShot(item: unknown, index: number, context: StoryboardContext, iss
       }
     }
   }
+  // 站位和声音里引用的实体也会补进出场实体，所以放在出场实体解析之后。
   const staging = parseStaging(record.staging, entities, label, entityIds, issues);
   const sounds = parseSounds(record.sounds, context, label, entityIds, issues);
 

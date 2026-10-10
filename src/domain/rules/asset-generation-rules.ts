@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：规则见 private-docs/rujian-studio/开发文档-vscode/database-design.md 4.9；修改表单或提示词只改修订号，不创建空版本；能否生成的判断用“生效提示词”（已保存的，没有时按模板拼）；纯函数，不依赖数据库。
+// 备注：规则见 private-docs/rujian-studio/开发文档/database-design.md 4.9；修改表单或提示词只改修订号，不创建空版本；能否生成的判断用“生效提示词”（已保存的，没有时按模板拼）；纯函数，不依赖数据库。
 // ------------------------------------------------------------------------
 
 import { AssetContent, AssetGenerationSummary, AssetKind, AssetRecord, AssetUsageSummary } from '../models/asset';
@@ -25,7 +25,13 @@ export interface AssetRevisionUpdate {
   readonly promptContentRevision: number;
 }
 
-/** 资产类型对应的生成模型类型：音频资产用音频模型，其余用图像模型。 */
+/** 音频语言（界面文字）对应的语言代码。 */
+const LANGUAGE_CODES: Readonly<Record<string, string>> = { 中文: 'zh', 英文: 'en' };
+
+/**
+ * 资产类型对应的生成模型类型：音频资产用音频模型，其余用图像模型。
+ * @param kind 资产类型。
+ */
 export function modelKindOfAsset(kind: AssetKind): ModelKind {
   return kind === 'audio' ? 'audio' : 'image';
 }
@@ -35,7 +41,11 @@ function stableAttributes(attributes: Readonly<Record<string, string>>): string 
   return JSON.stringify(Object.entries(attributes).sort(([left], [right]) => left.localeCompare(right)));
 }
 
-/** 影响生成的表单字段（不含名称、提示词、文件）是否发生变化。 */
+/**
+ * 影响生成的表单字段（不含名称、提示词、文件）是否发生变化。
+ * @param previous 保存前的资产记录。
+ * @param next 保存后的资产内容。
+ */
 export function contentFieldsChanged(previous: AssetRecord, next: AssetContent): boolean {
   return (
     stableAttributes(previous.attributes) !== stableAttributes(next.attributes) ||
@@ -46,7 +56,6 @@ export function contentFieldsChanged(previous: AssetRecord, next: AssetContent):
     previous.extraRequirements !== next.extraRequirements
   );
 }
-
 
 /**
  * 计算保存时的修订信息。
@@ -95,12 +104,18 @@ export function countUsedEpisodes(usage: Pick<AssetUsageSummary, 'bindings' | 's
   }
   return episodes.size;
 }
-/** 是否有提示词。 */
+/**
+ * 是否有提示词。
+ * @param asset 资产记录（只用到提示词）。
+ */
 export function hasPrompt(asset: Pick<AssetRecord, 'prompt'>): boolean {
   return asset.prompt !== '';
 }
 
-/** 提示词是否需要更新：有提示词，且表单字段在提示词之后改过。 */
+/**
+ * 提示词是否需要更新：有提示词，且表单字段在提示词之后改过。
+ * @param asset 资产记录（只用到提示词和两个修订号）。
+ */
 export function isPromptOutdated(asset: Pick<AssetRecord, 'prompt' | 'promptContentRevision' | 'contentRevision'>): boolean {
   return hasPrompt(asset) && asset.promptContentRevision < asset.contentRevision;
 }
@@ -151,11 +166,9 @@ export function checkGenerationAvailability(
   return { available: true, reason: null };
 }
 
-/** 音频语言（界面文字）对应的语言代码。 */
-const LANGUAGE_CODES: Readonly<Record<string, string>> = { 中文: 'zh', 英文: 'en' };
-
 /**
  * 把音频语言的界面文字转换为语言代码。
+ * @param label 音频语言的界面文字。
  * @returns 语言代码；没有设置或为“其他”时为 undefined。
  */
 export function languageCodeOf(label: string | undefined): string | undefined {

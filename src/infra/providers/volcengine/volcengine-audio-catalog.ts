@@ -15,7 +15,9 @@ export const VOLCENGINE_SPEECH_RESOURCE_ID = 'seed-tts-2.0';
 
 /** 输出音频的编码格式、采样率与对应的 MIME 类型。 */
 export const VOLCENGINE_SPEECH_FORMAT = 'mp3';
+/** 语音合成输出的采样率，单位为赫兹。 */
 export const VOLCENGINE_SPEECH_SAMPLE_RATE = 24_000;
+/** 语音合成输出的 MIME 类型。 */
 export const VOLCENGINE_SPEECH_MIME_TYPE = 'audio/mpeg';
 
 /** 提示词（要朗读的文字）的长度上限。 */

@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：设计见 private-docs/rujian-studio/开发文档-vscode/production-profile-design.md 第 5.3、11 节；预算由程序计算（不调用模型），模型只分配每个节拍的剧情内容；节拍数量与顺序必须与模板一致。
+// 备注：设计见 private-docs/rujian-studio/开发文档/production-profile-design.md 第 5.3、11 节；预算由程序计算（不调用模型），模型只分配每个节拍的剧情内容；节拍数量与顺序必须与模板一致。
 // ------------------------------------------------------------------------
 
 import { GeneratedOutputError } from '../errors';
@@ -15,14 +15,19 @@ import { findBeatTemplate, getProductionProfile, listBeatTemplates } from './pro
 
 /** 单集目标时长（秒）的取值范围。 */
 export const TARGET_DURATION_MIN_SECONDS = 5;
+/** 目标时长的上限，单位为秒。 */
 export const TARGET_DURATION_MAX_SECONDS = 1800;
 /** 短剧集数参考值的最大值。 */
 export const EPISODE_COUNT_MAX = 100;
 /** 语速（字/秒）的取值范围，最多一位小数。 */
 export const WORDS_PER_SECOND_MIN = 1;
+/** 每秒字数（语速）的上限。 */
 export const WORDS_PER_SECOND_MAX = 20;
+/** 节拍表补充要求的长度上限。 */
 export const BEAT_EXTRA_MAX_LENGTH = 2000;
+/** 节拍表故事想法的长度上限。 */
 export const BEAT_IDEA_MAX_LENGTH = 2000;
+/** 单个节拍剧情概要的长度上限。 */
 export const BEAT_SYNOPSIS_MAX_LENGTH = 1000;
 
 /** 秒数分配的精度：按 0.1 秒为单位分配。 */

@@ -45,13 +45,19 @@ export class FrameHost {
     return this.frames.get(frameId);
   }
 
-  /** 移除页面 iframe。 */
+  /**
+   * 移除页面 iframe。
+   * @param frameId 页面标识。
+   */
   remove(frameId: string): void {
     this.frames.get(frameId)?.remove();
     this.frames.delete(frameId);
   }
 
-  /** 根据消息来源找出对应的页面标识；不是自己创建的 iframe 时返回 undefined。 */
+  /**
+   * 根据消息来源找出对应的页面标识；不是自己创建的 iframe 时返回 undefined。
+   * @param source 消息事件的来源窗口。
+   */
   frameIdOf(source: MessageEventSource | null): string | undefined {
     for (const [frameId, frame] of this.frames) {
       if (source !== null && frame.contentWindow === source) {
@@ -61,7 +67,11 @@ export class FrameHost {
     return undefined;
   }
 
-  /** 向页面发送消息（响应、事件）；页面已移除时忽略。 */
+  /**
+   * 向页面发送消息（响应、事件）；页面已移除时忽略。
+   * @param frameId 页面标识。
+   * @param message 要发送的响应或事件。
+   */
   post(frameId: string, message: unknown): void {
     const frame = this.frames.get(frameId);
     if (frame !== undefined) {
@@ -69,7 +79,10 @@ export class FrameHost {
     }
   }
 
-  /** 切换主题并通知全部页面。 */
+  /**
+   * 切换主题并通知全部页面。
+   * @param theme 新的界面主题。
+   */
   setTheme(theme: ShellTheme): void {
     this.theme = theme;
     for (const frame of this.frames.values()) {

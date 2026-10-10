@@ -150,12 +150,18 @@ export interface ScreenplayViewSources {
   readonly checklists: Pick<AdaptationChecklistRepository, 'find'>;
 }
 
-/** 作品剧本阶段的目标。 */
+/**
+ * 作品剧本阶段的目标。
+ * @param workId 作品标识。
+ */
 export function screenplayTarget(workId: number): StageTarget {
   return { workId, stage: 'screenplay', episodeId: null };
 }
 
-/** 从记录的输入快照中取出改编强度；快照里没有该字段时为 adapted。 */
+/**
+ * 从记录的输入快照中取出改编强度；快照里没有该字段时为 adapted。
+ * @param run 剧本阶段记录。
+ */
 export function readFidelity(run: StageRun): ScreenplayFidelity {
   return (run.input as { fidelity?: unknown }).fidelity === 'verbatim' ? 'verbatim' : 'adapted';
 }

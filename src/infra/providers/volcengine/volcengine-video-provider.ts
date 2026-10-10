@@ -49,6 +49,11 @@ const TASK_STATUSES: Readonly<Record<string, RemoteJobStatus>> = { ...VIDEO_TASK
 /** 参数校验规则：时长可不指定（由平台决定），不支持随机种子。 */
 const PARAMETER_RULES: VideoParameterRules = { durationRequired: false, seedUnsupported: true };
 
+/** 模型专有参数：键与请求体中键的对应，取值都是开或关。 */
+const EXTRA_PARAMETER_SPECS: Readonly<Record<string, ExtraParamSpec>> = {
+  watermark: { apiKey: 'watermark', allowed: [true, false] }
+};
+
 /** 素材校验规则：提示词与素材至少一项，尾帧必须配首帧；参考音频是否可以单独使用取决于模型。 */
 function buildMediaRules(model: VolcengineVideoModel): VideoMediaRules {
   return {
@@ -60,11 +65,6 @@ function buildMediaRules(model: VolcengineVideoModel): VideoMediaRules {
     requestMaxBytes: SEEDANCE_REQUEST_MAX_BYTES
   };
 }
-
-/** 模型专有参数：键与请求体中键的对应，取值都是开或关。 */
-const EXTRA_PARAMETER_SPECS: Readonly<Record<string, ExtraParamSpec>> = {
-  watermark: { apiKey: 'watermark', allowed: [true, false] }
-};
 
 /** 火山引擎的视频适配器。 */
 export class VolcengineVideoProvider implements VideoModelProvider {

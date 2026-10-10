@@ -14,6 +14,7 @@ import { IMAGE_FILE_MAX_BYTES, detectImageMime } from './image-size';
 import { PRODUCTION_PROFILES, UNSUPPORTED_FORMAT_SUFFIX } from './production-profile-rules';
 import { UploadedFile, getExtension, readUploadedFiles } from './upload-readers';
 
+/** 作品名称的长度上限。 */
 export const WORK_NAME_MAX_LENGTH = 60;
 
 /** 作品形态在界面中的名称，由制作方案注册表派生；尚未实现的形态带“即将推出”后缀，表单里显示但不能选中。 */
@@ -31,17 +32,25 @@ export const SOURCE_TYPE_LABELS: Readonly<Record<WorkSourceType, string>> = {
 
 /** 表单字段键：灵感图片、小说原文件、原创文稿文件、原创文稿粘贴的文字。 */
 export const IMAGE_FIELD_KEY = 'images';
+/** 小说文件字段的表单键。 */
 export const NOVEL_FIELD_KEY = 'novelFile';
+/** 原创文稿文件字段的表单键。 */
 export const MANUSCRIPT_FILE_FIELD_KEY = 'manuscriptFile';
+/** 原创文稿文字字段的表单键。 */
 export const MANUSCRIPT_TEXT_FIELD_KEY = 'manuscriptText';
 
+/** 灵感图片允许的文件扩展名。 */
 export const IMAGE_EXTENSIONS: readonly string[] = ['.png', '.jpg', '.jpeg', '.webp'];
+/** 灵感图片最多上传的张数。 */
 export const IMAGE_MAX_FILES = 10;
+/** 小说文件允许的扩展名。 */
 export const NOVEL_EXTENSIONS: readonly string[] = ['.txt', '.md'];
+/** 小说文件的大小上限，单位为字节。 */
 export const NOVEL_MAX_BYTES = 5 * 1024 * 1024;
 /** 原创文稿粘贴文字的字数上限，按最多 3 字节一个字计算也不超过 NOVEL_MAX_BYTES。 */
 export const MANUSCRIPT_TEXT_MAX_LENGTH = 1000000;
 
+/** UTF-8 文件开头的字节序标记，读取文本时去掉。 */
 const UTF8_BOM = [0xef, 0xbb, 0xbf];
 
 /** 粘贴的原稿保存为素材文件时使用的文件名。 */

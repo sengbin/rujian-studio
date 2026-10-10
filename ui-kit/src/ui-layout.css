@@ -1,0 +1,37 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：ui-layout.css
+ * 说明：界面组件库的布局原语：纵向堆叠、居中对齐的一行、可换行的一组。
+ * 作者：sengbin
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-11
+ * 备注：间隙取 ui-tokens.css 的间距令牌；页面不再各写一遍。
+ * ------------------------------------------------------------------------
+ */
+
+/* 页面里反复出现的三种弹性排版：纵向堆叠、居中对齐的一行、可换行的一组；间隙取总控的间距令牌，页面不再各写一遍 */
+.ui-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-page);
+}
+
+.ui-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.ui-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+/* 设置了 display 的控件会盖过 hidden 属性，这里让它们在没有页面基础样式的页面里也能正常隐藏 */
+.ui-stack[hidden],
+.ui-row[hidden],
+.ui-wrap[hidden] {
+  display: none !important;
+}

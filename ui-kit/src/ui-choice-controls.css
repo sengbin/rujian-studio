@@ -1,0 +1,281 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：ui-choice-controls.css
+ * 说明：界面组件库的选择类控件样式：单选组、复选框、开关，以及开关列表和分段单选两种变体。
+ * 作者：sengbin
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-11
+ * 备注：所有选择器以 ui- 开头；依赖 ui-tokens.css。
+ * ------------------------------------------------------------------------
+ */
+
+.ui-choice-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--choice-group-gap);
+}
+
+.ui-choice-group--horizontal {
+  flex-flow: row wrap;
+  gap: var(--choice-group-gap) var(--space-page);
+}
+
+.ui-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--choice-gap);
+  min-height: var(--choice-min-height);
+  cursor: pointer;
+  user-select: none;
+  /* 开启状态的强调色，悬停与按下时逐级加深 */
+  --choice-accent: var(--accent);
+}
+
+.ui-choice:not([aria-disabled="true"]):hover {
+  --choice-accent: var(--accent-hover);
+}
+
+.ui-choice:not([aria-disabled="true"]):active {
+  --choice-accent: var(--accent-active);
+}
+
+.ui-choice:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 1px solid var(--focus-border);
+  outline-offset: 2px;
+}
+
+.ui-choice__mark {
+  position: relative;
+  flex: none;
+  width: var(--choice-mark-size);
+  height: var(--choice-mark-size);
+  background: var(--input-bg);
+  border: 1px solid var(--choice-mark-border);
+  transition: background-color var(--hover-duration) ease, border-color var(--hover-duration) ease;
+}
+
+/* 未选中：悬停边框与底色亮一点点，按下比常态暗一点点 */
+.ui-choice:not([aria-disabled="true"]):not([aria-checked="true"]):hover .ui-choice__mark {
+  background: var(--choice-mark-hover-bg);
+  border-color: var(--choice-mark-border-hover);
+}
+
+.ui-choice:not([aria-disabled="true"]):not([aria-checked="true"]):active .ui-choice__mark {
+  background: var(--choice-mark-active-bg);
+  border-color: var(--choice-mark-border-active);
+}
+
+.ui-choice__mark--radio {
+  border-radius: 50%;
+}
+
+.ui-choice__mark--checkbox {
+  border-radius: var(--radius-sm);
+}
+
+.ui-choice[aria-checked="true"] .ui-choice__mark {
+  border-color: var(--choice-accent);
+}
+
+.ui-choice[aria-checked="true"] .ui-choice__mark--checkbox {
+  background: var(--choice-accent);
+}
+
+.ui-choice[aria-checked="true"] .ui-choice__mark--checkbox::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 3px;
+  width: 3px;
+  height: 7px;
+  border: solid var(--accent-foreground);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.ui-choice[aria-checked="true"] .ui-choice__mark--radio::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  background: var(--choice-accent);
+  border-radius: 50%;
+}
+
+.ui-choice[aria-disabled="true"] {
+  cursor: default;
+}
+
+.ui-choice[aria-disabled="true"] .ui-choice__label {
+  color: var(--disabled-text);
+}
+
+.ui-choice[aria-disabled="true"] .ui-choice__mark {
+  background: var(--disabled-bg);
+  border-color: var(--disabled-border);
+}
+
+.ui-choice[aria-disabled="true"][aria-checked="true"] .ui-choice__mark {
+  border-color: var(--disabled-text);
+}
+
+.ui-choice[aria-disabled="true"][aria-checked="true"] .ui-choice__mark--checkbox {
+  background: var(--disabled-text);
+}
+
+.ui-choice[aria-disabled="true"][aria-checked="true"] .ui-choice__mark--radio::after {
+  background: var(--disabled-text);
+}
+
+.ui-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--switch-row-gap);
+  min-height: var(--switch-row-min-height);
+  padding: var(--switch-row-padding);
+  color: var(--switch-row-color);
+}
+
+.ui-switch-row__label {
+  cursor: pointer;
+}
+
+.ui-switch {
+  position: relative;
+  flex: none;
+  width: var(--switch-width);
+  min-width: var(--switch-width);
+  min-height: 0;
+  height: var(--switch-height);
+  padding: 0;
+  background: var(--switch-off-bg);
+  border: 0;
+  border-radius: calc(var(--switch-height) / 2);
+  cursor: pointer;
+  transition: background var(--motion-duration) ease;
+}
+
+.ui-switch:hover {
+  background: var(--switch-off-hover-bg);
+}
+
+.ui-switch:active {
+  background: var(--switch-off-active-bg);
+}
+
+.ui-switch[aria-checked="true"] {
+  background: var(--accent);
+}
+
+.ui-switch[aria-checked="true"]:hover {
+  background: var(--accent-hover);
+}
+
+.ui-switch[aria-checked="true"]:active {
+  background: var(--accent-active);
+}
+
+.ui-switch:focus-visible {
+  outline: 1px solid var(--focus-border);
+  outline-offset: 2px;
+}
+
+.ui-switch:disabled,
+.ui-switch:disabled:hover,
+.ui-switch:disabled:active {
+  background: var(--disabled-border);
+  cursor: default;
+}
+
+.ui-switch:disabled[aria-checked="true"],
+.ui-switch:disabled[aria-checked="true"]:hover,
+.ui-switch:disabled[aria-checked="true"]:active {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.ui-switch:disabled .ui-switch__thumb {
+  background: var(--disabled-text);
+  box-shadow: none;
+}
+
+.ui-switch-row.ui-is-disabled .ui-switch-row__label {
+  color: var(--disabled-text);
+  cursor: default;
+}
+
+.ui-switch__thumb {
+  position: absolute;
+  top: calc((var(--switch-height) - var(--switch-thumb-size)) / 2);
+  left: calc((var(--switch-height) - var(--switch-thumb-size)) / 2);
+  width: var(--switch-thumb-size);
+  height: var(--switch-thumb-size);
+  background: var(--switch-thumb-bg);
+  border-radius: 50%;
+  box-shadow: var(--switch-thumb-shadow);
+  transition: transform var(--motion-duration) ease;
+}
+
+.ui-switch[aria-checked="true"] .ui-switch__thumb {
+  transform: translateX(calc(var(--switch-width) - var(--switch-thumb-size) - (var(--switch-height) - var(--switch-thumb-size))));
+}
+
+/* 分段单选（variant: 'segmented'）：选项等宽排成一行，隐藏单选点，选中项用底色加下方强调线表示；适用于少量互斥项，如参数的应用范围 */
+.ui-choice-group--segmented {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--control-border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.ui-choice-group--segmented .ui-choice {
+  justify-content: center;
+  min-height: var(--tab-height);
+  font-size: var(--font-size-body);
+}
+
+.ui-choice-group--segmented .ui-choice + .ui-choice {
+  border-left: 1px solid var(--divider);
+}
+
+.ui-choice-group--segmented .ui-choice__mark {
+  display: none;
+}
+
+.ui-choice-group--segmented .ui-choice:not([aria-disabled="true"]):hover {
+  background: var(--option-hover-bg);
+}
+
+.ui-choice-group--segmented .ui-choice:not([aria-disabled="true"]):active {
+  background: var(--option-active-bg);
+}
+
+.ui-choice-group--segmented .ui-choice[aria-checked="true"] {
+  background: var(--choice-selected-bg);
+  box-shadow: inset 0 calc(-1 * var(--tab-indicator-height)) 0 var(--accent);
+  font-weight: var(--font-weight-strong);
+}
+
+/* 开关列表：一组开关行放进带外框的凹陷面板，行与行之间用分隔线；行高与内边距取 --switch-list-* 令牌 */
+.ui-switch-list {
+  --switch-row-min-height: var(--switch-list-row-min-height);
+  --switch-row-padding: var(--switch-list-row-padding);
+  overflow: hidden;
+  background: var(--inset-bg);
+  border: 1px solid var(--control-border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.ui-switch-list .ui-switch-row + .ui-switch-row {
+  border-top: 1px solid var(--divider);
+}
+
+/* 设置了 display 的控件会盖过 hidden 属性，这里让它们在没有页面基础样式的页面里也能正常隐藏 */
+.ui-choice-group[hidden],
+.ui-choice[hidden],
+.ui-switch-row[hidden] {
+  display: none !important;
+}

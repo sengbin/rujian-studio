@@ -13,12 +13,18 @@ import { readStagingFields } from './staging-rules';
 
 /** 单镜头时长的取值范围（秒）。 */
 export const SHOT_SECONDS_MIN = 0.1;
+/** 单个镜头时长的上限，单位为秒。 */
 export const SHOT_SECONDS_MAX = 600;
 
+/** 镜头场次、景别、机位、运镜、转场等标签字段的长度上限。 */
 export const SHOT_LABEL_MAX_LENGTH = 100;
+/** 镜头连续性备注的长度上限。 */
 export const SHOT_NOTE_MAX_LENGTH = 500;
+/** 镜头画面描述（提示词）的长度上限。 */
 export const SHOT_PROMPT_MAX_LENGTH = 2000;
+/** 声音条目文字的长度上限。 */
 export const SOUND_TEXT_MAX_LENGTH = 500;
+/** 声音条目语气描述的长度上限。 */
 export const SOUND_DELIVERY_MAX_LENGTH = 200;
 /** 一个镜头最多的声音条目数。 */
 export const MAX_SOUNDS_PER_SHOT = 20;
@@ -53,7 +59,14 @@ export function readShotText(
   return value;
 }
 
-/** 读取可选的秒数（数字，或界面提交的数字文本，空文本视为未填）；不是数字或超出范围时记录问题。 */
+/**
+ * 读取可选的秒数（数字，或界面提交的数字文本，空文本视为未填）；不是数字或超出范围时记录问题。
+ * @param raw 提交的秒数，可以是数字或数字文本。
+ * @param field 字段名，用于问题提示。
+ * @param label 镜头的名称，用于问题提示。
+ * @param positive 为 true 时秒数必须大于 0。
+ * @param issues 收集问题的数组，发现问题时追加。
+ */
 export function readSeconds(raw: unknown, field: string, label: string, positive: boolean, issues: string[]): number | null {
   const value = typeof raw === 'string' ? (raw.trim() === '' ? null : /^\d+(\.\d+)?$/.test(raw.trim()) ? Number(raw.trim()) : raw) : raw;
   if (value === undefined || value === null) {

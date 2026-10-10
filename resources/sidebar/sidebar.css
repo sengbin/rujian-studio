@@ -5,35 +5,18 @@
  * 作者：sengbin
  * 邮箱：chengbin@3578.cn
  * 日期：2026-09-30
- * 备注：颜色统一使用 rgb() 写法，主题通过 body.theme-light / body.theme-dark 切换。
+ * 备注：颜色取 ui-tokens.css 的令牌（菜单行的悬停与按下灰度也在那里），亮暗主题由令牌切换，本页不写主题分支。
  * ------------------------------------------------------------------------
  */
 
 :root {
   color-scheme: light dark;
-  --bg: var(--host-sidebar-background);
-  --focus-border: var(--host-focus-border, rgb(0, 120, 212));
-  --page-padding: var(--space-page) 0 var(--space-page) var(--space-page);
-  --page-padding-end: var(--space-page);
-  --card-gap: var(--space-page);
-  --card-padding: var(--space-md);
-  --divider: color-mix(in srgb, var(--host-foreground) 8%, transparent);
-  --row-hover-background: rgb(50, 50, 50);
-  --action-hover-background: rgb(61, 61, 61);
-  --row-pressed-background: rgb(47, 47, 47);
-  --action-pressed-background: rgb(56, 56, 56);
-}
-
-body.theme-light {
-  --divider: color-mix(in srgb, rgb(0, 0, 0) 8%, transparent);
-  --row-hover-background: rgb(230, 230, 230);
-  --action-hover-background: rgb(220, 220, 220);
-  --row-pressed-background: rgb(222, 222, 222);
-  --action-pressed-background: rgb(212, 212, 212);
-}
-
-body.theme-dark {
-  --divider: color-mix(in srgb, rgb(255, 255, 255) 8%, transparent);
+  /* 侧栏页的外边距：上右下左（右侧留给滚动条），及右侧内边距 */
+  --sidebar-padding: var(--space-page) 0 var(--space-page) var(--space-page);
+  --sidebar-padding-end: var(--space-page);
+  /* 分区卡片之间的间距与卡片内边距 */
+  --sidebar-card-gap: var(--space-page);
+  --sidebar-card-padding: var(--space-md);
 }
 
 * {
@@ -46,8 +29,8 @@ body {
   min-height: 100vh;
   min-width: 0;
   margin: 0;
-  padding: var(--page-padding);
-  color: var(--host-foreground);
+  padding: var(--sidebar-padding);
+  color: var(--text);
   background: var(--bg);
   font-size: var(--font-size-body);
   line-height: var(--line-height-body);
@@ -56,15 +39,15 @@ body {
 main {
   flex: none;
   display: grid;
-  gap: var(--card-gap);
-  padding-right: var(--page-padding-end);
+  gap: var(--sidebar-card-gap);
+  padding-right: var(--sidebar-padding-end);
 }
 
 /* 底部状态条：贴在页面底部，内容较多时跟在最后一张卡片之后 */
 .status-bar {
   margin-top: auto;
-  padding: var(--space-page) var(--page-padding-end) 0 0;
-  color: var(--host-description-foreground);
+  padding: var(--space-page) var(--sidebar-padding-end) 0 0;
+  color: var(--text-muted);
   font-size: var(--font-size-caption);
   line-height: var(--line-height-body);
 }
@@ -72,7 +55,7 @@ main {
 .status-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px var(--space-page);
+  gap: var(--space-xxs) var(--space-page);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -86,25 +69,25 @@ main {
 }
 
 .status-item .menu-icon {
-  width: 12px;
-  height: 12px;
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
 }
 
 .status-value[data-level='normal'] {
-  color: var(--host-foreground);
+  color: var(--text);
 }
 
 /* 版本号是辅助信息，沿用状态条的次要文字色，不与运行状态抢眼 */
 .status-version {
-  color: var(--host-description-foreground);
+  color: var(--text-muted);
 }
 
 .status-value[data-level='warning'] {
-  color: var(--host-warning-foreground, rgb(204, 167, 0));
+  color: var(--status-warning);
 }
 
 .status-value[data-level='error'] {
-  color: var(--host-error-foreground, rgb(244, 71, 71));
+  color: var(--status-error);
 }
 
 /* 卡片外壳只负责布局，视觉表面由 .card-inner 承担 */
@@ -115,7 +98,7 @@ main {
 
 .card-inner {
   min-width: 0;
-  padding: var(--card-padding);
+  padding: var(--sidebar-card-padding);
   background: var(--card-bg);
   border: 0;
   border-radius: var(--card-radius);
@@ -133,7 +116,7 @@ h2 {
   gap: var(--space-sm);
   margin: 0 0 var(--space-xs);
   padding: 0 0 var(--space-xs);
-  color: var(--host-foreground);
+  color: var(--text);
   border-bottom: 1px solid var(--divider);
 }
 
@@ -147,7 +130,7 @@ nav {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0;
-  padding: 0 0 0 2px;
+  padding: 0 0 0 var(--space-xxs);
   border-radius: var(--radius-md);
   transition: background-color var(--hover-duration) ease;
 }
@@ -157,18 +140,18 @@ nav {
 }
 
 .menu-row:hover {
-  background: var(--row-hover-background);
+  background: var(--menu-row-hover-bg);
 }
 
 .menu-row.is-pressed {
-  background: var(--row-pressed-background);
+  background: var(--menu-row-pressed-bg);
 }
 
 /* 提示（如数据库无法打开）：文字说明为主，颜色只作强化；长路径允许在任意位置换行 */
 .notice {
   margin: 0;
-  padding: 2px var(--space-sm);
-  color: var(--host-error-foreground, rgb(244, 71, 71));
+  padding: var(--space-xxs) var(--space-sm);
+  color: var(--status-error);
   font-size: var(--font-size-body);
   line-height: var(--line-height-body);
   overflow-wrap: anywhere;
@@ -193,8 +176,8 @@ button:focus-visible {
 /* 内联 SVG 图标：线条与颜色由 SVG 属性和当前文字颜色决定，这里只定尺寸 */
 .menu-icon {
   flex: none;
-  width: 14px;
-  height: 14px;
+  width: var(--icon-size);
+  height: var(--icon-size);
 }
 
 .menu-main,
@@ -218,7 +201,7 @@ button:focus-visible {
 h2 > span,
 .menu-title,
 .menu-action > span {
-  padding-bottom: 1px;
+  padding-bottom: var(--space-hairline);
 }
 
 .menu-title {
@@ -230,17 +213,17 @@ h2 > span,
 }
 
 .menu-row:has(.menu-action:hover, .menu-action:focus-visible) .menu-title {
-  color: var(--host-description-foreground);
+  color: var(--text-muted);
 }
 
 .menu-badge {
   display: inline-block;
   flex: none;
   padding: 0 var(--space-xs);
-  color: color-mix(in srgb, var(--host-foreground) 70%, transparent);
+  color: color-mix(in srgb, var(--text) 70%, transparent);
   font-size: var(--font-size-caption);
   line-height: 16px;
-  border: 1px solid color-mix(in srgb, var(--host-foreground) 24%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text) 24%, transparent);
   border-radius: var(--radius-sm);
 }
 
@@ -251,16 +234,16 @@ h2 > span,
   width: var(--row-height);
   height: var(--row-height);
   padding: 0;
-  color: var(--host-description-foreground);
+  color: var(--text-muted);
   background: transparent;
 }
 
 .menu-action:hover,
 .menu-action:focus-visible {
-  color: var(--host-link-foreground);
-  background: var(--action-hover-background);
+  color: var(--link);
+  background: var(--menu-action-hover-bg);
 }
 
 .menu-action.is-pressed {
-  background: var(--action-pressed-background);
+  background: var(--menu-action-pressed-bg);
 }

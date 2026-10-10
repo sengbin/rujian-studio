@@ -18,7 +18,9 @@ export const TEXT_MODEL_FIELD_KEY = 'textModel';
 /** 作品类表单追加在文本模型说明后的补充：所选模型会保存为作品的文本模型，之后的生成沿用。 */
 export const TEXT_MODEL_SAVED_NOTE = '；选择后同时保存为作品的文本模型';
 
+/** 所选文本模型已关闭或停用时的校验提示。 */
 const TEXT_MODEL_UNAVAILABLE_MESSAGE = '所选文本模型已不可用，请重新选择。';
+/** 文本模型字段说明的固定后半句，解释“沿用默认”和列表范围。 */
 const TEXT_MODEL_DESCRIPTION_TAIL = '使用的模型；“沿用默认”使用“模型设置”中的默认文本模型，已关闭或停用的模型不在列表中';
 
 /** 表单对文本模型选择的需求：读取候选与当前选择。 */
@@ -35,7 +37,10 @@ export interface WorkTextModels extends TextModelStates {
   setWorkModel(workId: number, modelKey: string | null): void;
 }
 
-/** “沿用默认”选项的文字，带上当前默认模型的名称。 */
+/**
+ * “沿用默认”选项的文字，带上当前默认模型的名称。
+ * @param state 作品的文本模型状态（候选列表与当前默认模型）。
+ */
 export function defaultTextModelOption(state: WorkTextModelState): string {
   return `沿用默认（${state.defaultLabel ?? '没有可用的默认文本模型'}）`;
 }
@@ -59,7 +64,10 @@ export function createTextModelField(state: WorkTextModelState, purpose: string,
   };
 }
 
-/** 文本模型字段的初始值：作品单独选择且仍可用的模型，否则是“沿用默认”。 */
+/**
+ * 文本模型字段的初始值：作品单独选择且仍可用的模型，否则是“沿用默认”。
+ * @param state 作品的文本模型状态。
+ */
 export function textModelInitialValue(state: WorkTextModelState): string {
   const selected = state.choices.find((choice) => choice.key === state.selectedKey);
   return selected === undefined ? defaultTextModelOption(state) : selected.label;
@@ -67,6 +75,8 @@ export function textModelInitialValue(state: WorkTextModelState): string {
 
 /**
  * 把表单里的文本模型字段值转换为模型键。
+ * @param state 作品的文本模型状态，用于确认所选模型仍在候选列表中。
+ * @param values 表单提交的字段值。
  * @returns 模型键；“沿用默认”为 null。
  * @throws ValidationError 所选模型已不在候选列表中。
  */

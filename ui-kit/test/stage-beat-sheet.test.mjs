@@ -103,7 +103,7 @@ function setup(view) {
     },
     onEvent: () => undefined
   };
-  for (const file of ['shared/page-format.js', 'stage/stage-actions.js', 'stage/stage-header.js', 'stage/stage.js', 'stage/stage-editor-common.js', 'stage/stage-beat-sheet.js', 'stage/stage-screenplay-list.js', 'stage/stage-screenplay-editors.js', 'stage/stage-screenplay-adaptation.js', 'stage/stage-screenplay.js']) {
+  for (const file of ['shared/page-format.js', 'stage/stage-actions.js', 'stage/stage-header.js', 'stage/stage.js', 'stage/stage-editing.js', 'stage/stage-beat-sheet.js', 'stage/stage-screenplay-list.js', 'stage/stage-screenplay-editors.js', 'stage/stage-screenplay-adaptation.js', 'stage/stage-screenplay.js']) {
     window.eval(readFileSync(`${RESOURCES_ROOT}${file}`, 'utf8'));
   }
   return { window, doc: env.document, requests };

@@ -13,7 +13,7 @@ import { loadScript, loadTimelineWindow, makeShot, makeView } from './storyboard
 
 const timelineWindow = loadTimelineWindow();
 const timeline = timelineWindow.aiStoryboardTimeline;
-const playerApi = loadScript('stage/stage-storyboard-preview-player.js', timelineWindow).aiStoryboardPlayer;
+const playerApi = loadScript('stage/storyboard-preview/stage-storyboard-preview-player.js', timelineWindow).aiStoryboardPlayer;
 
 /** 三个镜头：2 秒、3 秒、4 秒，共 9 秒。 */
 function compileThree() {

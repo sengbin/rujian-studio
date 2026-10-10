@@ -17,6 +17,7 @@ export const SPEAKER_NAME_MAX_LENGTH = 50;
 /** 一次返回的问题说明最多列出的条数，避免标注全错时反馈过长。 */
 const MAX_REPORTED_ISSUES = 10;
 
+/** 原文分段类型的全部取值，用于校验。 */
 const SEGMENT_KINDS = Object.keys(SEGMENT_KIND_LABELS) as SegmentKind[];
 
 /** 已知的角色：名称与别名，用于核对说话人。 */

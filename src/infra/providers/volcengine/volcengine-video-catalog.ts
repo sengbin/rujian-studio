@@ -32,26 +32,6 @@ export interface VolcengineVideoModel {
   readonly audioOnlyReference: boolean;
 }
 
-/** 构造 Seedance 的能力：2.x 系列都支持首尾帧、参考图、参考音频与原生声音，不支持随机种子。 */
-function seedanceCapability(options: Pick<VideoCapability, 'resolutions' | 'duration' | 'referenceImagesMax' | 'audioInputMax'>): VideoCapability {
-  return {
-    aspectRatios: ['16:9', '9:16', '1:1', '4:3', '3:4', '21:9'],
-    resolutions: options.resolutions,
-    duration: options.duration,
-    fps: [24],
-    audioModes: ['none', 'native'],
-    audioElements: ['dialogue', 'narration', 'sfx', 'music'],
-    voiceReference: true,
-    audioInputMax: options.audioInputMax,
-    firstFrame: true,
-    lastFrame: true,
-    referenceImagesMax: options.referenceImagesMax,
-    seed: false,
-    firstFrameDefinesAspect: true,
-    promptMaxLength: SEEDANCE_PROMPT_MAX_LENGTH
-  };
-}
-
 /** Seedance 2.5：4 至 30 秒，最多 30 张参考图、10 段参考音频，可只传音频。 */
 const SEEDANCE_25_CAPABILITY = seedanceCapability({
   resolutions: ['480P', '720P', '1080P'],
@@ -59,17 +39,6 @@ const SEEDANCE_25_CAPABILITY = seedanceCapability({
   referenceImagesMax: 30,
   audioInputMax: { count: 10, maxSeconds: 30 }
 });
-
-/** Seedance 2.0 系列：4 至 15 秒，最多 9 张参考图、3 段参考音频；标准版额外支持 1080P 与 4K。 */
-function seedance20Capability(resolutions: readonly string[]): VideoCapability {
-  return seedanceCapability({
-    resolutions,
-    duration: { min: 4, max: 15, step: 1, allowAuto: true },
-    referenceImagesMax: 9,
-    audioInputMax: { count: 3, maxSeconds: 15 }
-  });
-}
-
 /** 火山引擎提供的视频模型。 */
 export const VOLCENGINE_VIDEO_MODELS: readonly VolcengineVideoModel[] = [
   {
@@ -94,3 +63,33 @@ export const VOLCENGINE_VIDEO_MODELS: readonly VolcengineVideoModel[] = [
     audioOnlyReference: false
   }
 ];
+
+/** 构造 Seedance 的能力：2.x 系列都支持首尾帧、参考图、参考音频与原生声音，不支持随机种子。 */
+function seedanceCapability(options: Pick<VideoCapability, 'resolutions' | 'duration' | 'referenceImagesMax' | 'audioInputMax'>): VideoCapability {
+  return {
+    aspectRatios: ['16:9', '9:16', '1:1', '4:3', '3:4', '21:9'],
+    resolutions: options.resolutions,
+    duration: options.duration,
+    fps: [24],
+    audioModes: ['none', 'native'],
+    audioElements: ['dialogue', 'narration', 'sfx', 'music'],
+    voiceReference: true,
+    audioInputMax: options.audioInputMax,
+    firstFrame: true,
+    lastFrame: true,
+    referenceImagesMax: options.referenceImagesMax,
+    seed: false,
+    firstFrameDefinesAspect: true,
+    promptMaxLength: SEEDANCE_PROMPT_MAX_LENGTH
+  };
+}
+
+/** Seedance 2.0 系列：4 至 15 秒，最多 9 张参考图、3 段参考音频；标准版额外支持 1080P 与 4K。 */
+function seedance20Capability(resolutions: readonly string[]): VideoCapability {
+  return seedanceCapability({
+    resolutions,
+    duration: { min: 4, max: 15, step: 1, allowAuto: true },
+    referenceImagesMax: 9,
+    audioInputMax: { count: 3, maxSeconds: 15 }
+  });
+}

@@ -33,6 +33,7 @@ const TASK_STATUSES: Readonly<Record<string, RemoteJobStatus>> = {
 
 /**
  * 从提交响应中读取任务标识。
+ * @param response 提交响应，格式未经校验。
  * @throws ProviderError 响应没有任务标识。
  */
 export function readTaskId(response: Record<string, unknown>): string {

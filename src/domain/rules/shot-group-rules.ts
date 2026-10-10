@@ -13,7 +13,9 @@ import { isEffectiveCut } from './shot-cut-rules';
 
 /** 单组最长时长的默认值与取值范围（秒）。 */
 export const DEFAULT_GROUP_MAX_SECONDS = 15;
+/** 镜头组总时长的下限，单位为秒。 */
 export const GROUP_SECONDS_MIN = 2;
+/** 镜头组总时长的上限，单位为秒。 */
 export const GROUP_SECONDS_MAX = 120;
 
 /** 在场次或景别、机位变化处断开时，断开前的部分至少要占上限的比例，避免为了对齐切点产生过短的组。 */
@@ -45,13 +47,19 @@ export interface PackedGroup {
   readonly joinsOpenGroup: boolean;
 }
 
-/** 从分镜脚本参数中读取单组最长时长；旧记录没有该字段时用默认值。 */
+/**
+ * 从分镜脚本参数中读取单组最长时长；旧记录没有该字段时用默认值。
+ * @param params 分镜脚本参数；旧记录或没有时为 null、undefined。
+ */
 export function groupMaxSecondsOf(params: Pick<StoryboardParams, 'groupMaxSeconds'> | null | undefined): number {
   const value = params?.groupMaxSeconds;
   return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : DEFAULT_GROUP_MAX_SECONDS;
 }
 
-/** 镜头总时长，保留 1 位小数。 */
+/**
+ * 镜头总时长，保留 1 位小数。
+ * @param shots 镜头列表。
+ */
 export function sumSeconds(shots: ReadonlyArray<{ readonly durationSeconds: number }>): number {
   return Math.round(shots.reduce((sum, shot) => sum + shot.durationSeconds, 0) * 10) / 10;
 }
@@ -129,13 +137,19 @@ export function planGroupLayout(shots: readonly GroupedShot[], groupIds: readonl
   return layout;
 }
 
-/** 全部重新分组的布局：不保留任何已有的组。 */
+/**
+ * 全部重新分组的布局：不保留任何已有的组。
+ * @param shots 要分组的镜头。
+ * @param maxSeconds 单组最长时长，单位为秒。
+ */
 export function planRegroupLayout(shots: readonly GroupableShot[], maxSeconds: number): GroupLayoutEntry[] {
   return packShots(shots, maxSeconds).map((group) => ({ groupId: null, shotIds: group.shotIds }));
 }
 
 /**
  * 在某个镜头之前拆开所在的组：前半部分保留原组，后半部分新建一组。
+ * @param layout 当前的分组布局。
+ * @param shotId 拆分位置的镜头标识，它成为新组的第一个镜头。
  * @throws ValidationError 镜头不在任何组里，或它是组内第一个镜头。
  */
 export function splitLayoutBefore(layout: readonly GroupLayoutEntry[], shotId: number): GroupLayoutEntry[] {
@@ -155,6 +169,8 @@ export function splitLayoutBefore(layout: readonly GroupLayoutEntry[], shotId: n
 
 /**
  * 把一个组并入它的上一组；被并入的组从布局中消失。
+ * @param layout 当前的分组布局。
+ * @param groupId 要并入上一组的镜头组标识。
  * @throws ValidationError 没有这个组，或它已经是第一组。
  */
 export function mergeLayoutIntoPrevious(layout: readonly GroupLayoutEntry[], groupId: number): GroupLayoutEntry[] {

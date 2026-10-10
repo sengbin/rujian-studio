@@ -83,6 +83,7 @@ interface AssetFileRow {
   readonly sort_order: number;
 }
 
+/** 把资产的数据库行转换为资产记录。 */
 function toRecord(row: AssetRow): AssetRecord {
   return {
     id: row.id,

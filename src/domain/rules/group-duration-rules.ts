@@ -47,7 +47,10 @@ export function fitGroupDuration(duration: DurationCapability, seconds: number):
   return { seconds: fitted, adjusted: Math.abs(fitted - seconds) > SECONDS_EPSILON, exceedsMax };
 }
 
-/** 模型单次可生成的最长时长（秒）；没有上限信息时为 null。 */
+/**
+ * 模型单次可生成的最长时长（秒）；没有上限信息时为 null。
+ * @param duration 模型的时长能力。
+ */
 export function maxGroupSeconds(duration: DurationCapability): number | null {
   if (duration.options !== undefined && duration.options.length > 0) return Math.max(...duration.options);
   return duration.max ?? null;

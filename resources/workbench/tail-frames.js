@@ -115,8 +115,9 @@
       const reason = error && error.message ? error.message : '';
       try {
         await window.hostBridge.request(REQUEST_FAILED, { resultId, reason });
-      } catch {
+      } catch (reportError) {
         // 宿主不可用时无法上报，任务保持等待。
+        console.warn('上报尾帧提取失败也失败了：', reportError);
       }
     } finally {
       if (videoUrl) URL.revokeObjectURL(videoUrl);

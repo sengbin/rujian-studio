@@ -1,0 +1,30 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：ui-typography.css
+ * 说明：界面组件库的文字角色样式：标题、小节标题与小标题。
+ * 作者：sengbin
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-11
+ * 备注：字号与字重取 ui-tokens.css 的字体角色令牌；页面只管外边距。
+ * ------------------------------------------------------------------------
+ */
+
+/* 标题的字号与字重由总控的字体角色决定；页面只管外边距，不再各写一遍 */
+.ui-title,
+.ui-heading,
+.ui-subheading {
+  margin: 0;
+  font-weight: var(--font-weight-strong);
+}
+
+.ui-title {
+  font-size: var(--font-size-title);
+}
+
+.ui-heading {
+  font-size: var(--font-size-heading);
+}
+
+.ui-subheading {
+  font-size: var(--font-size-subheading);
+}

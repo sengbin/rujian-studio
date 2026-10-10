@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：规则见 private-docs/rujian-studio/开发文档-vscode/ARCHITECTURE.md 6.7；每次提交新建版本，失败或取消的版本可原地重试，同一资产同时只能有一个进行中的版本；采用才写入资产文件，绑定和视频生成只读资产文件。
+// 备注：规则见 private-docs/rujian-studio/开发文档/ARCHITECTURE.md 6.7；每次提交新建版本，失败或取消的版本可原地重试，同一资产同时只能有一个进行中的版本；采用才写入资产文件，绑定和视频生成只读资产文件。
 // ------------------------------------------------------------------------
 
 import { FORM_LEVEL_ERROR_KEY, NotFoundError, ValidationError } from '../../domain/errors';
@@ -158,6 +158,7 @@ export class AssetGenerationService {
   /**
    * 读取某类型资产的可用模型（模型和服务商都已启用且已配置密钥），返回逐条判断资产是否有可用模型的函数，资产列表据此决定每一行“生成”按钮能否使用。
    * 音频资产按各自的音频类型（音色参考、背景音乐、音效）分别判断：模型不支持该资产的音频类型就不算可用。
+   * @param kind 资产类型。
    */
   async createUsableModelCheck(kind: AssetRecord['kind']): Promise<(asset: Pick<AssetRecord, 'kind' | 'attributes'>) => boolean> {
     const usable = await this.dependencies.providers.listUsableModels(modelKindOfAsset(kind));
@@ -166,6 +167,7 @@ export class AssetGenerationService {
 
   /**
    * 列出某类型资产当前全部可用的模型（模型和服务商都已启用且已配置密钥），供新建资产表单在资产还没有保存时选择模型；音频模型需要再按音频类型筛选（能力里有 audioKinds）。
+   * @param kind 资产类型。
    */
   async listModelOptions(kind: AssetRecord['kind']): Promise<GenerationModelOption[]> {
     const usable = await this.dependencies.providers.listUsableModels(modelKindOfAsset(kind));
@@ -174,6 +176,7 @@ export class AssetGenerationService {
 
   /**
    * 读取生成对话框需要的模型、默认值与能否生成。
+   * @param assetId 资产标识。
    * @throws NotFoundError 资产不存在。
    */
   async getCatalog(assetId: number): Promise<AssetGenerationCatalog> {
@@ -264,6 +267,7 @@ export class AssetGenerationService {
 
   /**
    * 取消进行中的版本。
+   * @param versionId 版本标识。
    * @returns remoteCanceled 为 false 表示服务商没有取消接口，平台任务可能继续并计费。
    * @throws NotFoundError 版本不存在或已经结束。
    */
@@ -275,6 +279,7 @@ export class AssetGenerationService {
 
   /**
    * 重试失败或已取消的版本：版本号不变，尝试次数加 1，重新排队。
+   * @param versionId 版本标识。
    * @throws NotFoundError 版本不存在。
    * @throws ValidationError 版本不是失败或已取消，或资产已有进行中的版本。
    */
@@ -295,6 +300,7 @@ export class AssetGenerationService {
 
   /**
    * 读取资产的版本列表。
+   * @param assetId 资产标识。
    * @throws NotFoundError 资产不存在。
    */
   async listVersions(assetId: number): Promise<AssetVersionList> {
@@ -318,6 +324,7 @@ export class AssetGenerationService {
 
   /**
    * 读取单个版本的详情，含结果文件的缩略图。
+   * @param versionId 版本标识。
    * @throws NotFoundError 版本不存在。
    */
   getVersion(versionId: number): AssetVersionDetail {
@@ -351,6 +358,7 @@ export class AssetGenerationService {
 
   /**
    * 读取一个版本结果文件的完整内容，用于查看原图或试听。
+   * @param fileId 版本结果文件标识。
    * @throws NotFoundError 文件不存在。
    */
   getFileData(fileId: number): { readonly mime: string; readonly fileName: string; readonly data: string } {
@@ -457,6 +465,7 @@ export class AssetGenerationService {
 
   /**
    * 删除版本及其文件。
+   * @param versionId 版本标识。
    * @throws NotFoundError 版本不存在。
    * @throws ValidationError 版本是当前采用的，或还在进行中。
    */

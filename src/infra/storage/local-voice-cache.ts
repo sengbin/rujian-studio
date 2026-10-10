@@ -20,6 +20,7 @@ export const VOICE_CACHE_DIRECTORY_NAME = 'voice-cache';
 const DEFAULT_MAX_ENTRIES = 500;
 const DEFAULT_MAX_BYTES = 1024 * 1024 * 1024;
 
+/** 缓存键的合法格式：64 位十六进制哈希，防止路径穿越。 */
 const KEY_PATTERN = /^[0-9a-f]{64}$/;
 
 /** 缓存大小上限。 */

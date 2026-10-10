@@ -42,7 +42,10 @@ export function normalizeNegativeItems(list: string, positive: string): string[]
   return items;
 }
 
-/** 句子收尾：去掉末尾空白，没有句末标点时补句号（末尾是英文字母或数字补“.”，否则补“。”）。 */
+/**
+ * 句子收尾：去掉末尾空白，没有句末标点时补句号（末尾是英文字母或数字补“.”，否则补“。”）。
+ * @param text 一句话。
+ */
 export function endSentence(text: string): string {
   const trimmed = text.trim();
   if (trimmed === '') return '';
@@ -50,7 +53,10 @@ export function endSentence(text: string): string {
   return /[A-Za-z0-9)]$/.test(trimmed) ? `${trimmed}.` : `${trimmed}。`;
 }
 
-/** 镜头语言：景别、机位与视角、摄影机运动三个字段按顺序用逗号连接，空字段跳过；都为空返回空串。 */
+/**
+ * 镜头语言：景别、机位与视角、摄影机运动三个字段按顺序用逗号连接，空字段跳过；都为空返回空串。
+ * @param shot 镜头记录（只用到景别、机位与视角、摄影机运动）。
+ */
 export function describeCamera(shot: Pick<ShotRecord, 'shotSize' | 'cameraAngle' | 'cameraMovement'>): string {
   return [shot.shotSize, shot.cameraAngle, shot.cameraMovement]
     .map((part) => part.trim())
@@ -58,14 +64,20 @@ export function describeCamera(shot: Pick<ShotRecord, 'shotSize' | 'cameraAngle'
     .join('，');
 }
 
-/** 转场写在这一镜头的末尾（官方写法如“硬切转场”“叠化转场”）；默认的“切”不写，返回空串。 */
+/**
+ * 转场写在这一镜头的末尾（官方写法如“硬切转场”“叠化转场”）；默认的“切”不写，返回空串。
+ * @param transition 转场名称。
+ */
 export function describeTransition(transition: string): string {
   const text = transition.trim();
   if (DEFAULT_TRANSITIONS.includes(text)) return '';
   return text.endsWith('转场') ? text : `${text}转场`;
 }
 
-/** 把“16:9”这样的画幅解析成宽高比（宽 / 高）；格式不对返回 null。 */
+/**
+ * 把“16:9”这样的画幅解析成宽高比（宽 / 高）；格式不对返回 null。
+ * @param text 画幅文字，形如 16:9；没有时为 null。
+ */
 export function parseAspectRatio(text: string | null): number | null {
   if (text === null) return null;
   const match = /^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$/.exec(text.trim());
@@ -75,14 +87,23 @@ export function parseAspectRatio(text: string | null): number | null {
   return width > 0 && height > 0 ? width / height : null;
 }
 
-/** 图片的比例是否与画幅明显不一致；任何一方缺失或无法解析时视为一致。 */
+/**
+ * 图片的比例是否与画幅明显不一致；任何一方缺失或无法解析时视为一致。
+ * @param imageWidth 图片宽度，单位为像素；未知为 null。
+ * @param imageHeight 图片高度，单位为像素；未知为 null。
+ * @param aspectRatio 目标画幅，形如 16:9；未知为 null。
+ */
 export function aspectDiffers(imageWidth: number | null, imageHeight: number | null, aspectRatio: string | null): boolean {
   const target = parseAspectRatio(aspectRatio);
   if (target === null || imageWidth === null || imageHeight === null || imageWidth <= 0 || imageHeight <= 0) return false;
   return Math.abs(imageWidth / imageHeight / target - 1) > ASPECT_MISMATCH_TOLERANCE;
 }
 
-/** 把图片宽高写成接近的常见比例文字，如 750×1000 写为“3:4”；不是常见比例时写为“宽×高”。 */
+/**
+ * 把图片宽高写成接近的常见比例文字，如 750×1000 写为“3:4”；不是常见比例时写为“宽×高”。
+ * @param width 图片宽度，单位为像素。
+ * @param height 图片高度，单位为像素。
+ */
 export function describeImageRatio(width: number, height: number): string {
   const ratio = width / height;
   for (const [w, h] of [[16, 9], [9, 16], [4, 3], [3, 4], [1, 1], [21, 9], [3, 2], [2, 3]] as const) {

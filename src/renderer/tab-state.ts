@@ -30,6 +30,7 @@ export class TabState {
 
   /**
    * 打开标签并激活；同一键已存在时只激活，不重复添加。
+   * @param tab 要打开的标签描述。
    * @returns 是否新增了标签。
    */
   open(tab: TabDescriptor): boolean {
@@ -41,7 +42,10 @@ export class TabState {
     return isNew;
   }
 
-  /** 激活已有标签。 @returns 该键的标签是否存在。 */
+  /**
+   * 激活已有标签。 @returns 该键的标签是否存在。
+   * @param key 标签键。
+   */
   activate(key: string): boolean {
     if (!this.has(key)) {
       return false;
@@ -50,7 +54,10 @@ export class TabState {
     return true;
   }
 
-  /** 关闭标签；关闭的是当前标签时，激活右侧相邻标签，没有则激活左侧。 @returns 该键的标签是否存在。 */
+  /**
+   * 关闭标签；关闭的是当前标签时，激活右侧相邻标签，没有则激活左侧。 @returns 该键的标签是否存在。
+   * @param key 标签键。
+   */
   close(key: string): boolean {
     const index = this.tabs.findIndex((tab) => tab.key === key);
     if (index < 0) {
@@ -63,7 +70,10 @@ export class TabState {
     return true;
   }
 
-  /** 按顺序循环切换到下一个（1）或上一个（-1）标签；少于两个标签时不变。 */
+  /**
+   * 按顺序循环切换到下一个（1）或上一个（-1）标签；少于两个标签时不变。
+   * @param step 1 切换到下一个，-1 切换到上一个。
+   */
   cycle(step: 1 | -1): void {
     if (this.tabs.length < 2 || this.activeKey === undefined) {
       return;

@@ -8,13 +8,13 @@
 // ------------------------------------------------------------------------
 
 import { StageKind, StageProgress, StageRun } from '../../domain/models/stage-run';
-import { TextGenerationPort, TextModelInfo } from '../../domain/ports/text-generation-port';
+import { TextGenerationPort, TextModelIdentity } from '../../domain/ports/text-generation-port';
 
 /** 工作流执行时可用的上下文。 */
 export interface StageContext {
   /** 本次执行的阶段记录；重试时带有上次保存的进度，用于从中断处继续。 */
   readonly run: StageRun;
-  readonly model: TextModelInfo;
+  readonly model: TextModelIdentity;
   readonly text: TextGenerationPort;
   /** 取消信号；工作流应把它传给文本生成端口，并在步骤之间检查。 */
   readonly signal: AbortSignal;

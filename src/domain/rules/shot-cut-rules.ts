@@ -45,7 +45,10 @@ function normalize(text: string | undefined): string {
   return (text ?? '').replace(/[\s,，、。；;：:]/g, '');
 }
 
-/** 景别的取景等级；识别不了为 null。 */
+/**
+ * 景别的取景等级；识别不了为 null。
+ * @param text 景别文字。
+ */
 export function shotSizeLevel(text: string | undefined): number | null {
   const label = normalize(text);
   return SHOT_SIZE_RULES.find((rule) => rule.words.some((word) => label.includes(word)))?.level ?? null;
@@ -76,7 +79,11 @@ export function classifyCut(before: CutLook, after: CutLook): CutChange {
   return parts.every((part) => part === 'same') ? 'unchanged' : 'unknown';
 }
 
-/** 是否确定是有效的剪辑切换；无法判断时不算。 */
+/**
+ * 是否确定是有效的剪辑切换；无法判断时不算。
+ * @param before 前一个镜头的取景特征。
+ * @param after 后一个镜头的取景特征。
+ */
 export function isEffectiveCut(before: CutLook, after: CutLook): boolean {
   return classifyCut(before, after) === 'cut';
 }

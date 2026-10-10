@@ -141,7 +141,7 @@ export class BackupService {
     try {
       assetFiles = this.storage.exportAssetFiles(targetPath);
     } catch (error) {
-      throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: `数据库已备份，但本地文件没能备份：${error instanceof Error ? error.message : String(error)}` });
+      throw new ValidationError({ [FORM_LEVEL_ERROR_KEY]: `数据库已备份，但本地文件没能备份：${error instanceof Error ? error.message : String(error)}` }, { cause: error });
     }
     return { cancelled: false, filePath: targetPath, sizeBytes, assetFiles };
   }

@@ -36,12 +36,14 @@ interface BindingRow {
   readonly created_at: string;
 }
 
+/** 查询绑定的公共 SELECT 部分，带出实体名称与资产信息。 */
 const BINDING_SELECT = `SELECT b.id, b.episode_id, b.entity_id, se.name AS entity_name, b.asset_id, a.name AS asset_name,
     a.kind AS asset_kind, b.purpose, b.is_primary, b.note, b.created_at
   FROM entity_bindings b
   JOIN script_entities se ON se.id = b.entity_id
   JOIN assets a ON a.id = b.asset_id`;
 
+/** 把绑定的数据库行转换为绑定记录。 */
 function toRecord(row: BindingRow): BindingRecord {
   return {
     id: row.id,

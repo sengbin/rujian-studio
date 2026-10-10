@@ -9,17 +9,19 @@
  * ------------------------------------------------------------------------
  */
 
-/* 工作区布局令牌：分隔线、面板表面、面板阴影（亮主题才有）；控件尺寸与外观全站统一由 ui-tokens.css 的总控令牌决定，这里不覆盖；悬停与按下颜色也直接用总控令牌 */
+/* 工作区布局令牌与布局：分隔线、面板表面、面板阴影（跟随卡片令牌，亮主题才有）；占满弹出页面的高度，头部、提示区纵向排列，主体取剩余高度并在内部滚动；容器查询按弹出页面自身宽度响应；控件尺寸与外观全站统一由 ui-tokens.css 的总控令牌决定，这里不覆盖 */
 .stage-view--workspace {
   --stage-line: var(--host-widget-border, color-mix(in srgb, var(--text) 12%, transparent));
   --stage-surface: color-mix(in srgb, var(--host-widget-background, var(--bg)) 90%, var(--bg));
-  --stage-shadow: none;
+  --stage-shadow: var(--card-shadow);
   /* 字段之间的间距由内容布局负责 */
   --field-gap: 0;
-}
-
-body.theme-light .stage-view--workspace {
-  --stage-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
+  container: stage-workspace / inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-page);
+  height: 100%;
+  min-width: 0;
 }
 
 .stage-header .description {
@@ -78,7 +80,7 @@ body.theme-light .stage-view--workspace {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 2px var(--space-md);
+  gap: var(--space-xxs) var(--space-md);
 }
 
 .stage-item__title {
@@ -134,7 +136,7 @@ body.theme-light .stage-view--workspace {
 }
 
 .stage-adaptation__item .description {
-  margin: 2px 0 0 24px;
+  margin: var(--space-xxs) 0 0 24px;
 }
 
 /* 原始输出：保留换行，过长时滚动 */
@@ -192,16 +194,6 @@ body.theme-light .stage-view--workspace {
 }
 
 /* ---------- 工作区布局 ---------- */
-/* 占满弹出页面的高度：头部、提示区纵向排列，主体取剩余高度并在内部滚动；容器查询按弹出页面自身宽度响应 */
-.stage-view--workspace {
-  container: stage-workspace / inline-size;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-page);
-  height: 100%;
-  min-width: 0;
-}
-
 /* 头部：左侧作品信息与汇总，右侧版本、状态与操作；弹出页面较窄时上下排列 */
 .stage-view--workspace .stage-header {
   display: grid;

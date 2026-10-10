@@ -13,10 +13,13 @@ export const INTERRUPTED_MESSAGE = '应用重启，已中断。';
 /** 表单级错误使用的字段键，表示不属于某个具体字段。 */
 export const FORM_LEVEL_ERROR_KEY = '';
 
-/** 提交内容不符合约定；fieldErrors 以字段键为键、修正提示为值。 */
+/** 值得稍后重试的失败分类；鉴权、参数和内容审核类失败重试不会成功。 */
+const RETRYABLE_PROVIDER_FAILURES: readonly ProviderFailure[] = ['rate_limited', 'server', 'network'];
+
+/** 提交内容不符合约定；fieldErrors 以字段键为键、修正提示为值；cause 保留引发校验失败的原始异常。 */
 export class ValidationError extends Error {
-  constructor(readonly fieldErrors: Readonly<Record<string, string>>) {
-    super(Object.values(fieldErrors).join('；'));
+  constructor(readonly fieldErrors: Readonly<Record<string, string>>, options?: { readonly cause?: unknown }) {
+    super(Object.values(fieldErrors).join('；'), options);
     this.name = 'ValidationError';
   }
 }
@@ -56,9 +59,6 @@ export class TextGenerationError extends Error {
 
 /** 调用图像、音频、视频模型服务失败的分类：鉴权、限流、参数、内容审核、服务端、网络。 */
 export type ProviderFailure = 'auth' | 'rate_limited' | 'invalid_request' | 'content_rejected' | 'server' | 'network';
-
-/** 值得稍后重试的失败分类；鉴权、参数和内容审核类失败重试不会成功。 */
-const RETRYABLE_PROVIDER_FAILURES: readonly ProviderFailure[] = ['rate_limited', 'server', 'network'];
 
 /** 调用模型服务失败；category 决定生成队列是否重试以及界面如何提示，code 为服务商返回的错误码。 */
 export class ProviderError extends Error {

@@ -7,7 +7,7 @@
 // 备注：只接受来自应用窗口的消息；页面本身运行在沙箱 iframe 中，拿不到 IPC，只能经外壳中转。
 // ------------------------------------------------------------------------
 
-import { BrowserWindow, IpcMainEvent, IpcMainInvokeEvent, ipcMain } from 'electron';
+import { BrowserWindow, IpcMain, IpcMainEvent, IpcMainInvokeEvent, ipcMain } from 'electron';
 import { ShellBridge } from '../app/shell/shell-bridge';
 import { SHELL_CHANNELS, ShellInitialState, ShellTheme } from '../app/shell/shell-channels';
 
@@ -16,14 +16,20 @@ import { SHELL_CHANNELS, ShellInitialState, ShellTheme } from '../app/shell/shel
  * @param bridge 外壳桥。
  * @param getWindow 读取应用窗口。
  * @param getTheme 读取当前界面主题。
+ * @param ipc 注册处理的 ipcMain；默认用 Electron 的 ipcMain，测试时传入假对象。
  */
-export function registerShellIpc(bridge: ShellBridge, getWindow: () => BrowserWindow | undefined, getTheme: () => ShellTheme): void {
+export function registerShellIpc(
+  bridge: ShellBridge,
+  getWindow: () => BrowserWindow | undefined,
+  getTheme: () => ShellTheme,
+  ipc: Pick<IpcMain, 'on' | 'handle'> = ipcMain
+): void {
   const isFromAppWindow = (event: IpcMainEvent | IpcMainInvokeEvent): boolean => {
     const window = getWindow();
     return window !== undefined && !window.isDestroyed() && event.sender === window.webContents;
   };
 
-  ipcMain.on(SHELL_CHANNELS.fromFrame, (event, payload: unknown) => {
+  ipc.on(SHELL_CHANNELS.fromFrame, (event, payload: unknown) => {
     if (!isFromAppWindow(event) || typeof payload !== 'object' || payload === null) {
       return;
     }
@@ -33,13 +39,13 @@ export function registerShellIpc(bridge: ShellBridge, getWindow: () => BrowserWi
     }
   });
 
-  ipcMain.on(SHELL_CHANNELS.tabClosed, (event, key: unknown) => {
+  ipc.on(SHELL_CHANNELS.tabClosed, (event, key: unknown) => {
     if (isFromAppWindow(event) && typeof key === 'string') {
       bridge.handleTabClosed(key);
     }
   });
 
-  ipcMain.handle(SHELL_CHANNELS.ready, (event): ShellInitialState => {
+  ipc.handle(SHELL_CHANNELS.ready, (event): ShellInitialState => {
     if (!isFromAppWindow(event)) {
       throw new Error('只有应用窗口可以调用。');
     }

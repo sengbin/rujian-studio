@@ -31,7 +31,10 @@ export interface SidebarPageOptions {
   readonly theme: ShellTheme;
 }
 
-/** 生成侧栏页面的完整 HTML。 */
+/**
+ * 生成侧栏页面的完整 HTML。
+ * @param options 页面 HTML 的生成选项（主题与资源地址）。
+ */
 export function createSidebarPageHtml(options: SidebarPageOptions): string {
   return createSidebarHtml({
     cspSource: APP_PAGE_CSP_SOURCE,

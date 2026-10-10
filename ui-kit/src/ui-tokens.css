@@ -20,6 +20,8 @@
   /* 强调色及其上的文字色（主要按钮、选中态、开关），输入文字色；组件样式只引用这些令牌，不直接写 --host-* */
   --accent: var(--host-button-background);
   --accent-foreground: var(--host-button-foreground);
+  /* 链接与可点击文字的颜色 */
+  --link: var(--host-link-foreground);
   --input-foreground: var(--host-input-foreground);
   /* 统一间距，页面、组件的边距与间隙都只引用这几级，不再写死像素；要整体调松或调紧，只改这里。
      区块级：页面外边距、区块（卡片、分组、表格容器）之间的间距与区块内边距 */
@@ -28,6 +30,12 @@
   --space-md: 8px;
   --space-sm: 6px;
   --space-xs: 4px;
+  /* 微间距：紧贴的辅助文字之间的间隙，比 xs 更小 */
+  --space-xxs: 2px;
+  --space-hairline: 1px;
+  /* 图标边长：常规与小号 */
+  --icon-size: 14px;
+  --icon-size-sm: 12px;
 
   /* ---------- 字体总控：字号、字重、行高按“角色”分类，页面与组件只引用角色，不再写死数值；同一角色的文字在所有页面属性一致 ---------- */
   /* 字号：display 页面内的大标题；title 页面、面板、卡片、表格主标题；heading 分组与小节标题（对话框标题同级）；
@@ -54,6 +62,9 @@
   --card-radius: var(--radius-lg);
   --card-bg: color-mix(in srgb, var(--host-widget-background, var(--bg)) 90%, rgb(255, 255, 255));
   --card-shadow: none;
+  /* 卡片与面板的边框，以及嵌在面板里的列表、组件所用的凹陷底色（亮色主题见下方 body.theme-light） */
+  --card-border: color-mix(in srgb, rgb(255, 255, 255) 7%, var(--bg));
+  --inset-bg: color-mix(in srgb, var(--bg) 83%, rgb(0, 0, 0));
 
   /* ---------- 控件总控（非颜色）：尺寸、内外边距、间隙、圆角、字号都只在这里改，组件库与页面样式只引用 ---------- */
   /* 按钮：所有按钮高度、字号、圆角、图标尺寸完全一致，只有宽度可以按需不同；“功能”级令牌默认继承通用值，只控制内边距与最小宽度 */
@@ -62,7 +73,7 @@
   --btn-gap: var(--space-xs);
   --btn-radius: var(--radius-sm);
   --btn-font-size: var(--font-size-body);
-  --btn-icon-size: 14px;
+  --btn-icon-size: var(--icon-size);
   --btn-compact-min-width: 60px;
   --btn-add-padding-x: var(--btn-padding-x);
   --btn-add-min-width: 0;
@@ -105,13 +116,25 @@
   --field-description-size: var(--font-size-caption);
   --field-description-gap: var(--space-sm);
   --field-error-size: var(--font-size-caption);
+  /* 字段标签、开关行、页签角标的文字色，默认沿用所在容器的文字色，页面可在容器上覆盖 */
+  --field-label-color: currentColor;
+  --switch-row-color: currentColor;
+  --tab-count-color: currentColor;
   --switch-row-gap: var(--space-md);
   --switch-row-min-height: 0;
+  /* 开关滑块的颜色与阴影（开关轨道有颜色，滑块始终是白色） */
+  --switch-thumb-bg: rgb(255, 255, 255);
+  --switch-thumb-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+  /* 开关列表（一组带分隔线的开关行）的行高与行内边距 */
+  --switch-list-row-min-height: 38px;
+  --switch-list-row-padding: 0 var(--space-page);
   /* 页签 */
   --tab-height: 32px;
   --tab-padding-x: var(--space-page);
   --tab-font-size: var(--font-size-body);
   --tab-count-font-size: var(--font-size-caption);
+  /* 选中页签下方指示线的粗细 */
+  --tab-indicator-height: 2px;
   /* 行与面板：菜单行、文件选择行、列表内的一行等行高，面板头高度；缩略图边长；动效时长统一 */
   --row-height: 26px;
   --row-height-lg: 36px;
@@ -139,7 +162,15 @@
   --chip-font-size: var(--font-size-caption);
   /* 悬停、按下时背景色与边框色的过渡时长；减少动态效果时为 0 */
   --hover-duration: 0.15s;
-  --divider: color-mix(in srgb, var(--host-foreground) 8%, transparent);
+  --divider: color-mix(in srgb, rgb(255, 255, 255) 8%, transparent);
+  /* 比分隔线更明显的控件外框（分段单选、开关列表），以及分段选项选中时的底色 */
+  --control-border-strong: color-mix(in srgb, var(--text) 28%, transparent);
+  --choice-selected-bg: color-mix(in srgb, var(--text) 8%, transparent);
+  /* 菜单行（侧栏等分阶段菜单）的中性灰度反馈：整行悬停、尾部操作悬停、整行按下、尾部操作按下 */
+  --menu-row-hover-bg: rgb(50, 50, 50);
+  --menu-action-hover-bg: rgb(61, 61, 61);
+  --menu-row-pressed-bg: rgb(47, 47, 47);
+  --menu-action-pressed-bg: rgb(56, 56, 56);
 
   --status-success: rgb(79, 220, 138);
   --status-warning: rgb(242, 177, 74);
@@ -169,6 +200,7 @@
   --button-secondary-active-bg: rgba(255, 255, 255, 0.05);
   --button-secondary-text: rgba(237, 237, 237, 0.92);
   --button-danger-bg: rgb(161, 51, 45);
+  --button-danger-text: rgb(255, 255, 255);
   --button-danger-hover-bg: rgb(180, 58, 51);
   --button-danger-active-bg: rgb(141, 40, 35);
   /* 强调色按钮：区别于默认的次要（灰）与主要（蓝）、危险（红，专用于删除）；
@@ -216,6 +248,13 @@ body.theme-dark {
 body.theme-light {
   --card-bg: color-mix(in srgb, var(--bg) 62%, rgb(226, 226, 226));
   --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.07);
+  --card-border: color-mix(in srgb, rgb(0, 0, 0) 22%, rgb(255, 255, 255));
+  --inset-bg: color-mix(in srgb, var(--bg) 76%, rgb(216, 216, 216));
+  --divider: color-mix(in srgb, rgb(0, 0, 0) 8%, transparent);
+  --menu-row-hover-bg: rgb(230, 230, 230);
+  --menu-action-hover-bg: rgb(220, 220, 220);
+  --menu-row-pressed-bg: rgb(222, 222, 222);
+  --menu-action-pressed-bg: rgb(212, 212, 212);
   --status-success: rgb(31, 122, 63);
   --status-warning: rgb(169, 106, 16);
   --status-error: rgb(180, 35, 24);
@@ -274,5 +313,6 @@ body.theme-light {
 @media (prefers-reduced-motion: reduce) {
   :root {
     --hover-duration: 0s;
+    --motion-duration: 0s;
   }
 }

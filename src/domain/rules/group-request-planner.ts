@@ -98,7 +98,10 @@ function describeSound(sound: SoundRecord, speakerName: string | undefined): str
   }
 }
 
-/** 把秒数写成“分:秒”（分、秒各两位），如 75 秒为 01:15；小数秒保留 1 位。 */
+/**
+ * 把秒数写成“分:秒”（分、秒各两位），如 75 秒为 01:15；小数秒保留 1 位。
+ * @param seconds 秒数，可带小数。
+ */
 export function formatTimestamp(seconds: number): string {
   const rounded = Math.round(seconds * 10) / 10;
   const minutes = Math.floor(rounded / 60);

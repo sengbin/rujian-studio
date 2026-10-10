@@ -23,6 +23,9 @@ export interface WorkbenchRun {
 
 /**
  * 取得工作台使用的分镜脚本版本。
+ * @param runs 阶段记录仓库，用于查找当前版本和历史版本。
+ * @param workId 作品标识。
+ * @param episodeId 集标识。
  * @throws NotFoundError 这一集还没有分镜脚本。
  */
 export function resolveWorkbenchRun(runs: Pick<StageRunRepository, 'findCurrent' | 'listVersions'>, workId: number, episodeId: number): WorkbenchRun {

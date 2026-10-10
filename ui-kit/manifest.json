@@ -1,5 +1,25 @@
 {
-  "styles": ["ui-tokens.css", "ui-controls.css", "ui-feedback.css", "ui-file-picker.css", "ui-table.css", "ui-dialog.css", "ui-scrollbar.css"],
+  "styles": [
+    "ui-tokens.css",
+    "ui-icons.css",
+    "ui-button.css",
+    "ui-audio-preview.css",
+    "ui-input-controls.css",
+    "ui-select.css",
+    "ui-choice-controls.css",
+    "ui-field.css",
+    "ui-tabs.css",
+    "ui-list.css",
+    "ui-image.css",
+    "ui-card.css",
+    "ui-typography.css",
+    "ui-layout.css",
+    "ui-feedback.css",
+    "ui-file-picker.css",
+    "ui-table.css",
+    "ui-dialog.css",
+    "ui-scrollbar.css"
+  ],
   "scripts": [
     "ui-core.js",
     "ui-scrollbar.js",

@@ -23,8 +23,11 @@ export const STAGING_ACTION_MAX_LENGTH = 100;
 /** 一个镜头最多的站位条目数。 */
 export const MAX_STAGING_PER_SHOT = 50;
 
+/** 站位横向位置的全部取值。 */
 const STAGE_X_VALUES = Object.keys(STAGE_X_LABELS) as StageX[];
+/** 站位纵深的全部取值。 */
 const STAGE_DEPTH_VALUES = Object.keys(STAGE_DEPTH_LABELS) as StageDepth[];
+/** 站位朝向的全部取值。 */
 const STAGE_FACING_VALUES = Object.keys(STAGE_FACING_LABELS) as StageFacing[];
 
 /** 站位字段：不含实体标识。 */

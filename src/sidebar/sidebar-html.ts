@@ -7,7 +7,7 @@
 // 备注：分区标题、菜单行与按钮前的图标为内联 SVG（见 sidebar-icons.ts）；样式与脚本位于 resources 目录，由外部文件引用；清单见 app/panels/page-resources.ts。
 // ------------------------------------------------------------------------
 
-import { createNonce, escapeHtml } from '../app/panels/html-utils';
+import { createNonce, escapeHtml } from '../app/panels/html-safety';
 import { ShellTheme } from '../app/shell/shell-channels';
 import { renderSidebarIcon } from './sidebar-icons';
 import { SidebarMenuItem, SidebarMenuSection } from './sidebar-menu-config';

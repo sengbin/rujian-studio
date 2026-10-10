@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
-// 备注：依赖 ui-core.js；行内操作按钮用 ui-button.js 的紧凑按钮；用法见 private-docs/rujian-studio/开发文档-vscode/ui-components.md。
+// 备注：依赖 ui-core.js；行内操作按钮用 ui-button.js 的紧凑按钮；用法见 private-docs/rujian-studio/开发文档/ui-components.md。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -55,13 +55,14 @@
 
   /**
    * 创建数据表格。
-   * @param {{ columns: Array<object>, rows?: Array<object>, ariaLabel?: string, compact?: boolean }} options
+   * @param {{ columns: Array<object>, rows?: Array<object>, ariaLabel?: string, compact?: boolean, flush?: boolean }} options
    *   columns 列描述，每列：
    *   title 表头文字；key 取值的字段名；render(row, index) 自定义内容（返回节点、文本、数组，或空值）；
    *   type 列类型 text（默认）、number、actions；width、minWidth 列宽（数字为像素，字符串如 "34%"）；
    *   nowrap 内容不换行；muted 淡色显示（布尔值或 (row) => 布尔值）；emptyText 内容为空时显示的淡色文字；
    *   tooltip(row) 单元格的悬停提示；
-   *   rows 行数据；ariaLabel 表格的可访问名称；compact 紧凑用途（行高、单元格内边距和字号取总控里的 --table-compact-*）。
+   *   rows 行数据；ariaLabel 表格的可访问名称；compact 紧凑用途（行高、单元格内边距和字号取总控里的 --table-compact-*）；
+   *   flush 平铺用途（嵌在已有面板里，去掉卡片边框与底色，表头粘在顶部）。
    * @returns {{ element: HTMLElement, setRows: (rows: Array<object>) => void, getRows: () => Array<object> }}
    */
   aiUi.table = function (options) {
@@ -73,10 +74,12 @@
     let currentRows = [];
     const body = aiUi.h('tbody');
     const head = aiUi.h('thead', {}, aiUi.h('tr', {}, columns.map(renderHeadCell)));
+    const tableClass = ['ui-table', settings.compact ? 'ui-table--compact' : '', settings.flush ? 'ui-table--flush' : ''].filter(Boolean).join(' ');
+    const containerClass = settings.flush ? 'ui-table-container ui-table-container--flush' : 'ui-table-container';
     const element = aiUi.h(
       'div',
-      { class: 'ui-table-container' },
-      aiUi.h('table', { class: settings.compact ? 'ui-table ui-table--compact' : 'ui-table', attrs: { 'aria-label': settings.ariaLabel } }, head, body)
+      { class: containerClass },
+      aiUi.h('table', { class: tableClass, attrs: { 'aria-label': settings.ariaLabel } }, head, body)
     );
 
     /** 用新的行数据整体重绘表体。 */

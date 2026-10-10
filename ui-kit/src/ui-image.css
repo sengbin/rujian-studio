@@ -1,0 +1,63 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：ui-image.css
+ * 说明：界面组件库的图片样式：缩略图、原图预览容器。
+ * 作者：sengbin
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-11
+ * 备注：所有选择器以 ui- 开头；依赖 ui-tokens.css。
+ * ------------------------------------------------------------------------
+ */
+
+/* 缩略图用 cover 铺满，原图预览用 contain 完整显示；预览容器让图片居中 */
+.ui-image {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.ui-image--cover {
+  object-fit: cover;
+}
+
+.ui-image--contain {
+  object-fit: contain;
+}
+
+.ui-image-viewer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 缩略图：固定尺寸的方块，图片用 cover 铺满；可点击的缩略图是按钮，没有图片时显示占位文字；尺寸由 --thumb-size 决定，页面可在元素上改写 */
+.ui-thumb {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--thumb-size);
+  height: var(--thumb-size);
+  padding: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--font-size-caption);
+  border: 1px solid var(--table-border);
+  border-radius: var(--radius-md);
+}
+
+.ui-thumb--button {
+  background: transparent;
+  cursor: pointer;
+}
+
+.ui-thumb--button:focus-visible {
+  outline: 1px solid var(--focus-border);
+  outline-offset: 1px;
+}
+
+/* 设置了 display 的控件会盖过 hidden 属性，这里让它们在没有页面基础样式的页面里也能正常隐藏 */
+.ui-thumb[hidden],
+.ui-image-viewer[hidden] {
+  display: none !important;
+}

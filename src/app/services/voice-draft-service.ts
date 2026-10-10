@@ -59,7 +59,7 @@ export interface VoiceDraftView {
 }
 
 /** 打开“生成音色”对话框所需的信息。 */
-export interface VoiceDraftInfo {
+export interface VoiceDraftDialogContext {
   readonly speakerName: string;
   /** 角色设定里的音色描述；没有时取身份与概述；旁白没有。 */
   readonly description: string;
@@ -114,7 +114,10 @@ interface ResolvedSpeaker {
 export class VoiceDraftService {
   constructor(private readonly dependencies: VoiceDraftServiceDependencies) {}
 
-  /** 读取作品里各说话人的临时音色与旁白音色状态。 */
+  /**
+   * 读取作品里各说话人的临时音色与旁白音色状态。
+   * @param workId 作品标识。
+   */
   getSpeakers(workId: number): VoiceSpeakersView {
     const { narrators, drafts } = this.dependencies;
     const narrator = narrators.find(workId);
@@ -138,7 +141,7 @@ export class VoiceDraftService {
    * @throws ValidationError 请求不合法，或说话人不是角色、旁白。
    * @throws NotFoundError 集或角色不存在。
    */
-  getDraftInfo(workId: number, rawInput: unknown): VoiceDraftInfo {
+  getDraftInfo(workId: number, rawInput: unknown): VoiceDraftDialogContext {
     const { drafts, narrators, bindings, assets } = this.dependencies;
     const input = readVoiceSpeakerInput(rawInput);
     const speaker = this.resolveSpeaker(workId, input);

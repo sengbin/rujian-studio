@@ -278,8 +278,9 @@ export class VoicePreviewService {
   private persist(key: string, voice: CachedVoice): void {
     try {
       this.dependencies.diskCache?.put(key, voice.mime, Buffer.from(voice.data, 'base64'));
-    } catch {
-      // 缓存只是为了省钱，写不进去就算了。
+    } catch (error) {
+      // 缓存只是为了省钱，写不进去不影响合成结果，只记录警告。
+      console.warn('写入配音磁盘缓存失败：', error);
     }
   }
 

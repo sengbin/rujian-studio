@@ -12,6 +12,7 @@ import { test } from 'node:test';
 import { IDS, loadTimeline, loadTimelineWindow, makeShot, makeSound, makeStaging, makeView } from './storyboard-preview-fixtures.mjs';
 
 const timeline = loadTimeline();
+const sampler = loadTimelineWindow().aiStoryboardSampler;
 
 /** 角色种类名（classifyCharacterDetail 的 species）。 */
 const speciesOf = (name, hint) => timeline.classifyCharacterDetail(name, hint).species;
@@ -118,7 +119,7 @@ test('场景：取出场实体里的第一个场景，同一场景颜色一致�
 test('颜色：第一个角色是红色，同一角色在各镜头里颜色一致', () => {
   const view = makeView([walkingShot(1), walkingShot(2), makeShot(3, { entityIds: [IDS.bat] })]);
   const shots = timeline.compile(view).shots;
-  assert.equal(shots[0].actors[0].color, '#E5484D');
+  assert.equal(shots[0].actors[0].color, 'rgb(229, 72, 77)');
   assert.equal(shots[1].actors[0].color, shots[0].actors[0].color);
   assert.notEqual(shots[2].actors[0].color, shots[0].actors[0].color);
 });
@@ -182,7 +183,7 @@ test('定位与恢复：时间落在哪个镜头；末尾落在最后一个；�
 test('移动曲线：开头与结尾各停留 10%，中点在两个位置之间；纵深变化时位置与缩放同步', () => {
   const view = makeView([walkingShot(1)]);
   const compiled = timeline.compile(view);
-  const at = (time) => timeline.sampleFrame(compiled, time).actors[0];
+  const at = (time) => sampler.sampleFrame(compiled, time).actors[0];
   assert.equal(at(0).x, 0.22);
   assert.equal(at(0.4).x, 0.22, '停留结束时还在起点');
   assert.ok(Math.abs(at(2).x - 0.5) < 1e-9, '中点在两个位置正中');
@@ -190,18 +191,18 @@ test('移动曲线：开头与结尾各停留 10%，中点在两个位置之间�
   assert.equal(at(4).x, 0.78, '镜头结束时停在终点');
 
   const deep = timeline.compile(makeView([makeShot(1, { entityIds: [IDS.hedgehog], staging: [makeStaging(IDS.hedgehog, { startX: 'center', startDepth: 'back', endDepth: 'front' })] })]));
-  const start = timeline.sampleFrame(deep, 0).actors[0];
-  const end = timeline.sampleFrame(deep, 4).actors[0];
+  const start = sampler.sampleFrame(deep, 0).actors[0];
+  const end = sampler.sampleFrame(deep, 4).actors[0];
   assert.deepEqual([start.y, start.scale, end.y, end.scale], [0.56, 0.7, 0.88, 1.35]);
 });
 
 test('移动起伏：移动中有上下起伏，减少动态效果时关闭，不移动时没有', () => {
   const compiled = timeline.compile(makeView([walkingShot(1)]));
-  const flat = timeline.sampleFrame(compiled, 1.04, { reducedMotion: true }).actors[0];
-  const bobbing = timeline.sampleFrame(compiled, 1.04).actors[0];
+  const flat = sampler.sampleFrame(compiled, 1.04, { reducedMotion: true }).actors[0];
+  const bobbing = sampler.sampleFrame(compiled, 1.04).actors[0];
   assert.notEqual(bobbing.y, flat.y);
   const still = timeline.compile(makeView([makeShot(1, { entityIds: [IDS.hedgehog], staging: [makeStaging(IDS.hedgehog, { startX: 'center' })] })]));
-  assert.equal(timeline.sampleFrame(still, 1.04).actors[0].y, timeline.sampleFrame(still, 2.04).actors[0].y);
+  assert.equal(sampler.sampleFrame(still, 1.04).actors[0].y, sampler.sampleFrame(still, 2.04).actors[0].y);
 });
 
 test('字幕与说话：时间区间内显示，说话角色标记说话；同时最多两条；标签带淡入淡出透明度', () => {
@@ -219,23 +220,23 @@ test('字幕与说话：时间区间内显示，说话角色标记说话；同�
     })
   ]);
   const compiled = timeline.compile(view);
-  assert.deepEqual(timeline.sampleFrame(compiled, 0.5).captions, []);
-  const early = timeline.sampleFrame(compiled, 1.2);
+  assert.deepEqual(sampler.sampleFrame(compiled, 0.5).captions, []);
+  const early = sampler.sampleFrame(compiled, 1.2);
   assert.deepEqual(early.captions.map((caption) => [caption.kind, caption.speakerName, caption.text]), [['dialogue', '刺猬', '你是来找朋友的吗？']]);
   assert.deepEqual(early.actors.map((actor) => actor.isSpeaking), [true, false]);
-  const crowded = timeline.sampleFrame(compiled, 2.1);
+  const crowded = sampler.sampleFrame(compiled, 2.1);
   assert.equal(crowded.captions.length, 2, '同时最多两条字幕');
   assert.deepEqual(crowded.captions.map((caption) => caption.text), ['你是来找朋友的吗？', '洞穴深处传来回声。']);
   assert.deepEqual(crowded.tags.map((tag) => [tag.kind, tag.text]), [['sfx', '水滴声']]);
   assert.ok(crowded.tags[0].opacity > 0 && crowded.tags[0].opacity < 1, '标签刚出现时半透明');
-  assert.equal(timeline.sampleFrame(compiled, 2.5).tags[0].opacity, 1);
-  assert.deepEqual(timeline.sampleFrame(compiled, 5.5).captions, [], '声音结束后字幕消失');
+  assert.equal(sampler.sampleFrame(compiled, 2.5).tags[0].opacity, 1);
+  assert.deepEqual(sampler.sampleFrame(compiled, 5.5).captions, [], '声音结束后字幕消失');
 });
 
 test('运镜采样：推近缩放增大、拉远缩放减小、固定不变；缩放不小于 1；跟拍向移动角色靠拢；手持在减少动态效果时不晃动', () => {
   const frameOf = (cameraMovement, time, options) => {
     const compiled = timeline.compile(makeView([walkingShot(1, { cameraMovement, shotSize: '全景' })]));
-    return timeline.sampleFrame(compiled, time, options).camera;
+    return sampler.sampleFrame(compiled, time, options).camera;
   };
   assert.equal(frameOf('推近', 0).zoom, 1);
   assert.ok(Math.abs(frameOf('推近', 4).zoom - 1.15) < 1e-9);
@@ -256,37 +257,37 @@ test('转场叠加：叠化在下一镜头开头带上一镜头结尾帧并淡�
   const build = (transition) => timeline.compile(makeView([walkingShot(1, { transition }), makeShot(2)]));
 
   const dissolve = build('叠化');
-  const mid = timeline.sampleFrame(dissolve, 4.25);
+  const mid = sampler.sampleFrame(dissolve, 4.25);
   assert.equal(mid.shotIndex, 1);
   assert.ok(mid.overlay.dissolve && mid.overlay.dissolve.alpha > 0 && mid.overlay.dissolve.alpha < 1);
   assert.equal(mid.overlay.dissolve.fromFrame.shotIndex, 0);
   assert.equal(mid.overlay.dissolve.fromFrame.actors[0].x, 0.78, '上一镜头的结尾帧');
-  assert.equal(timeline.sampleFrame(dissolve, 5).overlay.dissolve, null, '叠化时长之后结束');
+  assert.equal(sampler.sampleFrame(dissolve, 5).overlay.dissolve, null, '叠化时长之后结束');
 
   const fadeOut = build('淡出');
-  assert.equal(timeline.sampleFrame(fadeOut, 2).overlay.fadeToBlack, 0);
-  assert.ok(timeline.sampleFrame(fadeOut, 3.98).overlay.fadeToBlack > 0.9);
+  assert.equal(sampler.sampleFrame(fadeOut, 2).overlay.fadeToBlack, 0);
+  assert.ok(sampler.sampleFrame(fadeOut, 3.98).overlay.fadeToBlack > 0.9);
 
   const fadeIn = build('淡入');
-  assert.ok(timeline.sampleFrame(fadeIn, 4.01).overlay.fadeToBlack > 0.9);
-  assert.equal(timeline.sampleFrame(fadeIn, 6).overlay.fadeToBlack, 0);
+  assert.ok(sampler.sampleFrame(fadeIn, 4.01).overlay.fadeToBlack > 0.9);
+  assert.equal(sampler.sampleFrame(fadeIn, 6).overlay.fadeToBlack, 0);
 
   const flash = build('闪白');
-  assert.ok(timeline.sampleFrame(flash, 3.99).overlay.flashWhite > 0.9);
-  assert.ok(timeline.sampleFrame(flash, 4.01).overlay.flashWhite > 0.9);
-  assert.equal(timeline.sampleFrame(flash, 2).overlay.flashWhite, 0);
-  const reduced = timeline.sampleFrame(flash, 4.05, { reducedMotion: true });
+  assert.ok(sampler.sampleFrame(flash, 3.99).overlay.flashWhite > 0.9);
+  assert.ok(sampler.sampleFrame(flash, 4.01).overlay.flashWhite > 0.9);
+  assert.equal(sampler.sampleFrame(flash, 2).overlay.flashWhite, 0);
+  const reduced = sampler.sampleFrame(flash, 4.05, { reducedMotion: true });
   assert.equal(reduced.overlay.flashWhite, 0, '减少动态效果时闪白改为叠化');
   assert.ok(reduced.overlay.dissolve);
 
-  const cut = timeline.sampleFrame(build('切'), 4.05).overlay;
+  const cut = sampler.sampleFrame(build('切'), 4.05).overlay;
   assert.deepEqual(cut, { fadeToBlack: 0, flashWhite: 0, dissolve: null });
 });
 
 test('最后一个镜头只处理淡出；没有镜头时采样返回 null', () => {
   const last = timeline.compile(makeView([makeShot(1, { transition: '淡出' })]));
-  assert.ok(timeline.sampleFrame(last, 3.99).overlay.fadeToBlack > 0.9);
-  assert.equal(timeline.sampleFrame(timeline.compile(makeView([])), 0), null);
+  assert.ok(sampler.sampleFrame(last, 3.99).overlay.fadeToBlack > 0.9);
+  assert.equal(sampler.sampleFrame(timeline.compile(makeView([])), 0), null);
 });
 
 test('摘要：序号、场景与角色调度', () => {
@@ -313,7 +314,7 @@ test('景别取景：放大时对准主体，特写取说话的角色，中景�
       sounds: [makeSound({ speakerEntityId: IDS.bat, text: '你好', startOffsetSeconds: 0, durationSeconds: 2 })],
       ...overrides
     });
-  const cameraOf = (shotSize, overrides) => timeline.sampleFrame(timeline.compile(makeView([shot(shotSize, overrides)])), 0).camera;
+  const cameraOf = (shotSize, overrides) => sampler.sampleFrame(timeline.compile(makeView([shot(shotSize, overrides)])), 0).camera;
 
   assert.deepEqual(cameraOf('全景'), { zoom: 1, offsetX: 0, offsetY: 0, centerX: 0.5, centerY: 0.5 });
   const closeUp = cameraOf('特写');
@@ -323,13 +324,13 @@ test('景别取景：放大时对准主体，特写取说话的角色，中景�
   const medium = cameraOf('中景');
   assert.equal(medium.zoom, 1.3);
   assert.ok(Math.abs(medium.centerX - 0.5) < 1e-9, '两个角色左右对称，中心在画面中央');
-  const noCharacter = timeline.sampleFrame(timeline.compile(makeView([makeShot(1, { shotSize: '特写' })])), 0).camera;
+  const noCharacter = sampler.sampleFrame(timeline.compile(makeView([makeShot(1, { shotSize: '特写' })])), 0).camera;
   assert.deepEqual([noCharacter.zoom, noCharacter.centerX, noCharacter.centerY], [2.2, 0.5, 0.5]);
 });
 
 test('景别与运镜叠加：缩放相乘', () => {
   const compiled = timeline.compile(makeView([walkingShot(1, { shotSize: '中景', cameraMovement: '推近' })]));
-  assert.ok(Math.abs(timeline.sampleFrame(compiled, 4).camera.zoom - 1.3 * 1.15) < 1e-9);
+  assert.ok(Math.abs(sampler.sampleFrame(compiled, 4).camera.zoom - 1.3 * 1.15) < 1e-9);
 });
 
 test('场景归类：按场景名与场次文字判断地点和时间', () => {
@@ -354,7 +355,7 @@ test('道具与特效归类：按名称选择图形，认不出的用通用图�
 
 test('采样附带镜头信息、走位轨迹与行走状态', () => {
   const compiled = timeline.compile(makeView([walkingShot(1, { cameraMovement: '推近', shotSize: '全景' }), makeShot(2)]));
-  const frame = timeline.sampleFrame(compiled, 2);
+  const frame = sampler.sampleFrame(compiled, 2);
   assert.deepEqual(
     { seq: frame.shot.seq, count: frame.shot.count, shotSize: frame.shot.shotSize, cameraMovement: frame.shot.cameraMovement, duration: frame.shot.duration, prompt: frame.shot.prompt },
     { seq: 1, count: 2, shotSize: '全景', cameraMovement: '推近', duration: 4, prompt: '镜头1的画面' }
@@ -362,11 +363,11 @@ test('采样附带镜头信息、走位轨迹与行走状态', () => {
   const [actor] = frame.actors;
   assert.equal(actor.isWalking, true);
   assert.deepEqual([actor.path.fromX, actor.path.toX], [0.22, 0.78]);
-  assert.equal(timeline.sampleFrame(compiled, 0).actors[0].isWalking, false, '开头停留不算行走');
-  assert.equal(timeline.sampleFrame(compiled, 3.9).actors[0].isWalking, false, '结尾停留不算行走');
+  assert.equal(sampler.sampleFrame(compiled, 0).actors[0].isWalking, false, '开头停留不算行走');
+  assert.equal(sampler.sampleFrame(compiled, 3.9).actors[0].isWalking, false, '结尾停留不算行走');
   assert.equal(frame.hasSpeaker, false);
   const still = timeline.compile(makeView([makeShot(1, { entityIds: [IDS.hedgehog], staging: [makeStaging(IDS.hedgehog, { startX: 'center' })] })]));
-  assert.equal(timeline.sampleFrame(still, 1).actors[0].path, null);
+  assert.equal(sampler.sampleFrame(still, 1).actors[0].path, null);
 });
 
 test('调度俯视图：起点、终点、此刻位置与上一镜终点；位置没有变化时不画上一镜终点', () => {
@@ -377,30 +378,30 @@ test('调度俯视图：起点、终点、此刻位置与上一镜终点；位�
       makeShot(3, { entityIds: [IDS.hedgehog], staging: [makeStaging(IDS.hedgehog, { startX: 'center', startDepth: 'front' })] })
     ])
   );
-  const first = timeline.buildTopView(compiled, 0, 0);
+  const first = sampler.buildTopView(compiled, 0, 0);
   assert.equal(first.hasPrevious, false);
   assert.deepEqual([first.actors[0].from, first.actors[0].to], [{ x: 0.22, row: 0.5 }, { x: 0.78, row: 0.5 }]);
   assert.deepEqual(first.actors[0].current, first.actors[0].from, '开头停在起点');
-  assert.deepEqual(timeline.buildTopView(compiled, 0, 3.99).actors[0].current, { x: 0.78, row: 0.5 }, '结尾停在终点');
+  assert.deepEqual(sampler.buildTopView(compiled, 0, 3.99).actors[0].current, { x: 0.78, row: 0.5 }, '结尾停在终点');
 
-  const second = timeline.buildTopView(compiled, 1, 4.5);
+  const second = sampler.buildTopView(compiled, 1, 4.5);
   assert.equal(second.hasPrevious, true);
   assert.deepEqual(second.actors[0].ghost, { x: 0.78, row: 0.5 }, '刺猬上一镜终点在右侧，这一镜在中央前景');
   assert.equal(second.actors[1].ghost, null, '蝙蝠上一镜没有出场');
-  assert.equal(timeline.buildTopView(compiled, 2, 8.5).actors[0].ghost, null, '位置没有变化');
-  assert.equal(timeline.buildTopView(compiled, 9, 0), null);
+  assert.equal(sampler.buildTopView(compiled, 2, 8.5).actors[0].ghost, null, '位置没有变化');
+  assert.equal(sampler.buildTopView(compiled, 9, 0), null);
 });
 
 test('镜头对照：上一镜结尾、本镜开头、本镜结尾；第一个镜头没有上一镜', () => {
   const compiled = timeline.compile(makeView([makeShot(1, { durationSeconds: 3 }), makeShot(2, { durationSeconds: 5 })]));
-  assert.deepEqual(timeline.comparePanels(compiled, 1).map((panel) => [panel.key, panel.label, panel.time]), [
+  assert.deepEqual(sampler.comparePanels(compiled, 1).map((panel) => [panel.key, panel.label, panel.time]), [
     ['previousEnd', '上一镜结尾', 2.98],
     ['start', '本镜开头', 3],
     ['end', '本镜结尾', 7.98]
   ]);
-  assert.equal(timeline.comparePanels(compiled, 0)[0].time, null);
-  assert.equal(timeline.sampleFrame(compiled, 2.98).shotIndex, 0, '上一镜结尾仍属于上一镜');
-  assert.deepEqual(timeline.comparePanels(compiled, 5), []);
+  assert.equal(sampler.comparePanels(compiled, 0)[0].time, null);
+  assert.equal(sampler.sampleFrame(compiled, 2.98).shotIndex, 0, '上一镜结尾仍属于上一镜');
+  assert.deepEqual(sampler.comparePanels(compiled, 5), []);
 });
 test('角色种类：河马是河马，不被当成马；人名“河马医生”也按河马画', () => {
   assert.equal(speciesOf('河马'), 'hippo');
@@ -416,14 +417,14 @@ test('取景之外：景别放大对准说话的角色时，站位在另一侧�
       staging: [makeStaging(IDS.bat, { startX: 'left' }), makeStaging(IDS.hedgehog, { startX: 'right', ...second })],
       sounds: [makeSound({ speakerEntityId: IDS.bat, text: '你好', startOffsetSeconds: 0, durationSeconds: 2 })]
     });
-  const hidden = (shotSize, second) => [...timeline.framedOut(timeline.compile(makeView([shot(shotSize, second)])), 0)];
+  const hidden = (shotSize, second) => [...sampler.framedOut(timeline.compile(makeView([shot(shotSize, second)])), 0)];
   assert.deepEqual(hidden('近景'), [IDS.hedgehog]);
   assert.deepEqual(hidden('特写'), [IDS.hedgehog]);
   assert.deepEqual(hidden('中景'), []);
   assert.deepEqual(hidden('全景'), []);
   assert.deepEqual(hidden('近景', { endX: 'left' }), [], '走进了取景范围');
   assert.deepEqual(hidden('近景', { startX: 'off_right', endX: 'off_right' }), [], '站位本就在画面外，另有检查提示');
-  assert.deepEqual([...timeline.framedOut(timeline.compile(makeView([])), 0)], [], '没有镜头');
+  assert.deepEqual([...sampler.framedOut(timeline.compile(makeView([])), 0)], [], '没有镜头');
 });
 
 test('角色种类：动物、奇幻角色与人按名称归类；容易是姓氏的单字只在名称末尾才算；设定只看开头的身份介绍', () => {
@@ -447,7 +448,7 @@ test('角色种类：动物、奇幻角色与人按名称归类；容易是姓�
 test('角色种类带入编译与采样；非角色实体没有种类', () => {
   const view = makeView([makeShot(1, { entityIds: [IDS.hedgehog, IDS.table], staging: [makeStaging(IDS.hedgehog, { startX: 'left' }), makeStaging(IDS.table, { startX: 'right' })] })]);
   view.entities = view.entities.map((entity) => (entity.id === IDS.hedgehog ? { ...entity, hint: '一只小刺猬' } : entity));
-  const [hedgehog, table] = timeline.sampleFrame(timeline.compile(view), 0).actors;
+  const [hedgehog, table] = sampler.sampleFrame(timeline.compile(view), 0).actors;
   assert.deepEqual([hedgehog.species, table.species], ['hedgehog', '']);
 });
 test('人的性别与年龄：按称呼判断男女、老人、儿童、婴儿；设定里的“女性”“70 岁”也认；认不出时性别未知、年龄成年', () => {
@@ -487,7 +488,7 @@ test('会说话的物品与植物：名称里的多字词、设定里的“一�
 test('性别、年龄与物品图形带入编译与采样：只有人有性别和年龄，只有物品角色有图形', () => {
   const view = makeView([makeShot(1, { entityIds: [IDS.hedgehog, IDS.bat], staging: [makeStaging(IDS.hedgehog, { startX: 'left' }), makeStaging(IDS.bat, { startX: 'right' })] })]);
   view.entities = view.entities.map((entity) => (entity.id === IDS.hedgehog ? { ...entity, name: '王奶奶' } : entity.id === IDS.bat ? { ...entity, name: '宝箱' } : entity));
-  const [grandma, box] = timeline.sampleFrame(timeline.compile(view), 0).actors;
+  const [grandma, box] = sampler.sampleFrame(timeline.compile(view), 0).actors;
   assert.deepEqual([grandma.species, grandma.gender, grandma.age, grandma.glyph], ['human', 'female', 'elder', '']);
   assert.deepEqual([box.species, box.gender, box.age, box.glyph], ['thing', '', '', 'box']);
 });

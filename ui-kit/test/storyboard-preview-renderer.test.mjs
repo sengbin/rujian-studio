@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { IDS, loadRenderStack, makeShot, makeSound, makeStaging, makeView } from './storyboard-preview-fixtures.mjs';
 
-const { timeline, renderer, modes, art, creatures } = loadRenderStack();
+const { timeline, sampler, renderer, modes, art, creatures } = loadRenderStack();
 
 const SIZE = { width: 800, height: 450 };
 
@@ -31,7 +31,7 @@ function createFakeContext() {
 /** 画一帧，返回记录的调用。 */
 function render(view, time, display, extra = {}) {
   const compiled = timeline.compile(view);
-  const frame = timeline.sampleFrame(compiled, time);
+  const frame = sampler.sampleFrame(compiled, time);
   const ctx = createFakeContext();
   renderer.draw(ctx, frame, { ...SIZE, display, ...extra });
   return ctx.calls;
@@ -196,7 +196,7 @@ test('资产图：角色头像、道具图块与场景背景使用传入的图�
 
 test('矢量插画：每种场景类型、时间、道具与特效图形都能画出，说话与行走状态不报错', () => {
   const compiled = timeline.compile(makeView([sceneShot({ sounds: [makeSound({ speakerEntityId: IDS.hedgehog, text: '你好', startOffsetSeconds: 0, durationSeconds: 3 })] })]));
-  const frame = timeline.sampleFrame(compiled, 1);
+  const frame = sampler.sampleFrame(compiled, 1);
   for (const setting of ['indoor', 'street', 'forest', 'cave', 'sea', 'field', 'generic']) {
     for (const time of ['day', 'dusk', 'dawn', 'night']) {
       const ctx = createFakeContext();
@@ -218,7 +218,7 @@ test('矢量插画：每种场景类型、时间、道具与特效图形都能�
 test('镜头对照：三幅画面并排带标题，没有上一镜的位置画提示；画面不画 hud', () => {
   const compiled = timeline.compile(makeView([sceneShot(), makeShot(2, { entityIds: [IDS.cave] })]));
   const panelsOf = (index) =>
-    timeline.comparePanels(compiled, index).map((panel) => ({ label: panel.label, frame: panel.time === null ? null : timeline.sampleFrame(compiled, panel.time, { reducedMotion: true }) }));
+    sampler.comparePanels(compiled, index).map((panel) => ({ label: panel.label, frame: panel.time === null ? null : sampler.sampleFrame(compiled, panel.time, { reducedMotion: true }) }));
   const first = createFakeContext();
   modes.drawCompare(first, panelsOf(0), { ...SIZE });
   assert.deepEqual(textsOf(first.calls).filter((text) => ['上一镜结尾', '本镜开头', '本镜结尾', '没有上一镜'].includes(text)), ['没有上一镜', '上一镜结尾', '本镜开头', '本镜结尾']);
@@ -237,7 +237,7 @@ test('调度俯视图：标题、网格标注、摄影机、实体名称、起�
     ])
   );
   const ctx = createFakeContext();
-  modes.drawTopView(ctx, timeline.buildTopView(compiled, 1, 5), { ...SIZE });
+  modes.drawTopView(ctx, sampler.buildTopView(compiled, 1, 5), { ...SIZE });
   const texts = textsOf(ctx.calls);
   for (const expected of ['第 2 镜 · 调度俯视图 · 岩石洞穴', '摄影机', '刺猬', '蝙蝠（未设站位）', '上一镜终点', '左外', '右外', '背景', '前景']) assert.ok(texts.includes(expected), `缺少文字 ${expected}`);
   const empty = createFakeContext();
@@ -251,7 +251,7 @@ test('非人类角色：每个种类都能画出，说话、行走、没有站�
   for (const kind of species) {
     for (const extra of [{}, { walking: true }, { speaking: true }, { placed: false }, { image: { element: { name: kind }, width: 64, height: 64 } }, { facing: 'left' }, { facing: 'away' }]) {
       const ctx = createFakeContext();
-      const info = creatures.drawCharacter(ctx, { x: 400, y: 300, unit: 4, color: '#E5484D', facing: 'right', walking: false, speaking: false, placed: true, phase: 0.7, image: null, species: kind, seed: 3, ...extra });
+      const info = creatures.drawCharacter(ctx, { x: 400, y: 300, unit: 4, color: 'rgb(229, 72, 77)', facing: 'right', walking: false, speaking: false, placed: true, phase: 0.7, image: null, species: kind, seed: 3, ...extra });
       assert.ok(ctx.calls.length > 10, `${kind} 有绘制内容`);
       assert.ok([info.headX, info.headY, info.headR, info.height].every(Number.isFinite) && info.height > 5, `${kind} 返回头部位置与高度`);
       assert.ok(info.headY < 300, `${kind} 的头在脚的上方`);
@@ -292,7 +292,7 @@ test('动作气泡：相邻角色的气泡不重叠', () => {
 });
 test('人的各种年龄与性别、各种会说话的物品与植物、软体生物都能画出，并给出头部位置与高度；儿童与婴儿比成人矮', () => {
   const { creatures } = loadRenderStack();
-  const base = { x: 400, y: 300, unit: 4, color: '#E5484D', facing: 'right', walking: false, speaking: false, placed: true, phase: 0.7, image: null, seed: 3 };
+  const base = { x: 400, y: 300, unit: 4, color: 'rgb(229, 72, 77)', facing: 'right', walking: false, speaking: false, placed: true, phase: 0.7, image: null, seed: 3 };
   const heights = {};
   for (const gender of ['male', 'female', 'unknown']) {
     for (const age of ['baby', 'child', 'teen', 'adult', 'elder']) {
@@ -322,7 +322,7 @@ test('人的各种年龄与性别、各种会说话的物品与植物、软体�
 test('托底：全部场景类型、全部道具与物品图形、全部特效图形，以及表里没有的名称都能画出', () => {
   const { creatures, art } = loadRenderStack();
   const compiled = timeline.compile(makeView([sceneShot()]));
-  const frame = timeline.sampleFrame(compiled, 1);
+  const frame = sampler.sampleFrame(compiled, 1);
   const settings = ['indoor', 'street', 'forest', 'cave', 'sea', 'field', 'space', 'underwater', 'sky', 'desert', 'snow', 'mountain', 'ruins', 'village', 'kitchen', 'bathroom', 'bedroom', 'hospital', 'classroom', 'shop', 'generic', '不存在的类型'];
   for (const setting of settings) {
     const ctx = createFakeContext();
@@ -334,7 +334,7 @@ test('托底：全部场景类型、全部道具与物品图形、全部特效�
   const incomplete = Object.entries(art.PROPS).filter(([, def]) => typeof def.paint !== 'function' || !(def.height > 0) || !(def.face && def.face.r > 0 && def.face.cy > 0)).map(([glyph]) => glyph);
   assert.deepEqual(incomplete, [], '每种图形都有绘制函数、高度和脸的位置');
   const prop = frame.actors.find((actor) => actor.kind === 'prop');
-  const base = { x: 400, y: 300, unit: 4, color: '#8B6B4A', facing: 'right', walking: false, speaking: false, placed: true, phase: 0.5, image: null, seed: 1 };
+  const base = { x: 400, y: 300, unit: 4, color: 'rgb(139, 107, 74)', facing: 'right', walking: false, speaking: false, placed: true, phase: 0.5, image: null, seed: 1 };
   for (const glyph of glyphs) {
     const propCtx = createFakeContext();
     renderer.draw(propCtx, { ...frame, actors: [{ ...prop, glyph }] }, SIZE);
@@ -377,19 +377,19 @@ test('透明度：背景、道具、特效、角色在调用方设置的透明�
     assert.ok(Math.abs(ctx.globalAlpha - INITIAL) < 1e-9, `${label}：结束后透明度应恢复为 ${INITIAL}，实际 ${ctx.globalAlpha}`);
     assert.ok(ctx.maxAlpha <= INITIAL + 1e-9, `${label}：绘制中透明度不应超过 ${INITIAL}，实际最大 ${ctx.maxAlpha}`);
   };
-  const { scene } = timeline.sampleFrame(timeline.compile(makeView([sceneShot()])), 1);
+  const { scene } = sampler.sampleFrame(timeline.compile(makeView([sceneShot()])), 1);
   for (const setting of ['indoor', 'street', 'forest', 'cave', 'sea', 'field', 'space', 'underwater', 'sky', 'desert', 'snow', 'mountain', 'ruins', 'village', 'kitchen', 'bathroom', 'bedroom', 'hospital', 'classroom', 'shop', 'generic']) {
     for (const time of ['day', 'night', 'dusk']) {
       check(`背景 ${setting}/${time}`, (ctx) => art.drawBackdrop(ctx, { ...scene, setting, time }, 800, 450));
     }
   }
-  for (const glyph of Object.keys(art.PROPS)) check(`道具 ${glyph}`, (ctx) => art.drawProp(ctx, glyph, 400, 300, 4, '#CC8844', false));
+  for (const glyph of Object.keys(art.PROPS)) check(`道具 ${glyph}`, (ctx) => art.drawProp(ctx, glyph, 400, 300, 4, 'rgb(204, 136, 68)', false));
   for (const glyph of ['fire', 'smoke', 'rain', 'snow', 'light', 'lightning', 'magic', 'heart', 'notes', 'wind', 'bubbles', 'leaves', 'dark', 'shockwave', 'explosion', 'fireworks', 'projectile', 'beam', 'laser', 'shadow', 'splash', 'slash', 'unknown']) {
-    check(`特效 ${glyph}`, (ctx) => art.drawEffect(ctx, glyph, 400, 300, 40, '#CC8844', 0.35, false, { angle: 0.3 }));
+    check(`特效 ${glyph}`, (ctx) => art.drawEffect(ctx, glyph, 400, 300, 40, 'rgb(204, 136, 68)', 0.35, false, { angle: 0.3 }));
   }
   for (const species of creatures.SPECIES) {
     check(`角色 ${species}`, (ctx) =>
-      creatures.drawCharacter(ctx, { x: 400, y: 300, unit: 4, color: '#CC8844', facing: 'right', walking: false, speaking: false, placed: true, phase: 1.2, image: null, species, gender: null, seed: 1 })
+      creatures.drawCharacter(ctx, { x: 400, y: 300, unit: 4, color: 'rgb(204, 136, 68)', facing: 'right', walking: false, speaking: false, placed: true, phase: 1.2, image: null, species, gender: null, seed: 1 })
     );
   }
 });

@@ -203,6 +203,7 @@ export class StageService {
 
   /**
    * 读取最近一次创意生成使用的参数，作为“重新生成”表单的初始值。
+   * @param workId 作品标识。
    * @returns 参数；没有生成记录时为 undefined。
    */
   getLastCreativeParams(workId: number): CreativeParams | undefined {
@@ -252,6 +253,7 @@ export class StageService {
 
   /**
    * 读取失败记录保留的模型原始输出，用于排查。
+   * @param runId 阶段记录标识。
    * @throws NotFoundError 记录不存在。
    */
   getRawOutput(runId: number): string {
@@ -260,6 +262,7 @@ export class StageService {
 
   /**
    * 取消正在生成的记录。
+   * @param runId 阶段记录标识。
    * @throws ValidationError 该记录没有正在执行的生成。
    */
   cancel(runId: number): void {
@@ -270,6 +273,7 @@ export class StageService {
 
   /**
    * 取消作品各阶段正在进行的生成并等待它们结束；没有则什么都不做。删除作品前调用。
+   * @param workId 作品标识。
    */
   async cancelRunningForWork(workId: number): Promise<void> {
     const { runs, runner, screenplays } = this.dependencies;
@@ -291,6 +295,7 @@ export class StageService {
 
   /**
    * 重试失败或已取消的记录：从已保存的进度与章节继续。
+   * @param runId 阶段记录标识。
    * @throws NotFoundError 记录不存在。
    * @throws ValidationError 记录不是失败或已取消，或已有生成在进行。
    * @throws TextGenerationError 没有可用的文本模型。
@@ -301,6 +306,7 @@ export class StageService {
 
   /**
    * 确认采用：该版本成为当前版本，原来的当前版本变为历史。剧本尚未合并时，在同一事务内把抽取结果合并到集和实体。
+   * @param runId 阶段记录标识。
    * @throws NotFoundError 记录不存在。
    * @throws ValidationError 记录不是生成成功且待确认；或剧本新版本里已不存在的旧集已有下游数据（合并整体回滚）。
    */
@@ -319,6 +325,8 @@ export class StageService {
 
   /**
    * 保存人工编辑的一章：更新章节，并让该版本回到待确认（修订号加 1）。
+   * @param runId 阶段记录标识。
+   * @param rawChapter 界面提交的章节内容，未经校验。
    * @throws NotFoundError 记录或章节不存在。
    * @throws ValidationError 内容不合法、不是最新版本或生成尚未成功。
    */
@@ -354,6 +362,10 @@ export class StageService {
 
   /**
    * 确认记录属于指定作品和阶段，防止页面用别的作品的记录标识操作。
+   * @param runId 阶段记录标识。
+   * @param workId 作品标识。
+   * @param stage 阶段类型。
+   * @param episodeId 集标识；分镜脚本阶段需要，其余阶段为 null。
    * @throws NotFoundError 记录不存在或不属于该作品和阶段（分镜脚本还要属于该集）。
    */
   assertRunBelongs(runId: number, workId: number, stage: StageKind, episodeId: number | null = null): void {
@@ -363,7 +375,10 @@ export class StageService {
     }
   }
 
-  /** 读取记录，不存在时抛出 NotFoundError。 */
+  /**
+   * 读取记录，不存在时抛出 NotFoundError。
+   * @param runId 阶段记录标识。
+   */
   requireRun(runId: number): StageRun {
     const run = this.dependencies.runs.findById(runId);
     if (run === undefined) {
@@ -376,7 +391,10 @@ export class StageService {
     this.dependencies.changes.notify({ workId: run.workId, runId: run.id, stage: run.stage });
   }
 
-  /** 通知界面记录已变化，供阶段专属的服务在自己写入产出后调用。 */
+  /**
+   * 通知界面记录已变化，供阶段专属的服务在自己写入产出后调用。
+   * @param run 已变化的阶段记录。
+   */
   notifyChanged(run: StageRun): void {
     this.publish(run);
   }
@@ -391,12 +409,18 @@ function creativeTarget(workId: number): StageTarget {
   return { workId, stage: 'creative', episodeId: null };
 }
 
-/** 版本下拉列表中的一项。 */
+/**
+ * 版本下拉列表中的一项。
+ * @param run 阶段记录。
+ */
 export function toVersionItem(run: StageRun): StageVersionItem {
   return { id: run.id, version: run.version, display: toDisplayStatus(run), isCurrent: run.isCurrent, createdAt: run.createdAt };
 }
 
-/** 阶段产出页展示的记录概况。 */
+/**
+ * 阶段产出页展示的记录概况。
+ * @param run 阶段记录。
+ */
 export function toRunView(run: StageRun): StageRunView {
   return {
     id: run.id,

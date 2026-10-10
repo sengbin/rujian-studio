@@ -1,10 +1,10 @@
 // ------------------------------------------------------------------------
 // 名称：workbench.js
-// 说明：生成工作台页脚本：顶部选择项目、作品与分集并显示当前生成配置；下面三栏——左栏镜头组列表（状态、镜头数与时长、重新分组），中栏选中镜头组的详情（镜头、出场实体概览、生成状态与结果），右栏三步流程（绑定素材、配置参数、检查并提交）；底部可折叠的队列列出全部任务，失败时显示平台返回的具体原因。页面不出现整页滚动条，各区域在内部滚动。支持重新分组、拆分与合并镜头组、取消、编辑镜头后再次生成、打开结果视频、在结果版本之间切换采用和对比。本文件只保存页面状态并装配各区域，各区域的绘制在下面列出的子脚本里。
+// 说明：生成工作台页脚本：顶部上下文栏，下面左栏镜头组列表、中栏镜头组详情、右栏三步流程（绑定素材、配置参数、检查并提交），底部可折叠的队列与结果；本文件只保存页面状态并装配各区域。
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：请求与事件名称与 src/app/pages/workbench-handlers.ts 一致；“编辑镜头”“确认分镜脚本”复用 stage/stage.js 的产出层（aiStage）；右栏步骤页签由 workbench/step-tabs.js（aiStepTabs）提供，其中“绑定素材”面板由 workbench/bindings.js（aiBindings）提供，“配置参数”面板与生效参数的合并由 workbench/profile.js（aiProfile）提供，“检查并提交”面板由 workbench/submit-panel.js（aiSubmit）提供，“结果版本”弹出页由 workbench/versions.js（aiVersions）提供（打开时另行请求该组全部历史成功版本），“上一组尾帧作首帧”的尾帧截取由 workbench/tail-frames.js（aiTailFrames）提供；任务与镜头组状态的展示规则、耗时刷新由 workbench/job-display.js（aiWorkbenchJobs）提供，顶部上下文栏与集选择值由 workbench/context-bar.js（aiWorkbenchContext）提供，左栏镜头组列表由 workbench/groups-panel.js（aiWorkbenchGroups）提供，中栏镜头组详情由 workbench/detail-panel.js（aiWorkbenchDetail）提供，底部队列与结果由 workbench/queue-panel.js（aiWorkbenchQueue）提供，取消任务、结果视频操作与采用结果版本由 workbench/job-actions.js（aiWorkbenchActions）提供，这些脚本都必须先于本文件加载（job-display.js 在其余几个之前）；依赖 shared/page-format.js（pageFormat）。
+// 备注：请求与事件名称与 src/app/pages/workbench-handlers.ts 一致；各区域脚本（job-display、context-bar、groups-panel、detail-panel、queue-panel、job-actions、step-tabs、bindings、profile、submit-panel、versions、tail-frames）必须先于本文件加载，job-display 在其余几个之前；依赖 shared/page-format.js。
 // ------------------------------------------------------------------------
 
 'use strict';

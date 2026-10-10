@@ -41,7 +41,7 @@ function setup(handlers = {}, windowExtras = {}) {
     },
     clearTimeout: () => undefined
   };
-  const voice = loadScript('stage/stage-storyboard-preview-voice.js', win).aiStoryboardVoice;
+  const voice = loadScript('stage/storyboard-preview/stage-storyboard-preview-voice.js', win).aiStoryboardVoice;
   return { voice, requests, events };
 }
 

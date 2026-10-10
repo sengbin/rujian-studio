@@ -9,6 +9,7 @@
 
 /** 语速、音量的调整范围，与豆包语音的 speech_rate、loudness_rate 一致。 */
 export const DELIVERY_RATE_MIN = -50;
+/** 语速、音量调整值的上限。 */
 export const DELIVERY_RATE_MAX = 100;
 
 /** 语速、音量的默认调整幅度与程度词（很、特别等）下的幅度。 */

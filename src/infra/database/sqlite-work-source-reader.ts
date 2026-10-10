@@ -48,8 +48,8 @@ export class SqliteWorkSourceReader implements CreativeSourceReader {
   private readFile(row: SourceRow): Buffer {
     try {
       return this.files.read(row.file_path);
-    } catch {
-      throw new Error(`素材文件“${row.file_name}”已丢失，请到作品列表里重新上传。`);
+    } catch (error) {
+      throw new Error(`素材文件“${row.file_name}”已丢失，请到作品列表里重新上传。`, { cause: error });
     }
   }
 }

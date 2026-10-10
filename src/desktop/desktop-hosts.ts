@@ -44,7 +44,10 @@ export function createDesktopNotifier(): DesktopNotifier {
   };
 }
 
-/** 把窗口带到前台；窗口不存在或已销毁（关闭后正在收尾时再次启动）时什么都不做。 */
+/**
+ * 把窗口带到前台；窗口不存在或已销毁（关闭后正在收尾时再次启动）时什么都不做。
+ * @param window 应用窗口；可能不存在或已销毁。
+ */
 export function focusWindow(window: BrowserWindow | undefined): void {
   if (window === undefined || window.isDestroyed()) {
     return;

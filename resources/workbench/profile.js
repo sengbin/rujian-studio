@@ -237,7 +237,7 @@
       const box = aiUi.switchControl({ label: text, checked: selected.has(element), disabled: nativeOff || !supported, onChange: () => void changeElements(boxes) });
       return { element, box };
     });
-    const group = aiUi.h('div', { class: 'wb-switch-list', attrs: { role: 'group', 'aria-label': '声音内容' } }, boxes.map((item) => item.box.element));
+    const group = aiUi.h('div', { class: 'ui-switch-list', attrs: { role: 'group', 'aria-label': '声音内容' } }, boxes.map((item) => item.box.element));
     let description;
     if (model.audioElements.length === 0) description = '所选模型不支持原生生成声音内容。';
     else if (nativeOff) description = '声音设为“模型原生生成”时才传声音内容。';
@@ -376,9 +376,8 @@
    * @returns {{ element: HTMLElement, refresh: () => void }}
    */
   function create(host) {
-    const scopeControl = aiUi.radioGroup({ options: SCOPE_OPTIONS, value: 'work', direction: 'horizontal', ariaLabel: '参数范围', onChange: () => renderFields() });
+    const scopeControl = aiUi.radioGroup({ options: SCOPE_OPTIONS, value: 'work', variant: 'segmented', ariaLabel: '参数范围', onChange: () => renderFields() });
     const scopeField = aiUi.field({ label: '应用范围', control: scopeControl });
-    scopeField.element.classList.add('wb-profile__scope');
     const hintElement = aiUi.h('p', { class: 'description' });
     const message = aiUi.message();
     const fieldsElement = aiUi.h('div', { class: 'ui-stack wb-profile__fields' });

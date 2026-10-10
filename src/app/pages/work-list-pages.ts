@@ -17,7 +17,7 @@ import { createStoryboardFormCatalog } from '../forms/storyboard-form';
 import { createWorkFormCatalog } from '../forms/work-form';
 import { MessageRouter } from '../messaging/message-router';
 import { WORK_LIST_PAGE_RESOURCES } from '../panels/page-resources';
-import { OpenedPanel, PanelManager } from '../panels/panel-manager';
+import { OpenedPanel, PanelTabs } from '../panels/panel-tabs';
 import { BeatSheetService } from '../services/beat-sheet-service';
 import { DeletionService } from '../services/deletion-service';
 import { GenerationProfileService } from '../services/generation-profile-service';
@@ -90,7 +90,7 @@ export class WorkListPages {
       readonly voices: VoicePreviewService;
       readonly voiceDrafts: VoiceDraftService;
     },
-    private readonly panels: PanelManager
+    private readonly panels: PanelTabs
   ) {}
 
   /**

@@ -58,8 +58,9 @@ export function removeUnreferencedFiles(database: DatabaseSync, store: AssetFile
     }
     try {
       store.remove(filePath);
-    } catch {
+    } catch (error) {
       // 记录已经提交，删不掉磁盘文件（如被其他程序占用）只会留下一个无人引用的文件，不能让整个操作失败。
+      console.warn(`删除无人引用的文件失败（${filePath}）：`, error);
     }
   }
 }

@@ -1,0 +1,157 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：ui-select.css
+ * 说明：界面组件库的下拉列表样式：触发按钮、弹层与选项。
+ * 作者：sengbin
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-11
+ * 备注：所有选择器以 ui- 开头；依赖 ui-tokens.css。
+ * ------------------------------------------------------------------------
+ */
+
+.ui-select {
+  position: relative;
+}
+
+.ui-select__trigger {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: var(--select-min-width);
+  min-height: 0;
+  height: var(--select-height);
+  padding: 0 var(--select-padding-right) 0 var(--select-padding-left);
+  color: var(--input-foreground);
+  font: inherit;
+  font-size: var(--select-font-size);
+  text-align: left;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  cursor: pointer;
+  transition: border-color var(--hover-duration) ease;
+}
+
+.ui-select__trigger:not(:disabled):not(.ui-is-invalid):hover {
+  border-color: var(--input-border-hover);
+}
+
+/* 按下或弹层展开：边框比常态暗一点点，与悬停、键盘焦点区分开 */
+.ui-select__trigger:not(:disabled):not(.ui-is-invalid):active,
+.ui-select__trigger:not(:disabled):not(.ui-is-invalid)[aria-expanded="true"] {
+  border-color: var(--input-border-active);
+}
+
+.ui-select__trigger::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 5px;
+  height: 5px;
+  margin-top: -4px;
+  border: solid currentColor;
+  border-width: 0 1.5px 1.5px 0;
+  opacity: 0.75;
+  transform: rotate(45deg);
+}
+
+.ui-select__trigger[aria-expanded="true"]::after {
+  margin-top: -1px;
+  transform: rotate(225deg);
+}
+
+.ui-select__trigger:not(:disabled):not(.ui-is-invalid):focus-visible {
+  border-color: var(--focus-border);
+}
+
+.ui-select__trigger:focus-visible {
+  outline: 1px solid var(--focus-border);
+  outline-offset: -1px;
+}
+
+.ui-select__trigger:disabled {
+  color: var(--disabled-text);
+  background: var(--disabled-bg);
+  border-color: var(--disabled-border);
+  cursor: default;
+}
+
+.ui-select__trigger:disabled .ui-select__value {
+  color: var(--disabled-text);
+}
+
+.ui-select__value {
+  display: block;
+  overflow: hidden;
+  line-height: var(--input-field-height);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ui-select__value--placeholder {
+  color: var(--text-muted);
+}
+
+.ui-select__custom {
+  margin-top: var(--space-sm);
+}
+
+.ui-select__popup {
+  position: fixed;
+  z-index: 10000;
+  padding: var(--select-popup-padding);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: var(--select-font-size);
+  background: var(--dialog-bg);
+  border: 1px solid var(--dialog-border);
+  border-radius: var(--input-radius);
+  box-shadow: var(--dialog-shadow);
+  pointer-events: auto;
+}
+
+.ui-select__option {
+  padding: var(--select-option-padding-y) var(--select-option-padding-x);
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background-color var(--hover-duration) ease;
+}
+
+.ui-select__option--placeholder {
+  color: var(--text-muted);
+}
+
+/* 选项：键盘或鼠标移动高亮（is-active）与悬停同色，按下再深一档；选中项用强调色混合并同样分级 */
+.ui-select__option:hover,
+.ui-select__option.is-active {
+  background: var(--option-hover-bg);
+}
+
+.ui-select__option:active {
+  background: var(--option-active-bg);
+}
+
+.ui-select__option[aria-selected="true"] {
+  background: var(--option-selected-bg);
+}
+
+.ui-select__option[aria-selected="true"]:hover,
+.ui-select__option[aria-selected="true"].is-active {
+  background: var(--option-selected-hover-bg);
+}
+
+.ui-select__option[aria-selected="true"]:active {
+  background: var(--option-selected-active-bg);
+}
+
+/* 设置了 display 的控件会盖过 hidden 属性，这里让它们在没有页面基础样式的页面里也能正常隐藏 */
+.ui-select[hidden],
+.ui-select__custom[hidden],
+.ui-select__trigger[hidden] {
+  display: none !important;
+}

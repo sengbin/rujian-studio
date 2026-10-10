@@ -99,8 +99,9 @@ async function refreshStatus() {
       value.textContent = entry.value;
       value.dataset.level = entry.level;
     }
-  } catch {
+  } catch (error) {
     // 保留已显示的状态。
+    console.warn('读取侧栏状态失败：', error);
   } finally {
     statusRefreshing = false;
     if (statusStale) refreshStatus();

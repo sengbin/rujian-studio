@@ -112,6 +112,27 @@ test('表单打开器：打开失败后也会释放占用', async () => {
   assert.equal(opener.isOpen(), false);
 });
 
+test('取走待处理请求：默认取 result.request，可自定义取法，失败只警告不抛出', async () => {
+  const { format, window } = setup();
+  const handled = [];
+  window.hostBridge = { request: async (name) => (name === 'bad' ? Promise.reject(new Error('坏了')) : { request: { id: name } }) };
+  await format.takePendingRequest('a', (request) => handled.push(request));
+  await format.takePendingRequest('b', (request) => handled.push(request), (result) => result);
+  assert.deepEqual(handled, [{ id: 'a' }, { request: { id: 'b' } }]);
+
+  const originalWarn = console.warn;
+  const warnings = [];
+  console.warn = (...args) => warnings.push(args);
+  try {
+    await format.takePendingRequest('bad', () => handled.push('不应调用'));
+    await format.takePendingRequest('a', () => Promise.reject(new Error('处理失败')));
+  } finally {
+    console.warn = originalWarn;
+  }
+  assert.equal(handled.length, 2);
+  assert.equal(warnings.length, 2);
+});
+
 test('Base64 解码：还原字节', () => {
   const { format } = setup();
   assert.deepEqual([...format.decodeBase64('AQID')], [1, 2, 3]);

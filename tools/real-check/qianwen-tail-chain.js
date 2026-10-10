@@ -281,6 +281,7 @@ function printSummary(options, groups, calls, outputDirectory) {
   console.log(`视频、首帧、尾帧与 report.json 保存在：${outputDirectory}`);
 }
 
+/** 运行入口：解析参数并执行尾帧接力的验证流程。 */
 async function main() {
   const options = parseArguments(process.argv.slice(2));
   console.log(

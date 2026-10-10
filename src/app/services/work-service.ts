@@ -73,12 +73,18 @@ export class WorkService {
     return this.changeNotifier.subscribe(listener);
   }
 
-  /** 列出项目下的作品及其创意阶段状态。 */
+  /**
+   * 列出项目下的作品及其创意阶段状态。
+   * @param projectId 项目标识。
+   */
   listWorks(projectId: number): WorkListItem[] {
     return this.works.listByProject(projectId).map((work) => this.toListItem(work));
   }
 
-  /** 列出所有项目中指定素材来源的作品及其创意阶段状态。 */
+  /**
+   * 列出所有项目中指定素材来源的作品及其创意阶段状态。
+   * @param sourceType 素材来源类型。
+   */
   listWorksBySource(sourceType: WorkSourceType): WorkListItem[] {
     return this.works.listBySource(sourceType).map((work) => this.toListItem(work));
   }
@@ -91,6 +97,7 @@ export class WorkService {
   /**
    * 列出作品列表页某个视图下的作品：素材来源视图列该来源的全部作品，剧本视图只列创意已确认或已有剧本记录的作品；
    * 分镜脚本视图这里列出全部作品，其“剧本已确认或已有分镜脚本”的筛选见 isListedInStoryboardView，因为它依赖分镜脚本的汇总。
+   * @param view 作品列表页的视图。
    */
   listForView(view: WorkListView): WorkListItem[] {
     if (view === SCREENPLAY_VIEW) {
@@ -99,13 +106,17 @@ export class WorkService {
     return view === STORYBOARD_VIEW ? this.listAllWorks() : this.listWorksBySource(view);
   }
 
-  /** 按标识查找作品；不存在返回 undefined。 */
+  /**
+   * 按标识查找作品；不存在返回 undefined。
+   * @param id 作品标识。
+   */
   findWork(id: number): Work | undefined {
     return this.works.findById(id);
   }
 
   /**
    * 读取作品。
+   * @param id 作品标识。
    * @throws NotFoundError 作品不存在。
    */
   getWork(id: number): Work {
@@ -125,12 +136,18 @@ export class WorkService {
     return existing === undefined || existing.id === excludeWorkId;
   }
 
-  /** 作品形态是否还能修改：剧本一旦确认过，集就已经按剧情确定，形态不再能改。 */
+  /**
+   * 作品形态是否还能修改：剧本一旦确认过，集就已经按剧情确定，形态不再能改。
+   * @param workId 作品标识。
+   */
   canChangeKind(workId: number): boolean {
     return this.runs.listVersions({ workId, stage: 'screenplay', episodeId: null }).every((run) => run.approvedAt === null);
   }
 
-  /** 按上传顺序读取作品的灵感图片，供编辑表单带出已有图片。 */
+  /**
+   * 按上传顺序读取作品的灵感图片，供编辑表单带出已有图片。
+   * @param workId 作品标识。
+   */
   listImageSources(workId: number): NewWorkSource[] {
     return this.works.listSources(workId, 'image');
   }
@@ -173,6 +190,7 @@ export class WorkService {
 
   /**
    * 删除作品及其下全部内容。
+   * @param id 作品标识。
    * @throws NotFoundError 作品不存在。
    */
   deleteWork(id: number): void {

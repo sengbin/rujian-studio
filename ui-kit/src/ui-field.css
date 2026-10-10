@@ -1,0 +1,39 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：ui-field.css
+ * 说明：界面组件库的字段包装样式：标签、说明与错误提示。
+ * 作者：sengbin
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-11
+ * 备注：所有选择器以 ui- 开头；依赖 ui-tokens.css。
+ * ------------------------------------------------------------------------
+ */
+
+.ui-field {
+  margin: 0 0 var(--field-gap);
+}
+
+.ui-field__label {
+  display: block;
+  margin: 0 0 var(--field-label-gap);
+  font-size: var(--field-font-size);
+  font-weight: var(--field-label-weight);
+  color: var(--field-label-color);
+}
+
+.ui-field__description {
+  margin: 0 0 var(--field-description-gap);
+  color: var(--text-muted);
+  font-size: var(--field-description-size);
+  line-height: var(--line-height-body);
+}
+
+.ui-field__description--after {
+  margin: var(--space-xs) 0 0;
+}
+
+.ui-field__error {
+  margin: var(--space-xs) 0 0;
+  color: var(--status-error);
+  font-size: var(--field-error-size);
+}

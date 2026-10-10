@@ -102,3 +102,9 @@ test('列表：列表项用 aria-current 标出当前项，可点击，并带页
   current.click();
   assert.equal(clicks, 1);
 });
+test('页签：steps 变体加修饰类，未知变体报错', () => {
+  const { ui } = setup();
+  const tabs = createThreeTabs(ui, { variant: 'steps' });
+  assert.ok(tabs.element.classList.contains('ui-tabs') && tabs.element.classList.contains('ui-tabs--steps'));
+  assert.throws(() => createThreeTabs(ui, { variant: 'cards' }), /未知的页签变体/);
+});

@@ -93,18 +93,27 @@ function readFileName(value: unknown): string | undefined {
   return name.length === 0 || name.length > FILE_NAME_MAX_LENGTH ? undefined : name;
 }
 
-/** 读取图片的宽或高：正整数且在合理范围内，否则为 null。 */
+/**
+ * 读取图片的宽或高：正整数且在合理范围内，否则为 null。
+ * @param value 页面提交的宽或高。
+ */
 export function readImageSide(value: unknown): number | null {
   return typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= IMAGE_SIDE_MAX ? value : null;
 }
 
-/** 文件名的小写扩展名（含点）；没有扩展名返回空串。 */
+/**
+ * 文件名的小写扩展名（含点）；没有扩展名返回空串。
+ * @param fileName 文件名。
+ */
 export function getExtension(fileName: string): string {
   const index = fileName.lastIndexOf('.');
   return index < 0 ? '' : fileName.slice(index).toLowerCase();
 }
 
-/** 字节数转为“N MB”的说明文字。 */
+/**
+ * 字节数转为“N MB”的说明文字。
+ * @param bytes 字节数。
+ */
 export function formatMegabytes(bytes: number): string {
   return `${bytes / (1024 * 1024)} MB`;
 }

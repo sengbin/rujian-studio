@@ -33,6 +33,9 @@ const ERROR_CODE_CATEGORIES: ReadonlyArray<readonly [pattern: RegExp, category: 
   [/^(InvalidParameter|MissingParameter|InvalidArgument|InvalidImageURL|InvalidPayload|OutofContextError|RequestTooLarge|RequestBodyTooLarge)/, 'invalid_request']
 ];
 
+/** 默认超时：与各服务商的共用默认值相同。 */
+export const DEFAULT_VOLCENGINE_TIMEOUTS: HttpTimeouts = DEFAULT_PROVIDER_TIMEOUTS;
+
 /**
  * 按错误码判断失败分类。
  * @param code 平台返回的错误码。
@@ -42,9 +45,6 @@ export function classifyArkErrorCode(code: string | null): ProviderFailure | nul
   const match = ERROR_CODE_CATEGORIES.find(([pattern]) => code !== null && pattern.test(code));
   return match === undefined ? null : match[1];
 }
-
-/** 默认超时：与各服务商的共用默认值相同。 */
-export const DEFAULT_VOLCENGINE_TIMEOUTS: HttpTimeouts = DEFAULT_PROVIDER_TIMEOUTS;
 
 /** 火山方舟 HTTP 客户端。 */
 export class VolcengineApiClient extends BaseProviderApiClient {

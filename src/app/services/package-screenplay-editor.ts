@@ -74,7 +74,12 @@ export class PackageScreenplayEditor implements ScreenplayEditor {
     screenplays.saveStructure(run.id, { ...structure, episodes }, timestamp());
   }
 
-  /** 互换抽取结果中的位置，返回被移动的集的新位置。 */
+  /**
+   * 互换抽取结果中的位置，返回被移动的集的新位置。
+   * @param run 剧本阶段记录。
+   * @param ref 要移动的集的定位值。
+   * @param step 移动方向，1 向后、-1 向前。
+   */
   moveEpisode(run: StageRun, ref: number, step: number): number {
     const { screenplays, timestamp } = this.dependencies;
     const structure = requireStructure(screenplays, run.id);

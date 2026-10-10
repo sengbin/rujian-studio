@@ -58,7 +58,10 @@ export function readTailFrameInput(rawInput: unknown): TailFrameInput {
   return { resultId: readIdentifier(source, 'resultId', '结果'), mimeType, width: side('width'), height: side('height'), dataBase64: data };
 }
 
-/** 读取截取尾帧失败的上报：结果标识与失败原因（截断到合理长度，缺省为空串）。 */
+/**
+ * 读取截取尾帧失败的上报：结果标识与失败原因（截断到合理长度，缺省为空串）。
+ * @param rawInput 页面上报的失败内容，未经校验。
+ */
 export function readTailFrameFailure(rawInput: unknown): { readonly resultId: number; readonly reason: string } {
   const source = readRecord(rawInput);
   const reason = typeof source.reason === 'string' ? source.reason.trim().slice(0, TAIL_FRAME_REASON_MAX_LENGTH) : '';

@@ -10,6 +10,7 @@
 /** 键的最大长度。 */
 export const TEXT_MODEL_KEY_MAX_LENGTH = 200;
 
+/** 文本模型键的前缀，后面是模型标识。 */
 const PROVIDER_PREFIX = 'model:';
 
 /** 解析后的文本模型选择：服务商的文本模型。 */

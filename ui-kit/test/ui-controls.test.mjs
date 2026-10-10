@@ -491,3 +491,10 @@ test('滚动条悬停标记：鼠标所在元素及祖先带 data-ui-hover，移
   doc.documentElement.dispatchEvent(new env.window.MouseEvent('mouseleave'));
   assert.equal(doc.querySelectorAll('[data-ui-hover]').length, 0);
 });
+test('单选组：segmented 变体固定横向等宽排列，未知变体报错', () => {
+  const { ui } = setup();
+  const control = ui.radioGroup({ options: ['甲', '乙'], variant: 'segmented', direction: 'vertical' });
+  assert.ok(control.element.classList.contains('ui-choice-group--segmented'));
+  assert.ok(!control.element.classList.contains('ui-choice-group--horizontal'));
+  assert.throws(() => ui.radioGroup({ options: ['甲'], variant: 'tabs' }), /未知的单选组变体/);
+});

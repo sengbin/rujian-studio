@@ -31,6 +31,45 @@ const SILENT_LINE_LABELS = /^(画面动作|画面|动作|镜头|音效|配乐|�
 /** “说话人（括号）：台词”这类带标签的行；括号外不含标点，避免把含冒号的叙述句当成台词，括号内允许逗号（如“旁白（赤尾，急促）”）。 */
 const LABELED_LINE = /^\s*[-*•]?\s*((?:[^：:，,。！？（(\n]|[（(][^）)\n]*[）)]){1,30}?)\s*[：:]\s*(.*)$/;
 
+/** 单集最大时长（秒）的取值范围。 */
+export const EPISODE_DURATION_MIN_SECONDS = 1;
+/** 单集最大时长的上限，单位为秒。 */
+export const EPISODE_DURATION_MAX_SECONDS = 3600;
+/** 集数上限的最大值。 */
+export const MAX_EPISODES_LIMIT = 100;
+/** 剧本补充要求的长度上限。 */
+export const SCREENPLAY_EXTRA_MAX_LENGTH = 2000;
+/** 剧本包标题的长度上限。 */
+export const SCREENPLAY_TITLE_MAX_LENGTH = 100;
+/** 剧本包概要的长度上限。 */
+export const SCREENPLAY_OVERVIEW_MAX_LENGTH = 2000;
+/** 剧本包正文的长度上限。 */
+export const SCREENPLAY_TEXT_MAX_LENGTH = 200000;
+/** 集标题的长度上限。 */
+export const EPISODE_TITLE_MAX_LENGTH = 60;
+/** 集概要的长度上限。 */
+export const EPISODE_SYNOPSIS_MAX_LENGTH = 1000;
+/** 单集剧本正文的长度上限；单个短视频的剧本包正文就是这一集的正文，因此同样受限。 */
+export const EPISODE_TEXT_MAX_LENGTH = 20000;
+/** 编辑集时目标时长的上限（秒），不受单集最大时长约束。 */
+export const EPISODE_TARGET_EDIT_MAX_SECONDS = 86400;
+/** 实体名称的长度上限。 */
+export const ENTITY_NAME_MAX_LENGTH = 50;
+/** 单个实体最多保存的别名个数。 */
+export const ENTITY_ALIAS_MAX_COUNT = 10;
+/** 实体描述的长度上限。 */
+export const ENTITY_DESCRIPTION_MAX_LENGTH = 500;
+/** 实体单个设定字段的长度上限。 */
+export const ENTITY_ATTRIBUTE_MAX_LENGTH = 500;
+/** 角色“表演与动作”按情绪分条书写，比其他设定字段长。 */
+export const ENTITY_PERFORMANCE_MAX_LENGTH = 800;
+/** 一份剧本最多抽取的实体数。 */
+export const MAX_ENTITIES = 200;
+/** 实体类型的全部取值，用于校验。 */
+const ENTITY_KINDS = Object.keys(ENTITY_KIND_LABELS) as EntityKind[];
+/** 别名输入的分隔符：逗号、顿号和换行。 */
+const ALIAS_SEPARATORS = /[,，、\n]/;
+
 /**
  * 统计剧本里的口播字数（台词与旁白），不计场次标题、画面动作、音效和配乐；用它按语速估算时长才接近成片。
  * 没有任何台词或旁白时退回统计全文，避免估算为 0。
@@ -51,39 +90,13 @@ export function countSpokenWords(text: string): number {
   return spoken > 0 ? spoken : countWords(text);
 }
 
-/** 单集最大时长（秒）的取值范围。 */
-export const EPISODE_DURATION_MIN_SECONDS = 1;
-export const EPISODE_DURATION_MAX_SECONDS = 3600;
-/** 集数上限的最大值。 */
-export const MAX_EPISODES_LIMIT = 100;
-
-export const SCREENPLAY_EXTRA_MAX_LENGTH = 2000;
-export const SCREENPLAY_TITLE_MAX_LENGTH = 100;
-export const SCREENPLAY_OVERVIEW_MAX_LENGTH = 2000;
-/** 剧本包正文的长度上限。 */
-export const SCREENPLAY_TEXT_MAX_LENGTH = 200000;
-export const EPISODE_TITLE_MAX_LENGTH = 60;
-export const EPISODE_SYNOPSIS_MAX_LENGTH = 1000;
-/** 单集剧本正文的长度上限；单个短视频的剧本包正文就是这一集的正文，因此同样受限。 */
-export const EPISODE_TEXT_MAX_LENGTH = 20000;
-/** 编辑集时目标时长的上限（秒），不受单集最大时长约束。 */
-export const EPISODE_TARGET_EDIT_MAX_SECONDS = 86400;
-export const ENTITY_NAME_MAX_LENGTH = 50;
-export const ENTITY_ALIAS_MAX_COUNT = 10;
-export const ENTITY_DESCRIPTION_MAX_LENGTH = 500;
-export const ENTITY_ATTRIBUTE_MAX_LENGTH = 500;
-/** 角色“表演与动作”按情绪分条书写，比其他设定字段长。 */
-export const ENTITY_PERFORMANCE_MAX_LENGTH = 800;
-/** 一份剧本最多抽取的实体数。 */
-export const MAX_ENTITIES = 200;
-
-/** 某个设定字段的长度上限。 */
+/**
+ * 某个设定字段的长度上限。
+ * @param key 设定字段的键。
+ */
 export function entityAttributeMaxLength(key: string): number {
   return key === PERFORMANCE_ATTRIBUTE_KEY ? ENTITY_PERFORMANCE_MAX_LENGTH : ENTITY_ATTRIBUTE_MAX_LENGTH;
 }
-
-const ENTITY_KINDS = Object.keys(ENTITY_KIND_LABELS) as EntityKind[];
-const ALIAS_SEPARATORS = /[,，、\n]/;
 
 /** 生成剧本时需要的作品信息，来自作品和输入快照。 */
 export interface ScreenplayContext {
@@ -114,7 +127,6 @@ export function normalizeScreenplayParams(rawInput: unknown, formatType: Product
   return { maxEpisodeDurationSeconds, maxEpisodes, extra };
 }
 
-
 /**
  * 校验并整理模型返回的剧本包：标题、梗概、正文。
  * @param raw 模型提交的 { title, overview, fullText }。
@@ -129,6 +141,7 @@ export function parseScreenplayText(raw: unknown, singleEpisode: boolean): Scree
   const overview = textOf(raw, 'overview');
   const fullText = textOf(raw, 'fullText');
 
+  // 逐项收集问题并一次性反馈，让模型一次改完；只有一集时正文还要受单集上限约束。
   const issues: string[] = [];
   if (title.length === 0 || title.length > SCREENPLAY_TITLE_MAX_LENGTH) {
     issues.push(`title 必须是 1 到 ${SCREENPLAY_TITLE_MAX_LENGTH} 字的文本。`);
@@ -155,6 +168,7 @@ function parseEpisode(item: unknown, index: number, context: ScreenplayContext, 
   const record = isRecord(item) ? item : {};
   const single = !isMultiEpisode(context.formatType);
 
+  // 单集作品没有分集：标题取作品名、正文取整篇剧本，不要求模型重复给出。
   const title = single ? context.workName : textOf(record, 'title');
   if (title.length === 0 || title.length > EPISODE_TITLE_MAX_LENGTH) {
     issues.push(`第 ${seq} 集标题必须是 1 到 ${EPISODE_TITLE_MAX_LENGTH} 字的文本。`);
@@ -168,6 +182,7 @@ function parseEpisode(item: unknown, index: number, context: ScreenplayContext, 
     issues.push(`第 ${seq} 集 screenplayText 必须是 1 到 ${EPISODE_TEXT_MAX_LENGTH} 字的文本。`);
   }
 
+  // 目标时长可以省略；给了就必须是不超过单集最大时长的正整数。
   const rawDuration = record.targetDurationSeconds;
   let targetDurationSeconds: number | null = null;
   if (rawDuration !== undefined && rawDuration !== null) {
@@ -190,6 +205,7 @@ function readAliases(value: unknown, name: string, label: string, issues: string
     issues.push(`${label}的 aliases 必须是文本数组。`);
     return [];
   }
+  // 去掉空白、与名称相同的别名和重复项。
   const aliases = [...new Set((value as string[]).map((alias) => alias.trim()).filter((alias) => alias.length > 0 && alias !== name))];
   if (aliases.length > ENTITY_ALIAS_MAX_COUNT || aliases.some((alias) => alias.length > ENTITY_NAME_MAX_LENGTH)) {
     issues.push(`${label}的别名最多 ${ENTITY_ALIAS_MAX_COUNT} 个，每个不超过 ${ENTITY_NAME_MAX_LENGTH} 字。`);
@@ -207,6 +223,7 @@ function readAttributes(value: unknown, kind: EntityKind, label: string, issues:
     issues.push(`${label}的 attributes 必须是对象。`);
     return attributes;
   }
+  // 只读取该类型允许的设定字段：空值忽略，其余必须是不超长的文本。
   for (const { key } of ENTITY_ATTRIBUTES[kind]) {
     const entry = value[key];
     if (isBlank(entry)) {
@@ -235,6 +252,7 @@ function parseEntity(item: unknown, index: number, names: Set<string>, issues: s
     issues.push(`${label}的 name 必须是 1 到 ${ENTITY_NAME_MAX_LENGTH} 字的文本。`);
     return undefined;
   }
+  // 同类型的实体按名称查重，重复的丢弃并记问题。
   const key = `${kind}\u0000${name}`;
   if (names.has(key)) {
     issues.push(`${ENTITY_KIND_LABELS[kind as EntityKind]}“${name}”重复出现，同类型的实体名称不能重复。`);

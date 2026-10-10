@@ -54,8 +54,14 @@ export interface AssetPrompts {
   readonly prompt: string;
 }
 
+/** 模板直出的图像提示词末尾固定追加的约束。 */
+const TEMPLATE_IMAGE_SUFFIX = '画面中不出现文字、标识、水印和边框。';
+/** 与画面无关、拼图像提示词时不写入的描述字段（角色的音色描述）。 */
+const NON_VISUAL_ATTRIBUTE_KEYS: ReadonlySet<string> = new Set(['voice_description']);
+
 /**
  * 读取音频资产的类型；音频类型在创建时必填，缺失或取值不合法说明数据有误。
+ * @param attributes 资产的描述字段。
  * @throws Error attributes 里没有有效的 audio_kind。
  */
 export function readAudioKind(attributes: Readonly<Record<string, string>>): AudioKind {
@@ -66,17 +72,26 @@ export function readAudioKind(attributes: Readonly<Record<string, string>>): Aud
   return value as AudioKind;
 }
 
-/** 资产类型（音频为其音频类型）在提示词里的名称，用作模板变量。 */
+/**
+ * 资产类型（音频为其音频类型）在提示词里的名称，用作模板变量。
+ * @param asset 资产记录（只用到类型和描述字段）。
+ */
 export function promptKindLabel(asset: Pick<AssetRecord, 'kind' | 'attributes'>): string {
   return asset.kind === 'audio' ? AUDIO_KIND_LABELS[readAudioKind(asset.attributes)] : ASSET_KIND_LABELS[asset.kind];
 }
 
-/** 资产的画面（声音）重点。 */
+/**
+ * 资产的画面（声音）重点。
+ * @param asset 资产记录（只用到类型和描述字段）。
+ */
 export function promptFocus(asset: Pick<AssetRecord, 'kind' | 'attributes'>): string {
   return asset.kind === 'audio' ? AUDIO_FOCUS[readAudioKind(asset.attributes)] : IMAGE_FOCUS[asset.kind];
 }
 
-/** 把已保存的资产转换为表单键的文本值，供整理草稿使用。 */
+/**
+ * 把已保存的资产转换为表单键的文本值，供整理草稿使用。
+ * @param asset 已保存的资产记录。
+ */
 export function assetToDraftValues(asset: AssetRecord): Record<string, string> {
   const values: Record<string, string> = { name: asset.name, extra: asset.extraRequirements };
   if (asset.kind === 'audio') {
@@ -171,12 +186,6 @@ export type PromptSourceAsset = Pick<
   AssetRecord,
   'kind' | 'name' | 'prompt' | 'attributes' | 'composition' | 'style' | 'background' | 'referenceAspectRatio' | 'extraRequirements'
 >;
-
-/** 模板直出的图像提示词末尾固定追加的约束。 */
-const TEMPLATE_IMAGE_SUFFIX = '画面中不出现文字、标识、水印和边框。';
-
-/** 与画面无关、拼图像提示词时不写入的描述字段（角色的音色描述）。 */
-const NON_VISUAL_ATTRIBUTE_KEYS: ReadonlySet<string> = new Set(['voice_description']);
 
 /** 去掉首尾空白和结尾的标点，避免拼接后出现重复标点。 */
 function trimClause(text: string): string {

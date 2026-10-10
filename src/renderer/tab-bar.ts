@@ -40,16 +40,19 @@ export class TabBar {
   render(): void {
     const items = this.state.list().map((tab) => {
       const isActive = tab.key === this.state.active;
+      // 容器只负责布局；页签按钮与关闭按钮并列，避免交互元素互相嵌套。
       const item = document.createElement('div');
       item.className = isActive ? 'tab is-active' : 'tab';
-      item.setAttribute('role', 'tab');
-      item.setAttribute('aria-selected', String(isActive));
-      item.tabIndex = 0;
-      item.title = tab.title;
+      item.setAttribute('role', 'presentation');
 
-      const label = document.createElement('span');
+      const label = document.createElement('button');
       label.className = 'tab__label';
+      label.type = 'button';
+      label.setAttribute('role', 'tab');
+      label.setAttribute('aria-selected', String(isActive));
+      label.title = tab.title;
       label.textContent = tab.title;
+      label.addEventListener('click', () => this.handlers.onActivate(tab.key));
 
       const close = document.createElement('button');
       close.className = 'tab__close';
@@ -62,18 +65,11 @@ export class TabBar {
       });
 
       item.append(label, close);
-      item.addEventListener('click', () => this.handlers.onActivate(tab.key));
       // 中键点击关闭。
       item.addEventListener('auxclick', (event) => {
         if (event.button === 1) {
           event.preventDefault();
           this.handlers.onClose(tab.key);
-        }
-      });
-      item.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          this.handlers.onActivate(tab.key);
         }
       });
       return item;

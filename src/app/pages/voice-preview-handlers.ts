@@ -11,7 +11,7 @@ import { MessageRouter } from '../messaging/message-router';
 import { VoiceDraftService } from '../services/voice-draft-service';
 import { VoicePreviewService } from '../services/voice-preview-service';
 
-/** 台词试听使用的请求名称，需与 resources/stage/stage-storyboard-preview-voice.js 一致。 */
+/** 台词试听使用的请求名称，需与 resources/stage/storyboard-preview/stage-storyboard-preview-voice.js 一致。 */
 export const VOICE_PREVIEW_REQUESTS = {
   options: 'voicePreview.options',
   synthesize: 'voicePreview.synthesize',

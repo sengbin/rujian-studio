@@ -45,6 +45,7 @@ export class WorkCreationService {
   /**
    * 创建作品并保存文本模型，然后启动创意生成；原创文稿则直接导入原稿章节。
    * 没能启动生成或导入时撤销刚创建的作品，用户修正后可以直接重新提交。
+   * @param request 作品创建请求（作品内容、文本模型与来源素材）。
    * @returns 新作品。
    * @throws ValidationError 内容或参数不合法、文本模型不可选、参考节拍表（新作品没有已确认的节拍表）、原稿缺失或分段过多。
    * @throws ConflictError 项目内作品名称重复。

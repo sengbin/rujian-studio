@@ -57,6 +57,7 @@ export class ScreenplayService {
 
   /**
    * 检查作品能否开始生成剧本：创意必须已确认。表单打开时先检查，避免用户填完才报错。
+   * @param workId 作品标识。
    * @throws NotFoundError 作品不存在。
    * @throws ValidationError 创意还没有已确认的版本。
    */
@@ -96,6 +97,7 @@ export class ScreenplayService {
 
   /**
    * 读取最近一次剧本生成使用的参数，作为“重新生成”表单的初始值。
+   * @param workId 作品标识。
    * @returns 参数；没有生成记录时为 undefined。
    */
   getLastParams(workId: number): ScreenplayParams | undefined {
@@ -105,6 +107,7 @@ export class ScreenplayService {
 
   /**
    * 统计最新剧本版本的集数与实体数，用于作品列表；合并后按作品的集和实体统计，否则按抽取结果统计。
+   * @param workId 作品标识。
    * @returns 数量；没有生成成功的剧本或还没有抽取结果时为 null。
    */
   getContentCounts(workId: number): { readonly episodes: number; readonly entities: number } | null {
@@ -132,6 +135,7 @@ export class ScreenplayService {
 
   /**
    * 按已确认的节拍表建议生成参数，作为“生成剧本”表单的初始值：单集最大时长取目标时长加容差，集数上限取节拍表的参考集数。
+   * @param workId 作品标识。
    * @returns 建议值；作品没有已确认的节拍表时为 undefined。
    */
   suggestParams(workId: number): { readonly maxEpisodeDurationSeconds: number; readonly maxEpisodes: number } | undefined {
@@ -178,6 +182,8 @@ export class ScreenplayService {
 
   /**
    * 保存人工编辑的剧本包正文，并让该版本回到待确认。已抽取的集和实体不会随正文自动更新，需要时点“重新抽取”。
+   * @param runId 剧本阶段记录标识。
+   * @param rawInput 界面提交的内容，未经校验。
    * @throws ValidationError 内容不合法、不是最新版本或生成尚未成功。
    * @throws NotFoundError 记录不存在或还没有剧本包。
    */
@@ -298,6 +304,7 @@ export class ScreenplayService {
 
   /**
    * 用当前剧本包正文重新抽取集和实体，覆盖尚未合并的抽取结果；在后台执行，进度通过阶段事件推送。
+   * @param runId 剧本阶段记录标识。
    * @throws NotFoundError 记录不存在。
    * @throws ValidationError 不是最新版本、生成尚未成功或抽取结果已合并到作品。
    * @throws TextGenerationError 没有可用的文本模型。
@@ -321,6 +328,7 @@ export class ScreenplayService {
 
   /**
    * 保真模式下只重新标注：保留已抽取的集和实体（含对它们的修改），清除所有集的结构标注后在后台重做；进度通过阶段事件推送。
+   * @param runId 剧本阶段记录标识。
    * @throws NotFoundError 记录不存在或还没有抽取结果。
    * @throws ValidationError 不是最新版本、生成尚未成功、不是保真模式或抽取结果已合并到作品。
    * @throws TextGenerationError 没有可用的文本模型。

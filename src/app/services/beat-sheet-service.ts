@@ -87,6 +87,7 @@ export class BeatSheetService {
 
   /**
    * 读取最近一次节拍表生成使用的参数，作为“重新生成”表单的初始值。
+   * @param workId 作品标识。
    * @returns 参数；没有生成记录时为 undefined。
    */
   getLastParams(workId: number): BeatSheetParams | undefined {
@@ -96,6 +97,7 @@ export class BeatSheetService {
 
   /**
    * 读取作品当前已确认的节拍表，供创意、剧本、分镜阶段作为参考基准。
+   * @param workId 作品标识。
    * @returns 节拍表；没有已确认的版本或产出时为 undefined。
    */
   findApproved(workId: number): BeatSheet | undefined {

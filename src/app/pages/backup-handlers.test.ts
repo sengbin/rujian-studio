@@ -51,7 +51,7 @@ function createRouter() {
   return { fixture, choices, callOk, callError };
 }
 
-interface OverviewData {
+interface BackupOverviewResult {
   readonly database: { readonly databasePath: string; readonly schemaVersion: number; readonly counts: { readonly projects: number } } | null;
   readonly databaseUnavailableReason: string | null;
   readonly autoBackupDirectory: string;
@@ -62,7 +62,7 @@ interface OverviewData {
 test('读取概览：返回数据库状态与支持的最高版本', async () => {
   const { fixture, callOk } = createRouter();
   try {
-    const data = await callOk<OverviewData>(BACKUP_REQUESTS.load);
+    const data = await callOk<BackupOverviewResult>(BACKUP_REQUESTS.load);
     assert.equal(data.database?.databasePath, fixture.paths.databasePath);
     assert.equal(data.database?.schemaVersion, LATEST_VERSION);
     assert.equal(data.database?.counts.projects, 1);
@@ -110,11 +110,11 @@ test('恢复流程：选择文件、确认、读到待恢复、取消恢复', as
     // 确认请求带选择标识、不带路径，恢复哪个文件由宿主记住的选择决定。
     const restored = await callOk<{ pendingRestore: { sizeBytes: number; token: string } }>(BACKUP_REQUESTS.restore, { token: choice.candidate.token, filePath: 'C:\\其他文件.sqlite' });
     assert.ok(restored.pendingRestore.sizeBytes > 0);
-    const overview = await callOk<OverviewData>(BACKUP_REQUESTS.load);
+    const overview = await callOk<BackupOverviewResult>(BACKUP_REQUESTS.load);
     assert.equal(overview.pendingRestore?.token, restored.pendingRestore.token);
 
     assert.deepEqual(await callOk(BACKUP_REQUESTS.cancelRestore, { token: restored.pendingRestore.token }), { cancelled: true });
-    assert.equal((await callOk<OverviewData>(BACKUP_REQUESTS.load)).pendingRestore, null);
+    assert.equal((await callOk<BackupOverviewResult>(BACKUP_REQUESTS.load)).pendingRestore, null);
   } finally {
     fixture.cleanup();
   }
@@ -166,12 +166,12 @@ test('确认与取消恢复：缺少标识、标识不一致、没有待恢复�
     const wrong = await callError(BACKUP_REQUESTS.restore, { token: `${choice.candidate.token}-旧` });
     assert.equal(wrong?.kind, 'validation');
     assert.match(wrong?.message ?? '', /不一致/);
-    assert.equal((await callOk<OverviewData>(BACKUP_REQUESTS.load)).pendingRestore, null);
+    assert.equal((await callOk<BackupOverviewResult>(BACKUP_REQUESTS.load)).pendingRestore, null);
 
     // 已有待恢复项，但取消时带错标识：拒绝并保留。
     const restored = await callOk<{ pendingRestore: { token: string } }>(BACKUP_REQUESTS.restore, { token: choice.candidate.token });
     assert.match((await callError(BACKUP_REQUESTS.cancelRestore, { token: 'stale' }))?.message ?? '', /已发生变化/);
-    assert.equal((await callOk<OverviewData>(BACKUP_REQUESTS.load)).pendingRestore?.token, restored.pendingRestore.token);
+    assert.equal((await callOk<BackupOverviewResult>(BACKUP_REQUESTS.load)).pendingRestore?.token, restored.pendingRestore.token);
   } finally {
     fixture.cleanup();
   }

@@ -14,7 +14,7 @@ import { ChapterDraft } from '../../domain/models/creative';
 import { NewStageRun, ReviewPatch, StageProgress, StageRun, StageTarget } from '../../domain/models/stage-run';
 import { ChapterRepository } from '../../domain/ports/chapter-repository';
 import { StageRunRepository } from '../../domain/ports/stage-run-repository';
-import { ImageInput, TextGenerationRequest, TextGenerationSource, TextModelInfo } from '../../domain/ports/text-generation-port';
+import { ImageInput, TextGenerationRequest, TextGenerationSource, TextModelIdentity } from '../../domain/ports/text-generation-port';
 import { NovelSplitSettings } from '../../domain/rules/novel-splitter';
 import { CreativeWorkflow } from './creative-workflow';
 import { fingerprintImages, fingerprintNovel, isSameFingerprint, parseFingerprint } from './source-fingerprint';
@@ -139,7 +139,7 @@ class MemoryChapters implements ChapterRepository {
 
 interface HarnessOptions {
   responder?: Responder;
-  readonly model?: Partial<TextModelInfo>;
+  readonly model?: Partial<TextModelIdentity>;
   /** 小说原文；每次执行时重新读取，测试可以在重试前修改它。 */
   novelText?: string;
   /** 灵感图片；每次执行时重新读取。 */

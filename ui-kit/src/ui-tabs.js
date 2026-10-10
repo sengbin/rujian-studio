@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
-// 备注：依赖 ui-core.js；按 ARIA tablist 语义实现；样式见 ui-controls.css 的 ui-tabs、ui-tab。
+// 备注：依赖 ui-core.js；按 ARIA tablist 语义实现；样式见 ui-tabs.css 的 ui-tabs、ui-tab。
 // ------------------------------------------------------------------------
 
 'use strict';
@@ -12,12 +12,16 @@
 (function () {
   const aiUi = window.aiUi;
 
+  /** 页签的变体：steps 为带副文字的步骤页签（样式见 ui-tabs.css）。 */
+  const TAB_VARIANTS = ['steps'];
+
   /**
    * 创建页签。
    * @param {{ items: Array<{ id: string, label: string, count?: Node, className?: string, panel?: HTMLElement, content?: any }>,
-   *   activeId?: string, ariaLabel?: string, className?: string, panelClass?: string, focusablePanels?: boolean,
+   *   activeId?: string, ariaLabel?: string, variant?: 'steps', className?: string, panelClass?: string, focusablePanels?: boolean,
    *   onSelect?: (id: string) => void }} options
    *   items 每项的 count 是页签文字后面的数量节点（由调用方持有并更新），panel 传入已有面板元素，否则用 content 新建；
+   *   variant 选择变体（steps：带副文字的步骤页签），不传为基础下划线页签；
    *   className、panelClass 是页面自己的钩子类名；focusablePanels 为 true 时面板可用 Tab 键聚焦；onSelect 在每次选中（含初始选中）后调用。
    * @returns {{ element: HTMLElement, panels: HTMLElement[], buttons: Record<string, HTMLElement>, panelById: Record<string, HTMLElement>,
    *   activate: (id: string) => void, getActiveId: () => string }}
@@ -27,6 +31,7 @@
     const settings = options || {};
     const items = settings.items || [];
     if (items.length === 0) throw new Error('页签至少需要一项');
+    if (settings.variant !== undefined && !TAB_VARIANTS.includes(settings.variant)) throw new Error(`未知的页签变体：${settings.variant}`);
 
     const tabs = items.map((item) => {
       const tabId = aiUi.uid('ui-tab');
@@ -76,7 +81,7 @@
 
     const element = aiUi.h(
       'div',
-      { class: ['ui-tabs', settings.className].filter(Boolean).join(' '), attrs: { role: 'tablist', 'aria-label': settings.ariaLabel } },
+      { class: ['ui-tabs', settings.variant ? `ui-tabs--${settings.variant}` : '', settings.className].filter(Boolean).join(' '), attrs: { role: 'tablist', 'aria-label': settings.ariaLabel } },
       tabs.map((tab) => tab.button)
     );
     activate(tabs.some((tab) => tab.id === settings.activeId) ? settings.activeId : tabs[0].id);

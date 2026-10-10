@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：设计见 private-docs/rujian-studio/开发文档-vscode/production-profile-design.md 第 5、11、15 节；新增体量只需在这里追加记录；电视剧、电影只占位（supported 为 false，没有节拍模板）。
+// 备注：设计见 private-docs/rujian-studio/开发文档/production-profile-design.md 第 5、11、15 节；新增体量只需在这里追加记录；电视剧、电影只占位（supported 为 false，没有节拍模板）。
 // ------------------------------------------------------------------------
 
 import { BeatTemplate, ProductionFormatType, ProductionProfile } from '../models/production-profile';
@@ -16,20 +16,6 @@ export { BEAT_TEMPLATES };
 
 /** 体量特有的属性；换算系数与校准默认值各体量共用。 */
 type ProfileTraits = Pick<ProductionProfile, 'label' | 'promptDescription' | 'multiEpisode' | 'durationScopeLabel'>;
-
-/** 创建制作方案。 */
-function createProfile(formatType: ProductionFormatType, traits: ProfileTraits, beatTemplateId: string | null): ProductionProfile {
-  return {
-    formatType,
-    ...traits,
-    beatTemplateId,
-    wordsPerSecond: 4,
-    avgShotSeconds: 5,
-    toleranceRatio: DEFAULT_TOLERANCE_RATIO,
-    maxCalibrationRounds: DEFAULT_MAX_CALIBRATION_ROUNDS,
-    supported: beatTemplateId !== null
-  };
-}
 
 /** 全部制作方案，顺序即界面选项顺序。 */
 export const PRODUCTION_PROFILES: readonly ProductionProfile[] = [
@@ -46,12 +32,26 @@ export const PRODUCTION_PROFILES: readonly ProductionProfile[] = [
   createProfile('series', { label: '电视剧', promptDescription: '电视剧', multiEpisode: true, durationScopeLabel: '单集' }, null),
   createProfile('feature_film', { label: '电影/长片', promptDescription: '电影/长片', multiEpisode: false, durationScopeLabel: '全片' }, null)
 ];
-
 /** 占位体量在界面选项上的后缀。 */
 export const UNSUPPORTED_FORMAT_SUFFIX = '（即将推出）';
 
+/** 创建制作方案。 */
+function createProfile(formatType: ProductionFormatType, traits: ProfileTraits, beatTemplateId: string | null): ProductionProfile {
+  return {
+    formatType,
+    ...traits,
+    beatTemplateId,
+    wordsPerSecond: 4,
+    avgShotSeconds: 5,
+    toleranceRatio: DEFAULT_TOLERANCE_RATIO,
+    maxCalibrationRounds: DEFAULT_MAX_CALIBRATION_ROUNDS,
+    supported: beatTemplateId !== null
+  };
+}
+
 /**
  * 按体量取制作方案。
+ * @param formatType 体量类型。
  * @throws Error 体量未注册。
  */
 export function getProductionProfile(formatType: ProductionFormatType): ProductionProfile {
@@ -62,7 +62,10 @@ export function getProductionProfile(formatType: ProductionFormatType): Producti
   return profile;
 }
 
-/** 体量是否按剧情拆分为多集。 */
+/**
+ * 体量是否按剧情拆分为多集。
+ * @param formatType 体量类型。
+ */
 export function isMultiEpisode(formatType: ProductionFormatType): boolean {
   return getProductionProfile(formatType).multiEpisode;
 }
@@ -72,13 +75,17 @@ export function listSupportedFormats(): ProductionProfile[] {
   return PRODUCTION_PROFILES.filter((profile) => profile.supported);
 }
 
-/** 按标识取节拍模板；不存在时返回 undefined。 */
+/**
+ * 按标识取节拍模板；不存在时返回 undefined。
+ * @param id 节拍模板标识。
+ */
 export function findBeatTemplate(id: string): BeatTemplate | undefined {
   return BEAT_TEMPLATES.find((template) => template.id === id);
 }
 
 /**
  * 按标识取节拍模板。
+ * @param id 节拍模板标识。
  * @throws Error 模板未注册。
  */
 export function getBeatTemplate(id: string): BeatTemplate {
@@ -89,7 +96,10 @@ export function getBeatTemplate(id: string): BeatTemplate {
   return template;
 }
 
-/** 某种体量可用的节拍模板。 */
+/**
+ * 某种体量可用的节拍模板。
+ * @param formatType 体量类型。
+ */
 export function listBeatTemplates(formatType: ProductionFormatType): BeatTemplate[] {
   return BEAT_TEMPLATES.filter((template) => template.formatType === formatType);
 }

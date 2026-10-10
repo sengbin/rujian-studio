@@ -54,8 +54,11 @@ export interface ScreenplayFormDependencies {
   readonly onPicked: (workId: number) => void;
 }
 
+/** 提交按钮文字。 */
 const SUBMIT_LABEL = '开始生成';
+/** 没有可生成剧本的作品时的提示。 */
 const NO_STARTABLE_MESSAGE = '没有可生成剧本的作品，请先在“创作”列表中确认创意。';
+/** 文本模型字段说明里的用途前缀。 */
 const TEXT_MODEL_PURPOSE = '生成剧本时';
 
 /** 生成参数转表单初始值：数字转为文本，未设置的项为空串。 */

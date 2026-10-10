@@ -86,7 +86,7 @@ function setup() {
     },
     onEvent: () => undefined
   };
-  for (const file of ['shared/page-format.js', 'stage/stage-actions.js', 'stage/stage-header.js', 'stage/stage.js', 'stage/stage-editor-common.js', 'stage/stage-storyboard-panels.js', 'stage/stage-storyboard.js']) {
+  for (const file of ['shared/page-format.js', 'stage/stage-actions.js', 'stage/stage-header.js', 'stage/stage.js', 'stage/stage-editing.js', 'stage/stage-storyboard-panels.js', 'stage/stage-storyboard.js']) {
     window.eval(readFileSync(`${RESOURCES_ROOT}${file}`, 'utf8'));
   }
   return { window, doc: env.document, scrolled };

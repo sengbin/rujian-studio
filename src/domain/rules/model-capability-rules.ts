@@ -126,6 +126,7 @@ function summarizeText(capability: TextCapability): string[] {
   ];
 }
 
+/** 把视频模型能力汇总成输入、时长、画幅等说明文字，每项一条。 */
 function summarizeVideo(capability: VideoCapability): string[] {
   const inputs: string[] = [];
   if (capability.firstFrame) inputs.push('首帧');

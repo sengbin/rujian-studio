@@ -58,42 +58,16 @@ export interface QianwenImageModel {
   readonly extraParams: Readonly<Record<string, ExtraParamSpec>>;
 }
 
-/** 千问图像 3.0 系列：只支持文生图，单次最多 6 张。 */
-function qwenImageCapability(): ImageCapability {
-  return {
-    aspectRatios: ASPECT_RATIOS,
-    resolutions: ['1K', '2K'],
-    imagesPerRequestMax: 6,
-    referenceImagesMax: 0,
-    seed: true,
-    promptMaxLength: 4500
-  };
-}
-
-/** 万相 2.7 图像：支持最多 9 张参考图，单次最多 4 张。 */
-function wanImageCapability(resolutions: readonly string[]): ImageCapability {
-  return {
-    aspectRatios: ASPECT_RATIOS,
-    resolutions,
-    imagesPerRequestMax: 4,
-    referenceImagesMax: 9,
-    seed: true,
-    promptMaxLength: 5000
-  };
-}
-
 /** 千问图像 3.0 的专有参数：提示词改写、水印。 */
 const QWEN_IMAGE_EXTRA_PARAMS: Readonly<Record<string, ExtraParamSpec>> = {
   promptExtend: { apiKey: 'prompt_extend', allowed: [true, false] },
   watermark: WATERMARK_SPEC
 };
-
 /** 万相 2.7 的专有参数：思考模式（仅无参考图的文生图生效）、水印。 */
 const WAN_IMAGE_EXTRA_PARAMS: Readonly<Record<string, ExtraParamSpec>> = {
   thinkingMode: { apiKey: 'thinking_mode', allowed: [true, false] },
   watermark: WATERMARK_SPEC
 };
-
 /** 千问AI平台提供的图像模型。 */
 export const QIANWEN_IMAGE_MODELS: readonly QianwenImageModel[] = [
   {
@@ -125,3 +99,27 @@ export const QIANWEN_IMAGE_MODELS: readonly QianwenImageModel[] = [
     extraParams: WAN_IMAGE_EXTRA_PARAMS
   }
 ];
+
+/** 千问图像 3.0 系列：只支持文生图，单次最多 6 张。 */
+function qwenImageCapability(): ImageCapability {
+  return {
+    aspectRatios: ASPECT_RATIOS,
+    resolutions: ['1K', '2K'],
+    imagesPerRequestMax: 6,
+    referenceImagesMax: 0,
+    seed: true,
+    promptMaxLength: 4500
+  };
+}
+
+/** 万相 2.7 图像：支持最多 9 张参考图，单次最多 4 张。 */
+function wanImageCapability(resolutions: readonly string[]): ImageCapability {
+  return {
+    aspectRatios: ASPECT_RATIOS,
+    resolutions,
+    imagesPerRequestMax: 4,
+    referenceImagesMax: 9,
+    seed: true,
+    promptMaxLength: 5000
+  };
+}

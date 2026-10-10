@@ -38,9 +38,11 @@ interface ModelRow {
   readonly capability_json: string;
 }
 
+/** 查询模型的公共 SELECT 部分，带出能力 JSON。 */
 const MODEL_SELECT = `SELECT m.id, m.provider_id, m.code, m.display_name, m.kind, m.is_enabled, m.created_at, c.capability_json
   FROM models m JOIN model_capabilities c ON c.model_id = m.id`;
 
+/** 把服务商的数据库行转换为服务商记录。 */
 function toProvider(row: ProviderRow): ProviderRecord {
   return {
     id: row.id,
@@ -53,6 +55,7 @@ function toProvider(row: ProviderRow): ProviderRecord {
   };
 }
 
+/** 把模型的数据库行转换为模型记录。 */
 function toModel(row: ModelRow): ModelRecord {
   return {
     id: row.id,

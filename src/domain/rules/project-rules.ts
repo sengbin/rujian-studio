@@ -18,8 +18,11 @@ import {
   readText
 } from './field-readers';
 
+/** 项目名称的长度上限。 */
 export const PROJECT_NAME_MAX_LENGTH = 50;
+/** 项目描述的长度上限。 */
 export const PROJECT_DESCRIPTION_MAX_LENGTH = 500;
+/** 项目默认画面风格的长度上限。 */
 export const PROJECT_VISUAL_STYLE_MAX_LENGTH = 50;
 
 /**

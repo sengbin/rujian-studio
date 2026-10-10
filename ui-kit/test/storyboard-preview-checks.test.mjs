@@ -13,7 +13,7 @@ import { IDS, loadScript, loadScripts, makeShot, makeSound, makeStaging, makeVie
 
 const timelineWindow = loadScripts(['shared/page-format.js', ...TIMELINE_SCRIPTS]);
 const timeline = timelineWindow.aiStoryboardTimeline;
-const checks = loadScript('stage/stage-storyboard-preview-checks.js', timelineWindow).aiStoryboardChecks;
+const checks = loadScript('stage/storyboard-preview/stage-storyboard-preview-checks.js', timelineWindow).aiStoryboardChecks;
 
 /** 编译并检查一组镜头，返回检查项编码列表。 */
 function codesOf(shots) {

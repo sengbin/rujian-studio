@@ -9,18 +9,21 @@
 
 import { MessageRouter } from '../messaging/message-router';
 import { SETTINGS_PAGE_RESOURCES } from '../panels/page-resources';
-import { PanelManager } from '../panels/panel-manager';
+import { PanelTabs } from '../panels/panel-tabs';
 import { SettingsServices, registerSettingsHandlers } from './settings-handlers';
 
+/** 模型设置页的标签键，同一键只打开一个标签。 */
 const SETTINGS_PANEL_KEY = 'settings';
+/** 模型设置页的标题。 */
 const SETTINGS_TITLE = '模型设置';
+/** 模型设置页的描述，显示在标题后面。 */
 const SETTINGS_DESCRIPTION = '配置生成文字内容的文本模型，以及图像、音频、视频模型的服务商和访问密钥，修改后立即保存。';
 
 /** 设置页的入口。 */
 export class SettingsPages {
   constructor(
     private readonly services: SettingsServices,
-    private readonly panels: PanelManager
+    private readonly panels: PanelTabs
   ) {}
 
   /** 打开设置页；已打开时聚焦。 */

@@ -22,8 +22,11 @@ export const ASSET_PROMPT_FORM_NAME = 'asset.prompt';
 /** 提交按钮的键：保存、重新生成。 */
 export const ASSET_PROMPT_SUBMIT_KEYS = { save: 'save', regenerate: 'regenerate' } as const;
 
+/** 提示词文本框随内容增高时的最大行数。 */
 const PROMPT_MAX_ROWS = 10;
+/** 文本模型字段说明里的用途前缀。 */
 const TEXT_MODEL_PURPOSE = '重新生成提示词时';
+/** 文本模型字段说明的后缀：只对本次生成有效，“保存”不会用到。 */
 const TEXT_MODEL_NOTE = '；仅对本次生成有效，“保存”不会用到';
 
 /** 提示词字段下方的说明：优先显示需要用户注意的状态。 */

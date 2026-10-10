@@ -56,6 +56,7 @@ export class AssetCreationService {
 
   /**
    * 创建资产（从实体新建时同时绑定），再按所选方式继续；后续步骤没能完成时删除刚创建的资产。
+   * @param request 资产创建请求，含表单内容、生成方式和要绑定的实体。
    * @returns 新资产。
    * @throws ValidationError 内容不合法，或后续的出图、提示词生成不满足条件。
    * @throws ConflictError 同类型下名称重复，或实体已绑定过这个资产。

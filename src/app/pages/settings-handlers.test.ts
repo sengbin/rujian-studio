@@ -57,21 +57,21 @@ function createRouter() {
   return { callOk, callError };
 }
 
-interface ProviderData {
+interface ProviderSettingsResult {
   readonly id: number;
   readonly isEnabled: boolean;
   readonly apiKeyConfigured: boolean;
   readonly models: Array<{ id: number; isEnabled: boolean }>;
 }
 
-interface LoadedData {
+interface SettingsLoadResult {
   readonly text: { readonly choices: Array<{ key: string }> };
-  readonly providers: ProviderData[];
+  readonly providers: ProviderSettingsResult[];
 }
 
 test('加载：同时返回文本生成设置与服务商视图，新同步的模型默认都不启用', async () => {
   const { callOk } = createRouter();
-  const data = await callOk<LoadedData>(SETTINGS_REQUESTS.load);
+  const data = await callOk<SettingsLoadResult>(SETTINGS_REQUESTS.load);
   assert.deepEqual(data.text.choices, []);
   assert.equal(data.providers.length, 1);
   assert.deepEqual(data.providers[0].models.map((model) => model.isEnabled), [false]);
@@ -79,24 +79,24 @@ test('加载：同时返回文本生成设置与服务商视图，新同步的�
 
 test('服务商修改请求：返回修改后的服务商视图', async () => {
   const { callOk } = createRouter();
-  const loaded = (await callOk<LoadedData>(SETTINGS_REQUESTS.load)).providers[0];
+  const loaded = (await callOk<SettingsLoadResult>(SETTINGS_REQUESTS.load)).providers[0];
 
-  const updated = await callOk<{ provider: ProviderData }>(SETTINGS_REQUESTS.providerUpdate, { providerId: loaded.id, isEnabled: false });
+  const updated = await callOk<{ provider: ProviderSettingsResult }>(SETTINGS_REQUESTS.providerUpdate, { providerId: loaded.id, isEnabled: false });
   assert.equal(updated.provider.isEnabled, false);
 
-  const keyed = await callOk<{ provider: ProviderData }>(SETTINGS_REQUESTS.providerSetKey, { providerId: loaded.id, apiKey: 'sk-1' });
+  const keyed = await callOk<{ provider: ProviderSettingsResult }>(SETTINGS_REQUESTS.providerSetKey, { providerId: loaded.id, apiKey: 'sk-1' });
   assert.equal(keyed.provider.apiKeyConfigured, true);
 
-  const cleared = await callOk<{ provider: ProviderData }>(SETTINGS_REQUESTS.providerClearKey, { providerId: loaded.id });
+  const cleared = await callOk<{ provider: ProviderSettingsResult }>(SETTINGS_REQUESTS.providerClearKey, { providerId: loaded.id });
   assert.equal(cleared.provider.apiKeyConfigured, false);
 
-  const toggled = await callOk<{ provider: ProviderData }>(SETTINGS_REQUESTS.modelSetEnabled, { modelId: loaded.models[0].id, isEnabled: true });
+  const toggled = await callOk<{ provider: ProviderSettingsResult }>(SETTINGS_REQUESTS.modelSetEnabled, { modelId: loaded.models[0].id, isEnabled: true });
   assert.equal(toggled.provider.models[0].isEnabled, true);
 });
 
 test('测试连接请求：没有密钥时返回失败结果，配置密钥后返回成功；服务商不存在返回未找到', async () => {
   const { callOk, callError } = createRouter();
-  const loaded = (await callOk<LoadedData>(SETTINGS_REQUESTS.load)).providers[0];
+  const loaded = (await callOk<SettingsLoadResult>(SETTINGS_REQUESTS.load)).providers[0];
   assert.deepEqual(await callOk(SETTINGS_REQUESTS.providerTestConnection, { providerId: loaded.id }), { notice: '尚未配置访问密钥。', results: [] });
   await callOk(SETTINGS_REQUESTS.providerSetKey, { providerId: loaded.id, apiKey: 'sk-1' });
   const tested = await callOk<{ notice: string | null; results: Array<{ settingKey: string; ok: boolean }> }>(SETTINGS_REQUESTS.providerTestConnection, { providerId: loaded.id });
@@ -106,7 +106,7 @@ test('测试连接请求：没有密钥时返回失败结果，配置密钥后�
 
 test('服务商修改请求：校验失败返回字段错误，服务商不存在返回未找到', async () => {
   const { callOk, callError } = createRouter();
-  const loaded = (await callOk<LoadedData>(SETTINGS_REQUESTS.load)).providers[0];
+  const loaded = (await callOk<SettingsLoadResult>(SETTINGS_REQUESTS.load)).providers[0];
 
   const invalidKey = await callError(SETTINGS_REQUESTS.providerSetKey, { providerId: loaded.id, apiKey: '' });
   assert.equal(invalidKey.kind, 'validation');

@@ -1,7 +1,7 @@
 /*
  * ------------------------------------------------------------------------
  * 名称：host-theme.css
- * 说明：应用主题变量：提供页面样式与组件库依赖的 --host-* 变量（亮、暗两套），以及页面基础的字体与文字颜色。
+ * 说明：应用主题变量：提供页面样式、组件库和外壳依赖的 --host-* 变量（亮、暗两套），以及页面基础的字体与文字颜色。
  * 作者：sengbin
  * 邮箱：chengbin@3578.cn
  * 日期：2026-10-10
@@ -24,6 +24,9 @@
   --host-link-foreground: rgb(77, 170, 252);
   --host-error-foreground: rgb(248, 81, 73);
   --host-warning-foreground: rgb(204, 167, 0);
+  --host-border: rgb(43, 43, 43);
+  --host-tab-active-background: rgb(31, 31, 31);
+  --host-tab-hover-background: rgb(42, 42, 42);
 }
 
 :root.theme-light {
@@ -38,6 +41,9 @@
   --host-focus-border: rgb(0, 95, 184);
   --host-link-foreground: rgb(0, 95, 184);
   --host-warning-foreground: rgb(191, 136, 3);
+  --host-border: rgb(229, 229, 229);
+  --host-tab-active-background: rgb(255, 255, 255);
+  --host-tab-hover-background: rgb(236, 236, 236);
 }
 
 body {

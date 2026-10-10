@@ -5,11 +5,12 @@
  * 作者：sengbin
  * 邮箱：chengbin@3578.cn
  * 日期：2026-10-02
- * 备注：颜色统一使用主题变量；字段控件样式见 ui-kit/src/ui-controls.css。
+ * 备注：颜色统一使用主题变量；字段控件样式见 ui-kit/src/ui-field.css 等。
  * ------------------------------------------------------------------------
  */
 
 .settings-section {
+  --field-gap: var(--space-xs);
   max-width: 560px;
   margin: 0 0 var(--space-page);
 }
@@ -23,10 +24,6 @@
   margin: 0 0 var(--space-page);
   padding: 0 0 var(--space-sm);
   border-bottom: 1px solid var(--divider);
-}
-
-.settings-section {
-  --field-gap: var(--space-xs);
 }
 
 .settings-note {
@@ -86,8 +83,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 2px var(--space-md);
-  margin: 0 0 2px;
+  gap: var(--space-xxs) var(--space-md);
+  margin: 0 0 var(--space-xxs);
 }
 
 .provider-setting-head .ui-field__label {
@@ -111,7 +108,7 @@
 .provider-status {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-xxs);
   font-size: var(--font-size-caption);
 }
 
@@ -122,7 +119,7 @@
 }
 
 /* 模型表里的能力摘要：每项一行，弱化颜色 */
-.ui-table .provider-capability {
+.provider-capability {
   color: var(--text-muted);
   font-size: var(--font-size-caption);
   line-height: var(--line-height-body);
@@ -132,7 +129,7 @@
 .account-result {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-xxs);
   font-size: var(--font-size-caption);
 }
 
@@ -141,7 +138,7 @@
 }
 
 .account-note {
-  margin-top: 2px;
+  margin-top: var(--space-xxs);
 }
 
 .account-actions {

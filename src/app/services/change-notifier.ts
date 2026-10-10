@@ -26,7 +26,10 @@ export class ChangeNotifier<T = void> {
     };
   }
 
-  /** 通知全部订阅者；某个订阅者抛出异常不影响其余订阅者。 */
+  /**
+   * 通知全部订阅者；某个订阅者抛出异常不影响其余订阅者。
+   * @param payload 变化内容，原样传给每个订阅者。
+   */
   notify(payload: T): void {
     for (const listener of [...this.listeners]) {
       try {

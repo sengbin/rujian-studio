@@ -10,7 +10,7 @@
 import { BrowserWindow, app, dialog, nativeTheme, safeStorage } from 'electron';
 import started from 'electron-squirrel-startup';
 import * as path from 'node:path';
-import { PanelManager } from './app/panels/panel-manager';
+import { PanelTabs } from './app/panels/panel-tabs';
 import { ShellBridge } from './app/shell/shell-bridge';
 import { SIDEBAR_FRAME_ID } from './app/shell/shell-channels';
 import { ElectronSecretStore } from './infra/secrets/electron-secret-store';
@@ -86,7 +86,7 @@ function run(): void {
   function startApplication(): void {
     const notify = createDesktopNotifier();
     const dataRoot = path.join(app.getPath('userData'), DATA_DIRECTORY_NAME);
-    const panels = new PanelManager(bridge, getCurrentTheme);
+    const panels = new PanelTabs(bridge, getCurrentTheme);
     application = createApplication({
       dataRoot,
       resourceRoot,

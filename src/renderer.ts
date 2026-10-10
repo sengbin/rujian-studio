@@ -7,6 +7,7 @@
 // 备注：渲染进程不启用 Node 集成，只通过预加载脚本暴露的 window.rujianShell 与主进程通信。
 // ------------------------------------------------------------------------
 
+import '../resources/shared/host-theme.css';
 import './index.css';
 import { startAppShell } from './renderer/app-shell';
 

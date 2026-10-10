@@ -33,12 +33,16 @@ export interface ChatToolCallOptions {
   readonly classifyErrorCode: (code: string | null) => ProviderFailure | null;
 }
 
+/** 流式响应里没有任何内容的增量，遇到可忽略的数据块时返回它。 */
 const EMPTY_DELTA: ChoiceDelta = { content: '', toolCalls: [], finishReason: null };
 
 /** JSON Schema 模式下追加到系统段的说明：任务提示词里的“通过工具提交，参数”在这里指直接输出的 JSON 对象。 */
 export const JSON_OUTPUT_NOTE = '\n\n本次没有可调用的工具：把提示词里“通过工具提交”的参数对象直接作为回复输出，只输出符合给定 JSON Schema 的 JSON，不要输出其他文字；不用的字段填 null。';
 
-/** 构造请求体的 response_format：以输出工具的参数 Schema 为准，开启严格模式。 */
+/**
+ * 构造请求体的 response_format：以输出工具的参数 Schema 为准，开启严格模式。
+ * @param tool 输出工具定义，其参数 Schema 决定输出格式。
+ */
 export function buildJsonSchemaFormat(tool: TextGenerationRequest['tool']): Record<string, unknown> {
   return {
     type: 'json_schema',
@@ -46,7 +50,10 @@ export function buildJsonSchemaFormat(tool: TextGenerationRequest['tool']): Reco
   };
 }
 
-/** 构造用户消息的内容：没有图片时为文本，有图片时为“图片在前、文本在后”的内容块列表。 */
+/**
+ * 构造用户消息的内容：没有图片时为文本，有图片时为“图片在前、文本在后”的内容块列表。
+ * @param request 文本生成请求（用户文本与可选的图片）。
+ */
 export function buildUserContent(request: TextGenerationRequest): string | Array<Record<string, unknown>> {
   const images = request.images ?? [];
   if (images.length === 0) {

@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
-// 备注：依赖 ui-core.js；样式见 ui-feedback.css；状态文字的颜色取页面基础样式的 status-success、status-error（theme.css）。
+// 备注：依赖 ui-core.js；样式见 ui-feedback.css；状态文字的颜色取页面基础样式的 status-success、status-error（page-base.css）。
 // ------------------------------------------------------------------------
 
 'use strict';

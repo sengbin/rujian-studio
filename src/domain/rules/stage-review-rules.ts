@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
-// 备注：纯函数，不访问存储；规则来源 private-docs/rujian-studio/开发文档-vscode/ARCHITECTURE.md 6.3 与 private-docs/rujian-studio/开发文档-vscode/database-design.md 第 7 节。
+// 备注：纯函数，不访问存储；规则来源 private-docs/rujian-studio/开发文档/ARCHITECTURE.md 6.3 与 private-docs/rujian-studio/开发文档/database-design.md 第 7 节。
 // ------------------------------------------------------------------------
 
 import { FORM_LEVEL_ERROR_KEY, ValidationError } from '../errors';
@@ -45,17 +45,26 @@ export function toDisplayStatus(run: StageRun): StageDisplayStatus {
   return run.isCurrent ? 'approved' : 'history';
 }
 
-/** 是否可以确认采用：生成成功且尚待确认。 */
+/**
+ * 是否可以确认采用：生成成功且尚待确认。
+ * @param run 阶段记录。
+ */
 export function canApprove(run: StageRun): boolean {
   return run.status === 'succeeded' && run.reviewStatus === 'pending';
 }
 
-/** 是否可以取消：仅运行中。 */
+/**
+ * 是否可以取消：仅运行中。
+ * @param run 阶段记录。
+ */
 export function canCancel(run: StageRun): boolean {
   return run.status === 'running';
 }
 
-/** 是否可以重试：失败或已取消。 */
+/**
+ * 是否可以重试：失败或已取消。
+ * @param run 阶段记录。
+ */
 export function canRetry(run: StageRun): boolean {
   return run.status === 'failed' || run.status === 'canceled';
 }
@@ -111,6 +120,7 @@ export interface StartCheck {
 
 /**
  * 校验能否启动阶段生成：同一目标不能重复运行，上游必须已确认。
+ * @param check 启动检查所需的状态（同一目标的现有记录与上游状态）。
  * @throws ValidationError 不满足启动条件。
  */
 export function assertCanStart(check: StartCheck): void {

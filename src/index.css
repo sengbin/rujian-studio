@@ -1,38 +1,40 @@
 /*
  * ------------------------------------------------------------------------
  * 名称：index.css
- * 说明：外壳界面样式：左侧菜单区与右侧主内容区的布局、标签栏、页面 iframe 的显示切换，随 html 的 data-theme 切换亮暗。
+ * 说明：外壳界面样式：左侧菜单区与右侧主内容区的布局、标签栏、页面 iframe 的显示切换，颜色全部取自应用主题变量。
  * 作者：sengbin
  * 邮箱：chengbin@3578.cn
  * 日期：2026-10-10
- * 备注：颜色采用深色与浅色两套现代配色；页面内部样式不在这里。
+ * 备注：亮暗配色只在 resources/shared/host-theme.css 维护，这里不再写色值；页面内部样式不在这里。
  * ------------------------------------------------------------------------
  */
 
 :root {
   color-scheme: dark;
+  /* 左侧菜单区宽度 */
   --shell-sidebar-width: 220px;
-  --shell-bg: rgb(24, 24, 24);
-  --shell-tab-bar-bg: rgb(24, 24, 24);
-  --shell-tab-active-bg: rgb(31, 31, 31);
-  --shell-tab-hover-bg: rgb(42, 42, 42);
-  --shell-text: rgb(204, 204, 204);
-  --shell-text-muted: rgb(157, 157, 157);
-  --shell-border: rgb(43, 43, 43);
-  --shell-accent: rgb(0, 120, 212);
-  --shell-font: 'Segoe UI', system-ui, -apple-system, 'Microsoft YaHei', sans-serif;
+  /* 外壳正文字号 */
+  --shell-font-size: 13px;
+  /* 标签栏高度 */
+  --shell-tab-height: 35px;
+  /* 单个标签的最大宽度 */
+  --shell-tab-max-width: 200px;
+  /* 标签内文字与关闭按钮的间距 */
+  --shell-tab-gap: 6px;
+  /* 页签文字左侧内边距 */
+  --shell-tab-padding-start: 12px;
+  /* 关闭按钮右侧外边距 */
+  --shell-tab-padding-end: 8px;
+  /* 标签关闭按钮的边长 */
+  --shell-tab-close-size: 20px;
+  /* 标签关闭按钮的圆角 */
+  --shell-tab-close-radius: 4px;
+  /* 分隔线与激活标签顶部强调线的粗细 */
+  --shell-line-width: 1px;
 }
 
-:root[data-theme='light'] {
+:root.theme-light {
   color-scheme: light;
-  --shell-bg: rgb(248, 248, 248);
-  --shell-tab-bar-bg: rgb(248, 248, 248);
-  --shell-tab-active-bg: rgb(255, 255, 255);
-  --shell-tab-hover-bg: rgb(236, 236, 236);
-  --shell-text: rgb(59, 59, 59);
-  --shell-text-muted: rgb(113, 113, 113);
-  --shell-border: rgb(229, 229, 229);
-  --shell-accent: rgb(0, 95, 184);
 }
 
 * {
@@ -44,28 +46,28 @@ body {
   height: 100%;
   margin: 0;
   overflow: hidden;
-  color: var(--shell-text);
-  background: var(--shell-bg);
-  font-family: var(--shell-font);
-  font-size: 13px;
+  color: var(--host-foreground);
+  background: var(--host-sidebar-background);
+  font-family: var(--host-font-family);
+  font-size: var(--shell-font-size);
 }
 
 [hidden] {
   display: none !important;
 }
 
-#app-shell {
+.shell {
   display: flex;
   height: 100%;
 }
 
-#sidebar-pane {
+.shell__sidebar {
   flex: none;
   width: var(--shell-sidebar-width);
-  border-right: 1px solid var(--shell-border);
+  border-right: var(--shell-line-width) solid var(--host-border);
 }
 
-#workspace {
+.shell__workspace {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -73,18 +75,18 @@ body {
 }
 
 /* 标签栏：固定在主内容区顶部，标签过多时横向滚动（隐藏滚动条） */
-#tab-bar {
+.shell__tabs {
   display: flex;
   flex: none;
-  height: 35px;
+  height: var(--shell-tab-height);
   overflow-x: auto;
   overflow-y: hidden;
-  background: var(--shell-tab-bar-bg);
-  border-bottom: 1px solid var(--shell-border);
+  background: var(--host-sidebar-background);
+  border-bottom: var(--shell-line-width) solid var(--host-border);
   scrollbar-width: none;
 }
 
-#tab-bar::-webkit-scrollbar {
+.shell__tabs::-webkit-scrollbar {
   display: none;
 }
 
@@ -93,27 +95,21 @@ body {
   display: flex;
   flex: none;
   align-items: center;
-  gap: 6px;
-  max-width: 200px;
-  padding: 0 8px 0 12px;
-  color: var(--shell-text-muted);
-  border-right: 1px solid var(--shell-border);
-  cursor: pointer;
+  gap: var(--shell-tab-gap);
+  max-width: var(--shell-tab-max-width);
+  padding-right: var(--shell-tab-padding-end);
+  color: var(--host-description-foreground);
+  border-right: var(--shell-line-width) solid var(--host-border);
   user-select: none;
 }
 
 .tab:hover {
-  background: var(--shell-tab-hover-bg);
-}
-
-.tab:focus-visible {
-  outline: 1px solid var(--shell-accent);
-  outline-offset: -1px;
+  background: var(--host-tab-hover-background);
 }
 
 .tab.is-active {
-  color: var(--shell-text);
-  background: var(--shell-tab-active-bg);
+  color: var(--host-foreground);
+  background: var(--host-tab-active-background);
 }
 
 /* 激活标签的顶部强调线 */
@@ -122,15 +118,30 @@ body {
   top: 0;
   right: 0;
   left: 0;
-  height: 1px;
-  background: var(--shell-accent);
+  height: var(--shell-line-width);
+  background: var(--host-button-background);
   content: '';
 }
 
 .tab__label {
+  min-width: 0;
+  height: 100%;
+  padding: 0 0 0 var(--shell-tab-padding-start);
   overflow: hidden;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.tab__label:focus-visible,
+.tab__close:focus-visible {
+  outline: var(--shell-line-width) solid var(--host-button-background);
+  outline-offset: calc(-1 * var(--shell-line-width));
 }
 
 .tab__close {
@@ -138,13 +149,13 @@ body {
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: var(--shell-tab-close-size);
+  height: var(--shell-tab-close-size);
   padding: 0;
   color: inherit;
   background: transparent;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--shell-tab-close-radius);
   cursor: pointer;
   opacity: 0;
 }
@@ -156,24 +167,24 @@ body {
 }
 
 .tab__close:hover {
-  background: color-mix(in srgb, var(--shell-text) 16%, transparent);
+  background: color-mix(in srgb, var(--host-foreground) 16%, transparent);
 }
 
-#tab-views {
+.shell__views {
   position: relative;
   flex: 1;
   min-height: 0;
-  background: var(--shell-tab-active-bg);
+  background: var(--host-tab-active-background);
 }
 
-#empty-hint {
+.shell__empty {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0;
-  color: var(--shell-text-muted);
+  color: var(--host-description-foreground);
 }
 
 .page-frame {
@@ -184,16 +195,16 @@ body {
 }
 
 /* 标签页面叠放在同一区域，只显示当前标签；隐藏的页面保留状态 */
-#tab-views > .page-frame {
+.shell__views > .page-frame {
   position: absolute;
   inset: 0;
   visibility: hidden;
 }
 
-#tab-views > .page-frame.is-active {
+.shell__views > .page-frame.is-active {
   visibility: visible;
 }
 
-#sidebar-pane > .page-frame {
+.shell__sidebar > .page-frame {
   display: block;
 }

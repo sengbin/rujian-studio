@@ -115,7 +115,7 @@
         aiUi.h(
           'div',
           { class: 'wb-queue__body', hidden: !isOpen, attrs: { id: panelId } },
-          rows.length === 0 ? aiUi.h('p', { class: 'description wb-queue__empty', text: '还没有提交过生成任务。' }) : aiUi.table({ columns, rows, ariaLabel: '生成任务', compact: true }).element
+          rows.length === 0 ? aiUi.h('p', { class: 'description wb-queue__empty', text: '还没有提交过生成任务。' }) : aiUi.table({ columns, rows, ariaLabel: '生成任务', compact: true, flush: true }).element
         )
       );
     }

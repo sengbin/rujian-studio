@@ -48,7 +48,10 @@ const SPECIAL_FAILURES: ReadonlyMap<string, { readonly label: string; readonly h
   ]
 ]);
 
-/** 失败原因的界面说明：分类名称与处理建议。 */
+/**
+ * 失败原因的界面说明：分类名称与处理建议。
+ * @param failure 任务的失败信息（分类与原因）。
+ */
 export function describeJobFailure(failure: JobFailure): { readonly label: string; readonly hint: string } {
   const special = failure.code === null ? undefined : SPECIAL_FAILURES.get(failure.code);
   return special ?? { label: FAILURE_LABELS[failure.category], hint: FAILURE_HINTS[failure.category] };

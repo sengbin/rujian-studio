@@ -164,6 +164,7 @@
       return JSON.stringify([key, view && view.canGenerate, view && view.blockReason, groups, resolved && [resolved.values, resolved.issues], [...busyGroupIds]]);
     }
 
+    /** 重绘“检查并提交”面板：镜头组勾选列表、预览汇总与底部的确认和提交按钮。 */
     function render() {
       const { view, resolved } = host.getState();
       renderedKey = stateKey();

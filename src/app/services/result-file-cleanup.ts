@@ -17,6 +17,7 @@ export interface ResultFileCleanupDependencies {
 
 /**
  * 删除没有结果记录引用的视频文件。
+ * @param dependencies 视频任务仓库与结果文件存储。
  * @returns 删除的文件数。
  * @throws Error 列举或删除文件失败。
  */

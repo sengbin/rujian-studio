@@ -57,7 +57,10 @@ export interface MaterialRequest {
   ask<T>(template: string, variables: Record<string, string>, parse: (json: unknown) => T, options: AskOptions): Promise<T>;
 }
 
-/** 从进度数据中读取素材整理进度，缺失或格式不对时视为从头开始。 */
+/**
+ * 从进度数据中读取素材整理进度，缺失或格式不对时视为从头开始。
+ * @param detail 阶段进度里保存的数据，格式未经校验。
+ */
 export function readMaterialProgress(detail: unknown): MaterialProgress {
   const source = typeof detail === 'object' && detail !== null ? (detail as Record<string, unknown>) : {};
   return {
@@ -67,7 +70,10 @@ export function readMaterialProgress(detail: unknown): MaterialProgress {
   };
 }
 
-/** 一段原文的标签，如“第 3 段 第三章 归途”。 */
+/**
+ * 一段原文的标签，如“第 3 段 第三章 归途”。
+ * @param segment 一段原文。
+ */
 export function segmentLabel(segment: NovelSegment): string {
   return segment.title === null ? `第 ${segment.index} 段` : `第 ${segment.index} 段 ${segment.title}`;
 }
@@ -103,6 +109,7 @@ export function loadSource(
 
 /**
  * 整理素材为文字：文字灵感直接使用；图片先描述；小说逐段提取要点。已完成的步骤不重复。
+ * @param request 素材整理请求（作品、素材类型、已有进度和回调）。
  * @returns 用于后续提示词的素材文字，已包裹为数据段。
  */
 export async function prepareMaterial(request: MaterialRequest): Promise<string> {

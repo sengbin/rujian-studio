@@ -69,6 +69,16 @@ export interface AssetGenerationQueueDependencies extends RemoteJobQueueOptions 
   readonly notify: (change: AssetVersionChange) => void;
 }
 
+/** 识别出的图片与音频 MIME 类型对应的文件扩展名。 */
+const EXTENSION_BY_MIME: Readonly<Record<string, string>> = {
+  'image/png': '.png',
+  'image/jpeg': '.jpg',
+  'image/webp': '.webp',
+  'audio/mpeg': '.mp3',
+  'audio/wav': '.wav',
+  'audio/mp4': '.m4a'
+};
+
 /** 资产生成队列。 */
 export class AssetGenerationQueue extends BaseRemoteJobQueue<AssetVersionRecord, ImageJobResult | AudioJobResult> {
   constructor(private readonly dependencies: AssetGenerationQueueDependencies) {
@@ -230,16 +240,6 @@ function assertValid(issues: readonly string[]): void {
     throw new ProviderError('invalid_request', issues.join('；'));
   }
 }
-
-/** 识别出的图片与音频 MIME 类型对应的文件扩展名。 */
-const EXTENSION_BY_MIME: Readonly<Record<string, string>> = {
-  'image/png': '.png',
-  'image/jpeg': '.jpg',
-  'image/webp': '.webp',
-  'audio/mpeg': '.mp3',
-  'audio/wav': '.wav',
-  'audio/mp4': '.m4a'
-};
 
 /** 按 MIME 类型给出文件扩展名；未登记的类型视为程序错误。 */
 function extensionOf(mime: string): string {

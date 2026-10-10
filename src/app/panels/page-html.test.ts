@@ -41,7 +41,7 @@ test('按顺序引用全部样式与脚本，并有挂载点', () => {
   const html = createPageHtml(OPTIONS);
   assert.ok(html.indexOf('a.css') < html.indexOf('b.css'));
   assert.ok(html.indexOf('a.js') < html.indexOf('b.js'));
-  assert.match(html, /<div id="app"><\/div>/);
+  assert.match(html, /<main id="app" class="page-main"><\/main>/);
 });
 
 test('标题栏在挂载点之前，标题与描述上下排列，右侧有工具栏插槽，描述中的特殊字符被转义', () => {

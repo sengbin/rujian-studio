@@ -36,12 +36,19 @@ export interface VoiceDraft {
 export class VoiceDraftStore {
   private readonly drafts = new Map<string, VoiceDraft>();
 
-  /** 读取暂存的试听音色；没有返回 undefined。 */
+  /**
+   * 读取暂存的试听音色；没有返回 undefined。
+   * @param workId 作品标识。
+   * @param speakerKey 说话人键。
+   */
   find(workId: number, speakerKey: string): VoiceDraft | undefined {
     return this.drafts.get(keyOf(workId, speakerKey));
   }
 
-  /** 暂存试听音色，同一说话人已有的被替换；超过条数上限时淘汰最久没有使用的。 */
+  /**
+   * 暂存试听音色，同一说话人已有的被替换；超过条数上限时淘汰最久没有使用的。
+   * @param draft 要暂存的试听音色。
+   */
   save(draft: VoiceDraft): void {
     const key = keyOf(draft.workId, draft.speakerKey);
     this.drafts.delete(key);
@@ -54,12 +61,19 @@ export class VoiceDraftStore {
     }
   }
 
-  /** 丢弃暂存的试听音色。 */
+  /**
+   * 丢弃暂存的试听音色。
+   * @param workId 作品标识。
+   * @param speakerKey 说话人键。
+   */
   delete(workId: number, speakerKey: string): void {
     this.drafts.delete(keyOf(workId, speakerKey));
   }
 
-  /** 列出作品里全部暂存的试听音色。 */
+  /**
+   * 列出作品里全部暂存的试听音色。
+   * @param workId 作品标识。
+   */
   listByWork(workId: number): VoiceDraft[] {
     return [...this.drafts.values()].filter((draft) => draft.workId === workId);
   }

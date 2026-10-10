@@ -1,0 +1,141 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：ui-input-controls.css
+ * 说明：界面组件库的单行输入与多行文本样式：边框、悬停、焦点、校验错误、禁用态和自绘的高度调整把手。
+ * 作者：sengbin
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-11
+ * 备注：所有选择器以 ui- 开头；依赖 ui-tokens.css。
+ * ------------------------------------------------------------------------
+ */
+
+.ui-input,
+.ui-textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  transition: border-color var(--hover-duration) ease;
+}
+
+.ui-input {
+  height: var(--input-height);
+}
+
+.ui-input__field,
+.ui-textarea__field {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  color: var(--input-foreground);
+  font: inherit;
+  background: transparent;
+  border: 0;
+  outline: none;
+}
+
+.ui-input__field {
+  height: var(--input-field-height);
+  padding: 0 var(--input-padding-x);
+  font-size: var(--input-font-size);
+}
+
+.ui-input__field::placeholder,
+.ui-textarea__field::placeholder {
+  color: var(--text-muted);
+}
+
+.ui-textarea__field {
+  min-height: var(--textarea-min-height);
+  padding: var(--textarea-padding-y) var(--textarea-padding-x);
+  font-size: var(--textarea-font-size);
+  line-height: var(--line-height-body);
+  resize: none;
+}
+
+/* 按内容自适应高度的多行文本（传了 maxRows）：高度由脚本计算，去掉最小高度和调整把手；选择器写三个类是为压过页面样式里的最小高度 */
+.ui-textarea.ui-textarea--auto .ui-textarea__field {
+  min-height: 0;
+}
+
+.ui-textarea--auto .ui-textarea__grip {
+  display: none;
+}
+
+/* 自绘的高度调整把手：右下角一条短横线，鼠标为上下调整光标 */
+.ui-textarea {
+  position: relative;
+}
+
+.ui-textarea__grip {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  width: 12px;
+  height: 12px;
+  cursor: ns-resize;
+  touch-action: none;
+  background: linear-gradient(var(--choice-mark-border), var(--choice-mark-border)) center 8px / 8px 2px no-repeat;
+}
+
+.ui-textarea__grip:hover {
+  background: linear-gradient(var(--text), var(--text)) center 8px / 8px 2px no-repeat;
+}
+
+/* 悬停：只把边框提亮一点点，底色不变；焦点、校验错误、禁用态优先，因此悬停排除它们；按下即获得焦点，由焦点边框反馈 */
+.ui-input:not(.ui-is-disabled):not(.ui-is-invalid):not(:focus-within):hover,
+.ui-textarea:not(.ui-is-disabled):not(.ui-is-invalid):not(:focus-within):hover {
+  border-color: var(--input-border-hover);
+}
+
+/* 焦点轮廓向内偏移 1px，正好盖在边框上：边框与轮廓合起来仍是 1px，不会变成 2px */
+.ui-input:focus-within,
+.ui-textarea:focus-within {
+  border-color: var(--focus-border);
+  outline: 1px solid var(--focus-border);
+  outline-offset: -1px;
+}
+
+.ui-input.ui-is-invalid,
+.ui-textarea.ui-is-invalid,
+.ui-select__trigger.ui-is-invalid {
+  border-color: var(--status-error);
+}
+
+.ui-input.ui-is-invalid:focus-within,
+.ui-textarea.ui-is-invalid:focus-within,
+.ui-select__trigger.ui-is-invalid:focus-visible {
+  outline-color: var(--status-error);
+}
+
+/* 禁用态：输入类控件换灰底、灰字，光标不变 */
+.ui-input.ui-is-disabled,
+.ui-textarea.ui-is-disabled {
+  background: var(--disabled-bg);
+  border-color: var(--disabled-border);
+  cursor: default;
+}
+
+.ui-input__field:disabled,
+.ui-textarea__field:disabled {
+  color: var(--disabled-text);
+  cursor: default;
+}
+
+.ui-input__field:disabled::placeholder,
+.ui-textarea__field:disabled::placeholder {
+  color: var(--disabled-text);
+}
+
+.ui-textarea.ui-is-disabled .ui-textarea__grip {
+  display: none;
+}
+
+/* 设置了 display 的控件会盖过 hidden 属性，这里让它们在没有页面基础样式的页面里也能正常隐藏 */
+.ui-input[hidden],
+.ui-textarea[hidden] {
+  display: none !important;
+}

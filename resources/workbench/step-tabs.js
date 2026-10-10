@@ -52,7 +52,7 @@
       items: items.map((item) => ({ id: item.id, label: [item.head, item.note], className: 'wb-steps__tab', panel: item.panel })),
       activeId: active,
       ariaLabel: options.ariaLabel || '步骤',
-      className: 'wb-steps__tabs',
+      variant: 'steps',
       focusablePanels: true,
       onSelect: (id) => {
         active = id;

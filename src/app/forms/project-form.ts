@@ -29,8 +29,11 @@ export const PROJECT_FORM_NAMES = {
   edit: 'project.edit'
 } as const;
 
+/** 新建项目表单的标题。 */
 const CREATE_FORM_TITLE = '新建项目';
+/** 编辑项目表单的标题。 */
 const EDIT_FORM_TITLE = '编辑项目';
+/** 提交按钮文字。 */
 const SUBMIT_LABEL = '保存';
 
 /** 构造项目表单的字段描述。 */

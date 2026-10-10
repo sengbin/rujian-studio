@@ -12,6 +12,7 @@ import { SOUND_KIND_LABELS, STAGE_DEPTH_LABELS, STAGE_FACING_LABELS, STAGE_X_LAB
 import { STAGING_ACTION_MAX_LENGTH } from '../../../domain/rules/staging-rules';
 import { OutputTool } from '../../../domain/ports/text-generation-port';
 
+/** 输出工具里的拒绝原因属性：因内容审查无法生成时才填写。 */
 const REFUSED_PROPERTY = {
   type: 'string',
   description: '仅在因内容审查无法生成时填写拒绝原因；正常生成时不要填写，其他字段必须填写。'

@@ -43,7 +43,10 @@ export function fingerprintNovel(segments: readonly NovelSegment[], settings: No
   };
 }
 
-/** 计算灵感图片素材的指纹：图片的数量、顺序、类型与内容都参与。 */
+/**
+ * 计算灵感图片素材的指纹：图片的数量、顺序、类型与内容都参与。
+ * @param images 灵感图片。
+ */
 export function fingerprintImages(images: readonly ImageInput[]): SourceFingerprint {
   const hash = createHash('sha256');
   for (const image of images) {
@@ -75,7 +78,11 @@ export function parseFingerprint(value: unknown): SourceFingerprint | null {
   return { split: { mode: mode as NovelSplitMode, maxSegmentChars }, lengths: lengths as number[], contentHash };
 }
 
-/** 两个指纹是否完全一致：分段设置、各段长度、内容哈希都相同。任一方为 null（没有指纹）时不一致。 */
+/**
+ * 两个指纹是否完全一致：分段设置、各段长度、内容哈希都相同。任一方为 null（没有指纹）时不一致。
+ * @param left 第一个指纹，没有时为 null。
+ * @param right 第二个指纹，没有时为 null。
+ */
 export function isSameFingerprint(left: SourceFingerprint | null, right: SourceFingerprint | null): boolean {
   if (left === null || right === null) {
     return false;

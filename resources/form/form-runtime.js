@@ -59,7 +59,7 @@
     canvas.width = Math.max(1, Math.round(width * scale));
     canvas.height = Math.max(1, Math.round(height * scale));
     const context = canvas.getContext('2d');
-    context.fillStyle = '#ffffff';
+    context.fillStyle = 'rgb(255, 255, 255)';
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
     const url = canvas.toDataURL('image/jpeg', THUMBNAIL_QUALITY);
@@ -79,8 +79,8 @@
       const bytes = window.pageFormat.decodeBase64(item.data);
       const buffer = await new window.OfflineAudioContext(1, 1, AUDIO_SAMPLE_RATE).decodeAudioData(bytes.buffer);
       return { ...item, durationSeconds: buffer.duration };
-    } catch {
-      throw new Error(`无法解码“${item.name}”，请换一个文件。`);
+    } catch (error) {
+      throw new Error(`无法解码“${item.name}”，请换一个文件。`, { cause: error });
     }
   }
 
@@ -225,8 +225,9 @@
         entry.uniqueCheckedValue = value;
         entry.uniqueError = result && result.error ? result.error : '';
         entry.field.setError(entry.uniqueError);
-      } catch {
+      } catch (error) {
         // 检查失败不阻止继续填写，提交时宿主会再次校验。
+        console.warn('字段唯一性检查失败：', error);
       }
     }
 
@@ -607,7 +608,7 @@
     await page.closed;
     openForms.delete(form);
     // 已提交的会话宿主已释放；这里通知宿主释放未提交的会话，失败不影响界面。
-    window.hostBridge.request(REQUEST_CLOSE, { formId: session.formId }).catch(() => undefined);
+    window.hostBridge.request(REQUEST_CLOSE, { formId: session.formId }).catch((error) => console.warn('通知宿主释放表单会话失败：', error));
     return isSaved;
   }
 

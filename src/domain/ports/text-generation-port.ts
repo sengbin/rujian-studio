@@ -37,7 +37,7 @@ export interface TextGenerationOptions {
 }
 
 /** 当前使用的文本模型信息。 */
-export interface TextModelInfo {
+export interface TextModelIdentity {
   /** 用于记录到阶段记录的标识，如“qianwen/qwen3.8-max”。 */
   readonly id: string;
   /** 最大输入 token 数，用于分段预算。 */
@@ -60,7 +60,7 @@ export interface TextGenerationPort {
    * 按设置选出要使用的模型。
    * @throws TextGenerationError 没有可用模型（未启用任何服务商文本模型等）。
    */
-  resolveModel(): Promise<TextModelInfo>;
+  resolveModel(): Promise<TextModelIdentity>;
   /** 估算文本占用的 token 数。 */
   countTokens(text: string): Promise<number>;
   /**

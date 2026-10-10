@@ -19,6 +19,7 @@ import {
   RemoteJobState
 } from '../../../domain/ports/provider-adapters';
 import { buildDeliveryInstruction, readDeliveryRates } from '../../../domain/rules/voice-delivery-rules';
+import { findVoiceByLabel, validateAudioContent } from '../shared/audio-request-validation';
 import { findModelByCode } from '../shared/provider-model-lookup';
 import { validateExtraParams } from '../shared/provider-payload';
 import { SyncResultStore } from '../shared/sync-result-store';
@@ -30,8 +31,7 @@ import {
   VOLCENGINE_SPEECH_MIME_TYPE,
   VOLCENGINE_SPEECH_RESOURCE_ID,
   VOLCENGINE_SPEECH_SAMPLE_RATE,
-  VOLCENGINE_VOICES,
-  VolcengineVoice
+  VOLCENGINE_VOICES
 } from './volcengine-audio-catalog';
 import { VOLCENGINE_SPEECH_PROVIDER, VOLCENGINE_SPEECH_PROVIDER_NAME } from './volcengine-catalog';
 import { VolcengineSpeechClient } from './volcengine-speech-client';
@@ -69,7 +69,7 @@ export class VolcengineAudioProvider implements AudioModelProvider {
     if (capability === undefined) {
       return [`${VOLCENGINE_SPEECH_PROVIDER_NAME}没有模型 ${request.modelCode}。`];
     }
-    return [...validateContent(request, capability), ...validateExtraParams(request.extraParams, {})];
+    return [...validateAudioContent(request, capability), ...validateExtraParams(request.extraParams, {})];
   }
 
   async submit(request: AudioGenerationRequest, context: ProviderCallContext): Promise<RemoteJobRef> {
@@ -95,48 +95,9 @@ export class VolcengineAudioProvider implements AudioModelProvider {
   }
 }
 
-/** 校验音频类型、要朗读的文字、语言、音色、时长和参考音频。 */
-function validateContent(request: AudioGenerationRequest, capability: AudioCapability): string[] {
-  const issues: string[] = [];
-  if (!capability.audioKinds.includes(request.audioKind)) {
-    issues.push(`该模型不能生成${request.audioKind}类型的音频，支持：${capability.audioKinds.join('、')}。`);
-  }
-  if (request.prompt.trim() === '') {
-    issues.push('提示词不能为空。');
-  }
-  if (request.prompt.length > capability.promptMaxLength) {
-    issues.push(`提示词不能超过 ${capability.promptMaxLength} 字（当前 ${request.prompt.length} 字）。`);
-  }
-  if (request.durationSeconds !== null) {
-    issues.push('该模型不支持指定时长，时长由内容决定。');
-  }
-  if (request.language !== null && !capability.languages.includes(request.language)) {
-    issues.push(`语言 ${request.language} 不在模型支持的范围内：${capability.languages.join('、')}。`);
-  }
-  if (request.voice !== null && !capability.voices.includes(request.voice)) {
-    issues.push(`该模型不支持预置音色 ${request.voice}。`);
-  }
-  if (request.referenceAudio !== null) {
-    issues.push('该模型不支持参考音频。');
-  }
-  return issues;
-}
-
-/** 按显示名称取音色；未指定（null）用默认音色，指定了却不在目录里则报错（校验阶段已拦截）。 */
-function resolveVoice(label: string | null): VolcengineVoice {
-  if (label === null) {
-    return VOLCENGINE_DEFAULT_VOICE;
-  }
-  const found = VOLCENGINE_VOICES.find((candidate) => candidate.label === label);
-  if (found === undefined) {
-    throw new ProviderError('invalid_request', `该模型不支持预置音色 ${label}。`);
-  }
-  return found;
-}
-
 /** 构造请求体：音色按显示名称换算成平台的音色标识，未指定时用默认音色；说话方式换成语音指令（情绪、语气）与语速、音量数值。 */
 function buildRequestBody(text: string, voiceLabel: string | null, delivery: string): Record<string, unknown> {
-  const voice = resolveVoice(voiceLabel);
+  const voice = findVoiceByLabel(VOLCENGINE_VOICES, VOLCENGINE_DEFAULT_VOICE, voiceLabel);
   const { speechRate, loudnessRate } = readDeliveryRates(delivery);
   const instruction = buildDeliveryInstruction(delivery);
   return {

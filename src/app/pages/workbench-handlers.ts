@@ -86,6 +86,7 @@ export type NoticeLevel = 'info' | 'warning';
 
 /**
  * 把提交结果整理成一条通知：已提交的组数、提醒与被拒绝的原因；有被拒绝的组时为警告级别。
+ * @param result 提交生成的结果。
  * @returns 没有任何内容可通知时返回 undefined。
  */
 export function describeSubmitResult(result: SubmitResult): { readonly level: NoticeLevel; readonly message: string } | undefined {

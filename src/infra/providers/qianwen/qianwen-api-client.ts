@@ -41,6 +41,9 @@ const ERROR_CODE_CATEGORIES: ReadonlyArray<readonly [prefix: string, category: P
   ['InvalidParameter', 'invalid_request']
 ];
 
+/** 默认超时：与各服务商的共用默认值相同。 */
+export const DEFAULT_QIANWEN_TIMEOUTS: QianwenTimeouts = DEFAULT_PROVIDER_TIMEOUTS;
+
 /**
  * 按错误码判断失败分类。
  * @param code 平台返回的错误码。
@@ -53,9 +56,6 @@ export function classifyErrorCode(code: string | null): ProviderFailure | null {
 
 /** 请求超时配置，单位为毫秒；测试时可注入更短的值。 */
 export type QianwenTimeouts = HttpTimeouts;
-
-/** 默认超时：与各服务商的共用默认值相同。 */
-export const DEFAULT_QIANWEN_TIMEOUTS: QianwenTimeouts = DEFAULT_PROVIDER_TIMEOUTS;
 
 /** 从错误响应中取出错误码与说明，兼容原生与 OpenAI 兼容两种结构。 */
 function readErrorFields(payload: Record<string, unknown>): { readonly code: string | null; readonly message: string | null } {

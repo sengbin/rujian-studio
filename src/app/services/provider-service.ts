@@ -266,17 +266,26 @@ export class ProviderService {
     return this.resolveCall('video', modelId);
   }
 
-  /** 同 resolveVideoCall，用于文本模型。 */
+  /**
+   * 同 resolveVideoCall，用于文本模型。
+   * @param modelId 文本模型标识。
+   */
   async resolveTextCall(modelId: number): Promise<ResolvedTextCall> {
     return this.resolveCall('text', modelId);
   }
 
-  /** 同 resolveVideoCall，用于图像模型。 */
+  /**
+   * 同 resolveVideoCall，用于图像模型。
+   * @param modelId 图像模型标识。
+   */
   async resolveImageCall(modelId: number): Promise<ResolvedImageCall> {
     return this.resolveCall('image', modelId);
   }
 
-  /** 同 resolveVideoCall，用于音频模型。 */
+  /**
+   * 同 resolveVideoCall，用于音频模型。
+   * @param modelId 音频模型标识。
+   */
   async resolveAudioCall(modelId: number): Promise<ResolvedAudioCall> {
     return this.resolveCall('audio', modelId);
   }
@@ -353,6 +362,7 @@ async function runConnectionCheck(settingKey: string, check: () => Promise<void>
   }
 }
 
+/** 把模型记录与价格说明转换为界面视图。 */
 function toModelView(model: ModelRecord, pricing: string | null): ModelView {
   return {
     id: model.id,

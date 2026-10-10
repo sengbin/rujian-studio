@@ -149,3 +149,11 @@ test('标签：显示文本并带 ui-chip 类', () => {
   assert.equal(chip.textContent, '写实摄影');
   assert.ok(chip.classList.contains('ui-chip'));
 });
+test('表格：flush 平铺用途给容器与表格加修饰类，可与紧凑用途同时使用', () => {
+  const { ui } = setup();
+  const plain = ui.table({ columns: [{ title: '名称', key: 'name' }], rows: [] });
+  assert.equal(plain.element.className, 'ui-table-container');
+  const flush = ui.table({ columns: [{ title: '名称', key: 'name' }], rows: [], compact: true, flush: true });
+  assert.ok(flush.element.classList.contains('ui-table-container--flush'));
+  assert.deepEqual([...flush.element.querySelector('table').classList], ['ui-table', 'ui-table--compact', 'ui-table--flush']);
+});

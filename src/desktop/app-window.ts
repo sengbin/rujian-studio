@@ -14,6 +14,9 @@ import { SHELL_CHANNELS, ShellCommand, ShellTheme } from '../app/shell/shell-cha
 /** 窗口标题。 */
 const WINDOW_TITLE = '如见 Studio';
 
+/** 窗口加载界面前的底色，需与 resources/shared/host-theme.css 的 --host-sidebar-background 一致（测试校验）；Electron 只接受十六进制写法。 */
+const WINDOW_BACKGROUND = { dark: '#181818', light: '#f8f8f8' } as const;
+
 /** 读取当前界面主题。 */
 export function getCurrentTheme(): ShellTheme {
   return nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
@@ -33,7 +36,7 @@ export function createAppWindow(resourceRoot: string, preloadPath: string): Brow
     minHeight: 600,
     title: WINDOW_TITLE,
     icon: path.join(resourceRoot, 'resources', 'logo.png'),
-    backgroundColor: getCurrentTheme() === 'dark' ? '#181818' : '#f8f8f8',
+    backgroundColor: WINDOW_BACKGROUND[getCurrentTheme()],
     webPreferences: { preload: preloadPath, contextIsolation: true, sandbox: true, nodeIntegration: false }
   });
   // 页面里的外部链接交给系统浏览器，窗口本身不允许导航或新开窗口。

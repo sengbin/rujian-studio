@@ -132,6 +132,7 @@
       close();
     }
 
+    /** 关闭弹层并释放它占用的事件监听。 */
     function close() {
       if (!isOpen) return;
       isOpen = false;
@@ -144,6 +145,7 @@
       window.removeEventListener('scroll', closeOnOutsideScroll, true);
     }
 
+    /** 展开弹层：创建选项列表，按触发按钮的位置与可用空间定位，并绑定关闭时机。 */
     function open() {
       if (isOpen || trigger.disabled || entries.length === 0) return;
       popup = aiUi.h('div', { class: 'ui-select__popup', attrs: { role: 'listbox', id: listboxId } });

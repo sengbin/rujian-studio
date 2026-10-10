@@ -643,7 +643,7 @@ test('入口：分镜脚本产出层头部的“分镜动画”按钮打开预�
   };
   const context = new Proxy({ measureText: (text) => ({ width: String(text).length * 10 }) }, { get: (target, name) => (name in target ? target[name] : () => undefined), set: () => true });
   window.HTMLCanvasElement.prototype.getContext = () => context;
-  for (const file of ['shared/page-format.js', 'stage/stage-actions.js', 'stage/stage-header.js', 'stage/stage.js', 'stage/stage-editor-common.js', 'stage/stage-storyboard-panels.js', 'stage/stage-storyboard.js', ...PREVIEW_SCRIPTS]) {
+  for (const file of ['shared/page-format.js', 'stage/stage-actions.js', 'stage/stage-header.js', 'stage/stage.js', 'stage/stage-editing.js', 'stage/stage-storyboard-panels.js', 'stage/stage-storyboard.js', ...PREVIEW_SCRIPTS]) {
     window.eval(readFileSync(`${RESOURCES_ROOT}${file}`, 'utf8'));
   }
   window.aiStage.open(WORK_ID, 'storyboard_script', EPISODE_ID);
@@ -668,7 +668,7 @@ test('入口：分镜脚本产出层头部的“分镜动画”按钮打开预�
   const empty = env.window;
   view = previewView({ shots: [], groups: [] });
   empty.hostBridge = { request: async () => view, onEvent: () => undefined };
-  for (const file of ['shared/page-format.js', 'stage/stage-actions.js', 'stage/stage-header.js', 'stage/stage.js', 'stage/stage-editor-common.js', 'stage/stage-storyboard-panels.js', 'stage/stage-storyboard.js', ...PREVIEW_SCRIPTS]) {
+  for (const file of ['shared/page-format.js', 'stage/stage-actions.js', 'stage/stage-header.js', 'stage/stage.js', 'stage/stage-editing.js', 'stage/stage-storyboard-panels.js', 'stage/stage-storyboard.js', ...PREVIEW_SCRIPTS]) {
     empty.eval(readFileSync(`${RESOURCES_ROOT}${file}`, 'utf8'));
   }
   empty.aiStage.open(WORK_ID, 'storyboard_script', EPISODE_ID);

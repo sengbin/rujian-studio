@@ -66,12 +66,18 @@ export interface RujianShellApi {
   onCommand(listener: (command: ShellCommand) => void): void;
 }
 
-/** 页面在 `iframe` 中加载的地址；页面标识里可能含冒号等字符，需要编码。 */
+/**
+ * 页面在 `iframe` 中加载的地址；页面标识里可能含冒号等字符，需要编码。
+ * @param frameId 页面标识。
+ */
 export function toFrameUrl(frameId: string): string {
   return `${APP_PROTOCOL}://page/${encodeURIComponent(frameId)}`;
 }
 
-/** 静态资源（相对应用资源根目录，使用 `/` 分隔）的地址。 */
+/**
+ * 静态资源（相对应用资源根目录，使用 `/` 分隔）的地址。
+ * @param relativePath 相对应用资源根目录的路径，使用 / 分隔。
+ */
 export function toResourceUrl(relativePath: string): string {
   return `${APP_PROTOCOL}://res/${relativePath.split('/').map(encodeURIComponent).join('/')}`;
 }

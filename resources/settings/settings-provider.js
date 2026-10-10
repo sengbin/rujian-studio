@@ -107,6 +107,7 @@
       let saved = setting.value;
       let field;
 
+      /** 保存一项服务商设置，并在状态行显示保存中、已保存或失败原因。 */
       async function save(value) {
         status.show(SAVING_TEXT, false);
         try {

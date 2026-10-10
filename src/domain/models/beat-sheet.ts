@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-06
-// 备注：设计见 private-docs/rujian-studio/开发文档-vscode/production-profile-design.md 第 4.2 节；对应 beat_sheets、beat_items 表；预算只是参考基准，不是硬约束。
+// 备注：设计见 private-docs/rujian-studio/开发文档/production-profile-design.md 第 4.2 节；对应 beat_sheets、beat_items 表；预算只是参考基准，不是硬约束。
 // ------------------------------------------------------------------------
 
 import { ProductionFormatType } from './production-profile';

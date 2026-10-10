@@ -49,6 +49,7 @@ export function omitNullProperties(value: unknown): unknown {
   return value;
 }
 
+/** 把一个 Schema 节点改写成严格模式支持的形式：去掉不支持的关键字和 null 类型。 */
 function strictenNode(node: Readonly<JsonObject>): JsonObject {
   const result: JsonObject = { ...node };
   for (const keyword of UNSUPPORTED_KEYWORDS) {

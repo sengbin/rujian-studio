@@ -25,6 +25,7 @@ import { FieldErrors, assertNoFieldErrors, readOptionalChoice, readOptionalText,
 import { IMAGE_FILE_MAX_BYTES, detectImageMime } from './image-size';
 import { UploadedFile, getExtension, readImageSide, readUploadedFiles } from './upload-readers';
 
+/** 资产名称的长度上限。 */
 export const ASSET_NAME_MAX_LENGTH = 50;
 /** 图像类资产单个描述字段的长度上限。 */
 export const ASSET_ATTRIBUTE_MAX_LENGTH = 200;
@@ -32,20 +33,32 @@ export const ASSET_ATTRIBUTE_MAX_LENGTH = 200;
 export const ASSET_EXTRA_MAX_LENGTH = 300;
 /** 音频描述的长度上限：模板直出时描述就是生成文字，试听确认的音色描述也写入这里（见 VOICE_DESCRIPTION_MAX_LENGTH），因此比图像类宽。 */
 export const ASSET_AUDIO_DESCRIPTION_MAX_LENGTH = 500;
+/** 单条提示词的长度上限。 */
 export const ASSET_PROMPT_MAX_LENGTH = 2000;
 /** 画面风格、角色类型等允许手动输入的短文本上限。 */
 export const ASSET_CHOICE_MAX_LENGTH = 100;
+/** 资产画面风格的长度上限。 */
 export const ASSET_STYLE_MAX_LENGTH = 50;
 
 /** 资产文件字段的表单键。 */
 export const ASSET_FILE_FIELD_KEY = 'files';
+/** 图片资产允许上传的文件扩展名。 */
 export const ASSET_IMAGE_EXTENSIONS: readonly string[] = ['.png', '.jpg', '.jpeg', '.webp'];
+/** 音频资产允许上传的文件扩展名。 */
 export const ASSET_AUDIO_EXTENSIONS: readonly string[] = ['.mp3', '.wav', '.m4a'];
+/** 图片资产最多上传的张数。 */
 export const ASSET_IMAGE_MAX_FILES = 10;
+/** 音频文件的大小上限，单位为字节。 */
 export const ASSET_AUDIO_MAX_BYTES = 20 * 1024 * 1024;
+/** 音频的时长上限，单位为秒。 */
 export const ASSET_AUDIO_MAX_SECONDS = 60;
 /** 页面生成的缩略图大小上限，超过则忽略该缩略图。 */
 const THUMBNAIL_MAX_BYTES = 256 * 1024;
+
+/** 音色参考资产里记录预置音色名的描述键：只有预置音色的模型没有参考音频输入，合成时按它选音色。 */
+export const AUDIO_PRESET_VOICE_KEY = 'preset_voice';
+/** 预置音色名的长度上限。 */
+const PRESET_VOICE_MAX_LENGTH = 100;
 
 /** 时长保留两位小数。 */
 function roundToHundredth(seconds: number): number {
@@ -73,6 +86,7 @@ export function readAssetKind(value: unknown): AssetKind {
 
 /**
  * 读取可缺省的文件来源：缺省返回 undefined，否则必须是“生成”或“上传”。
+ * @param value 提交的文件来源。
  * @throws ValidationError 文件来源无效。
  */
 export function readOptionalAssetFileSource(value: unknown): AssetFileSource | undefined {
@@ -84,6 +98,7 @@ export function readOptionalAssetFileSource(value: unknown): AssetFileSource | u
 
 /**
  * 读取必填的文件来源，必须是“生成”或“上传”。
+ * @param value 提交的文件来源。
  * @throws ValidationError 文件来源缺省或无效。
  */
 export function readAssetFileSource(value: unknown): AssetFileSource {
@@ -200,13 +215,11 @@ function requireFiles(files: NewAssetFile[], message: string, errors: FieldError
   return files;
 }
 
-/** 音色参考资产里记录预置音色名的描述键：只有预置音色的模型没有参考音频输入，合成时按它选音色。 */
-export const AUDIO_PRESET_VOICE_KEY = 'preset_voice';
-
-/** 预置音色名的长度上限。 */
-const PRESET_VOICE_MAX_LENGTH = 100;
-
-/** 保存修改后的音频表单内容时，沿用资产原有的预置音色（表单里没有这个字段）。 */
+/**
+ * 保存修改后的音频表单内容时，沿用资产原有的预置音色（表单里没有这个字段）。
+ * @param previous 保存前的资产记录。
+ * @param next 保存后的资产内容，缺少的预置音色会从原记录补上。
+ */
 export function keepPresetVoice(previous: AssetRecord, next: AssetContent): AssetContent {
   const preset = previous.attributes[AUDIO_PRESET_VOICE_KEY];
   if (previous.kind !== 'audio' || preset === undefined || next.attributes.audio_kind !== 'voice') {
@@ -229,6 +242,7 @@ export interface VoiceSampleInput {
 
 /**
  * 校验并规范化由试听确认的音色样本，得到“音色参考”类型的音频资产内容和它的一个参考音频文件（上传来源）。
+ * @param sample 试听确认的音色样本。
  * @throws ValidationError 名称为空或过长、描述或语言不合法，或内容不是有效的 MP3、WAV、M4A 音频。
  */
 export function normalizeVoiceSample(sample: VoiceSampleInput): NormalizedAsset {
@@ -269,7 +283,10 @@ export function normalizeVoiceSample(sample: VoiceSampleInput): NormalizedAsset 
   };
 }
 
-/** 校验并规范化手动保存的提示词；可以为空。 */
+/**
+ * 校验并规范化手动保存的提示词；可以为空。
+ * @param rawInput 界面提交的提示词，未经校验。
+ */
 export function normalizeAssetPrompts(rawInput: unknown): { readonly prompt: string } {
   const source = readRecord(rawInput);
   const errors: FieldErrors = {};
@@ -403,7 +420,10 @@ function readThumbnail(file: UploadedFile, index: number): NewAssetFile | undefi
   return { role: 'thumbnail', fileName: file.name, mime, width: null, height: null, durationSeconds: null, content, sortOrder: index };
 }
 
-/** 按文件头识别音频格式（MP3、WAV、M4A），返回 MIME 类型；无法识别返回 null。 */
+/**
+ * 按文件头识别音频格式（MP3、WAV、M4A），返回 MIME 类型；无法识别返回 null。
+ * @param content 音频文件内容。
+ */
 export function detectAudioMime(content: Uint8Array): string | null {
   const startsWith = (offset: number, bytes: readonly number[]) => bytes.every((byte, index) => content[offset + index] === byte);
   if (startsWith(0, [0x52, 0x49, 0x46, 0x46]) && startsWith(8, [0x57, 0x41, 0x56, 0x45])) {

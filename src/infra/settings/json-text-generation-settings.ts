@@ -38,7 +38,10 @@ export class JsonTextGenerationSettings implements TextGenerationSettingsStore {
     });
   }
 
-  /** 把修改写入设置文件，只写出现的项。 */
+  /**
+   * 把修改写入设置文件，只写出现的项。
+   * @param patch 要写入的修改，只含出现的项。
+   */
   async write(patch: TextGenerationSettingsPatch): Promise<void> {
     const content = this.readFile();
     if (patch.defaultModel !== undefined) {

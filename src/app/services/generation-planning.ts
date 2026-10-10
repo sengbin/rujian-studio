@@ -73,6 +73,8 @@ export interface GroupRequestPlannerDependencies {
 
 /**
  * 解析一个视频模型的调用信息。
+ * @param providers 提供可用模型列表和视频调用解析的服务商服务。
+ * @param modelId 模型标识。
  * @returns 调用信息；模型不可用时返回说明原因的文字。
  */
 export async function resolveModelContext(providers: Pick<ProviderService, 'listUsableModels' | 'resolveVideoCall'>, modelId: number): Promise<ModelContext | string> {
@@ -100,7 +102,10 @@ export class GroupRequestPlanner {
     private readonly firstFrames: FirstFrameResolver
   ) {}
 
-  /** 校验这一组并编译请求；任何一步不通过就返回阻断问题，不再继续后面的步骤。 */
+  /**
+   * 校验这一组并编译请求；任何一步不通过就返回阻断问题，不再继续后面的步骤。
+   * @param context 这一组的规划上下文（镜头、模型、参数、素材等）。
+   */
   plan(context: GroupPlanContext): GroupPlanOutcome {
     const { workId, episodeId, run, members, totalSeconds, params, model } = context;
     const { usable, call, capability, modelMax } = model;

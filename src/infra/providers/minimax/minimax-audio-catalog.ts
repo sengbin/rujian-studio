@@ -15,9 +15,13 @@ export const MINIMAX_SPEECH_PATH = '/v1/t2a_v2';
 
 /** 输出音频的编码格式、采样率、比特率、声道数与对应的 MIME 类型。 */
 export const MINIMAX_SPEECH_FORMAT = 'mp3';
+/** 语音合成输出的采样率，单位为赫兹。 */
 export const MINIMAX_SPEECH_SAMPLE_RATE = 32_000;
+/** 语音合成输出的比特率，单位为比特每秒。 */
 export const MINIMAX_SPEECH_BITRATE = 128_000;
+/** 语音合成输出的声道数。 */
 export const MINIMAX_SPEECH_CHANNEL = 1;
+/** 语音合成输出的 MIME 类型。 */
 export const MINIMAX_SPEECH_MIME_TYPE = 'audio/mpeg';
 
 /** 语言代码与平台 language_boost 取值的对应。 */
@@ -30,11 +34,6 @@ const SPEECH_PROMPT_MAX_LENGTH = 5000;
 export interface MinimaxVoice {
   readonly label: string;
   readonly voiceId: string;
-}
-
-/** 构造一个音色。 */
-function voice(label: string, voiceId: string): MinimaxVoice {
-  return { label, voiceId };
 }
 
 /** 系统音色，第一个为未指定音色时的默认音色。 */
@@ -111,10 +110,8 @@ export const MINIMAX_VOICES: readonly MinimaxVoice[] = [
   voice('英文·Rudolph', 'Rudolph'),
   voice('英文·Grinch', 'Grinch')
 ];
-
 /** 请求没有指定音色时使用的默认音色：音色目录里的第一个。 */
 export const MINIMAX_DEFAULT_VOICE: MinimaxVoice = MINIMAX_VOICES[0];
-
 /** 语音合成：只生成语音，文字内容决定时长，不支持参考音频；语速与音量可按说话方式调整，语言选项用于增强识别。 */
 const SPEECH_CAPABILITY: AudioCapability = {
   audioKinds: ['voice'],
@@ -125,7 +122,6 @@ const SPEECH_CAPABILITY: AudioCapability = {
   deliveryControl: true,
   promptMaxLength: SPEECH_PROMPT_MAX_LENGTH
 };
-
 /** MiniMax 提供的语音模型。 */
 export const MINIMAX_AUDIO_MODELS: readonly ModelDescriptor<'audio'>[] = [
   { code: 'speech-2.8-hd', displayName: 'MiniMax 语音 2.8 HD', kind: 'audio', capability: SPEECH_CAPABILITY },
@@ -135,3 +131,8 @@ export const MINIMAX_AUDIO_MODELS: readonly ModelDescriptor<'audio'>[] = [
   { code: 'speech-02-hd', displayName: 'MiniMax 语音 02 HD', kind: 'audio', capability: SPEECH_CAPABILITY },
   { code: 'speech-02-turbo', displayName: 'MiniMax 语音 02 Turbo', kind: 'audio', capability: SPEECH_CAPABILITY }
 ];
+
+/** 构造一个音色。 */
+function voice(label: string, voiceId: string): MinimaxVoice {
+  return { label, voiceId };
+}

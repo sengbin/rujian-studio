@@ -18,7 +18,7 @@ import { SettingsPages } from '../app/pages/settings-pages';
 import { WorkListPages } from '../app/pages/work-list-pages';
 import { WorkbenchHost } from '../app/pages/workbench-handlers';
 import { WorkbenchPages } from '../app/pages/workbench-pages';
-import { PanelManager } from '../app/panels/panel-manager';
+import { PanelTabs } from '../app/panels/panel-tabs';
 import { BackupHost, BackupService } from '../app/services/backup-service';
 import { GenerationService } from '../app/services/generation-service';
 import { ShellTheme } from '../app/shell/shell-channels';
@@ -66,7 +66,7 @@ export interface ApplicationEnvironment {
   readonly version: string;
   /** 读取当前界面主题，用于生成页面 HTML。 */
   readonly getTheme: () => ShellTheme;
-  readonly panels: PanelManager;
+  readonly panels: PanelTabs;
   readonly secrets: SecretStore;
   readonly workbenchHost: WorkbenchHost;
   readonly backupHost: BackupHost;

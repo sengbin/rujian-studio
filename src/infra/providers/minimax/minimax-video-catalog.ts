@@ -12,6 +12,7 @@ import { ModelDescriptor } from '../../../domain/models/model-provider';
 
 /** 视频任务接口的路径，相对接口地址：创建与取消、删除用同一路径后接任务标识，查询用单独的路径。 */
 export const MINIMAX_VIDEO_CREATE_PATH = '/v2/video_generation';
+/** 查询视频生成任务状态的接口路径。 */
 export const MINIMAX_VIDEO_QUERY_PATH = '/v2/query/video_generation';
 
 /** 单张图片素材（首帧、尾帧、参考图）的大小上限，单位为字节。 */
@@ -39,6 +40,22 @@ const PROMPT_MAX_LENGTH = 7000;
 const REFERENCE_IMAGES_MAX = 9;
 const AUDIO_INPUT_LIMIT = { count: 3, maxSeconds: 15 };
 
+/** MiniMax 提供的视频模型。 */
+export const MINIMAX_VIDEO_MODELS: readonly ModelDescriptor<'video'>[] = [
+  {
+    code: 'MiniMax-H3',
+    displayName: 'MiniMax H3',
+    kind: 'video',
+    capability: minimaxVideoCapability({ resolutions: ['768P', '2K'], duration: { min: 4, max: 15, step: 1 } })
+  },
+  {
+    code: 'MiniMax-H3-Max',
+    displayName: 'MiniMax H3 Max（极速）',
+    kind: 'video',
+    capability: minimaxVideoCapability({ resolutions: ['480P', '768P'], duration: { min: 5, max: 15, step: 1 } })
+  }
+];
+
 /** 构造 H3 系列的能力：首尾帧、参考图、参考音频与原生声音，不支持随机种子。 */
 function minimaxVideoCapability(options: Pick<VideoCapability, 'resolutions' | 'duration'>): VideoCapability {
   return {
@@ -58,19 +75,3 @@ function minimaxVideoCapability(options: Pick<VideoCapability, 'resolutions' | '
     promptMaxLength: PROMPT_MAX_LENGTH
   };
 }
-
-/** MiniMax 提供的视频模型。 */
-export const MINIMAX_VIDEO_MODELS: readonly ModelDescriptor<'video'>[] = [
-  {
-    code: 'MiniMax-H3',
-    displayName: 'MiniMax H3',
-    kind: 'video',
-    capability: minimaxVideoCapability({ resolutions: ['768P', '2K'], duration: { min: 4, max: 15, step: 1 } })
-  },
-  {
-    code: 'MiniMax-H3-Max',
-    displayName: 'MiniMax H3 Max（极速）',
-    kind: 'video',
-    capability: minimaxVideoCapability({ resolutions: ['480P', '768P'], duration: { min: 5, max: 15, step: 1 } })
-  }
-];

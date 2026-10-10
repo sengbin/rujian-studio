@@ -1,10 +1,10 @@
 // ------------------------------------------------------------------------
 // 名称：stage.js
-// 说明：阶段产出层的外壳脚本：在所属页面内以弹出页面显示生成进度，提供版本、确认采用、取消、重试、重新生成、查看原始输出；各阶段自己的内容区由登记的“阶段内容”负责。本文件只保留页面状态、数据加载与各部分的装配。
+// 说明：阶段产出层的外壳脚本：在所属页面内以弹出页面显示生成进度，提供版本、确认采用、取消、重试、重新生成、查看原始输出；各阶段的内容区由登记的“阶段内容”负责。
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-02
-// 备注：通过 aiStage.open(workId, stage, episodeId?, focus?) 打开（focus 为打开后要定位的对象，由阶段内容解释：分镜脚本为镜头标识），同一作品的同一阶段（分镜脚本还要同一集）只有一个产出层；阶段内容由 stage-beat-sheet.js、stage-creative.js、stage-screenplay.js、stage-storyboard.js 通过 aiStage.registerStage 登记；阶段登记 layout: 'workspace' 时使用工作区布局（头部带汇总、主体占满弹出页面高度并在内部滚动），样式见 stage.css；头部与进度区在 stage-header.js（aiStageHeader），确认采用、取消、重试、重新生成、查看原始输出与版本切换在 stage-actions.js（aiStageActions），二者以“工厂函数 + 注入上下文”创建，须先于本文件加载；请求载荷都带 workId 与 stage（分镜脚本还带 episodeId），事件名称与 src/app/pages/stage-handlers.ts 一致；依赖 form/form-runtime.js（aiForm）与 shared/page-format.js（pageFormat）。
+// 备注：通过 aiStage.open(workId, stage, episodeId?, focus?) 打开，同一作品的同一阶段（分镜脚本还要同一集）只有一个产出层；阶段内容通过 aiStage.registerStage 登记；头部与进度区在 stage-header.js、操作在 stage-actions.js，二者须先于本文件加载；事件名称与 src/app/pages/stage-handlers.ts 一致；依赖 form/form-runtime.js 与 shared/page-format.js。
 // ------------------------------------------------------------------------
 
 'use strict';

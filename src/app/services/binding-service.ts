@@ -22,16 +22,22 @@ import { AssetRepository } from '../../domain/ports/asset-repository';
 import { BindingRepository } from '../../domain/ports/binding-repository';
 import { FieldErrors, assertNoFieldErrors, isBlank, readRecord, readText } from '../../domain/rules/field-readers';
 import { ChangeNotifier } from './change-notifier';
-import { ReferenceFileData, readFirstReferenceFile } from './asset-reference-file';
+import { ReferenceFilePayload, readFirstReferenceFile } from './asset-reference-file';
 
 /** 绑定备注的长度上限。 */
 export const BINDING_NOTE_MAX_LENGTH = 200;
 
+/** 集或实体不存在，或实体不属于该集所在作品时的提示。 */
 const NOT_FOUND_MESSAGE = '集或实体不存在，或实体不属于这一集所在的作品。';
+/** 同一实体在本集已绑定过该资产时的提示。 */
 const DUPLICATE_MESSAGE = '这个实体在本集已经绑定过该资产。';
+/** 音频资产还没有音频文件时的提示。 */
 const NO_AUDIO_FILE_MESSAGE = '这个音频资产还没有音频文件，请先上传，或生成并采用。';
+/** 资产还没有参考图时的提示。 */
 const NO_IMAGE_FILE_MESSAGE = '这个资产还没有参考图。';
+/** 对音频资产查看图片时的提示。 */
 const IMAGE_ONLY_MESSAGE = '音频资产没有图片可查看。';
+/** 试听非“音色参考”类型音频资产时的提示。 */
 const VOICE_ONLY_MESSAGE = '只能试听“音色参考”类型的音频资产。';
 
 /** 绑定界面里的一个可选资产。 */
@@ -93,18 +99,26 @@ export class BindingService {
     return this.changeNotifier.subscribe(listener);
   }
 
-  /** 列出一集的全部绑定。 */
+  /**
+   * 列出一集的全部绑定。
+   * @param episodeId 集标识。
+   */
   listBindings(episodeId: number): BindingRecord[] {
     return this.bindings.listByEpisode(episodeId);
   }
 
-  /** 列出集所在作品的全部集标识（含这一集），按集序号排列。 */
+  /**
+   * 列出集所在作品的全部集标识（含这一集），按集序号排列。
+   * @param episodeId 集标识。
+   */
   listSiblingEpisodeIds(episodeId: number): number[] {
     return this.bindings.listSiblingEpisodeIds(episodeId);
   }
 
   /**
    * 读取集内一个实体的设定，用于从实体预填新建资产。
+   * @param episodeId 集标识。
+   * @param entityId 实体标识。
    * @throws NotFoundError 集或实体不存在，或实体不属于这一集所在的作品。
    */
   getEntityDetail(episodeId: number, entityId: number): BindingEntityDetail {
@@ -117,6 +131,7 @@ export class BindingService {
 
   /**
    * 读取一集的绑定界面视图：启用中的实体各自的形象与音色绑定（主资产在前），以及可选的资产。
+   * @param episodeId 集标识。
    * @throws NotFoundError 集不存在。
    */
   getEpisodeView(episodeId: number): EpisodeBindingView {
@@ -179,11 +194,12 @@ export class BindingService {
 
   /**
    * 读取音色参考音频的内容，用于实体绑定页试听；取资产的第一个参考文件。
+   * @param assetId 音色参考资产的标识。
    * @returns 音频的 MIME 类型与 Base64 内容（不带前缀）。
    * @throws NotFoundError 资产不存在，或还没有音频文件。
    * @throws ValidationError 资产不是“音色参考”类型的音频。
    */
-  readVoiceAudio(assetId: number): ReferenceFileData {
+  readVoiceAudio(assetId: number): ReferenceFilePayload {
     const asset = this.assets.findById(assetId);
     if (asset === undefined) {
       throw new NotFoundError(`资产 ${assetId} 不存在。`);
@@ -196,11 +212,12 @@ export class BindingService {
 
   /**
    * 读取图片资产第一张参考图的原图，用于实体绑定页点击缩略图查看。
+   * @param assetId 图片资产的标识。
    * @returns 图片的 MIME 类型与 Base64 内容（不带前缀）。
    * @throws NotFoundError 资产不存在，或还没有图片文件。
    * @throws ValidationError 资产是音频，没有图片。
    */
-  readReferenceImage(assetId: number): ReferenceFileData {
+  readReferenceImage(assetId: number): ReferenceFilePayload {
     const asset = this.assets.findById(assetId);
     if (asset === undefined) {
       throw new NotFoundError(`资产 ${assetId} 不存在。`);
@@ -251,6 +268,7 @@ export class BindingService {
 
   /**
    * 解除绑定；解除的是主资产时，同一实体同一用途下最早的绑定接任主资产。
+   * @param id 绑定标识。
    * @throws NotFoundError 绑定不存在。
    */
   unbind(id: number): void {
@@ -261,6 +279,7 @@ export class BindingService {
 
   /**
    * 把绑定设为主资产，原来的主资产自动取消。
+   * @param id 绑定标识。
    * @throws NotFoundError 绑定不存在。
    */
   setPrimary(id: number): BindingRecord {
@@ -273,6 +292,7 @@ export class BindingService {
   /**
    * 按名称自动匹配：实体的名称或别名与同类型资产的名称相同，且还没有绑定的，列为建议。
    * 只做形象绑定的建议，不写入，由用户确认后逐条调用 bind。
+   * @param episodeId 集标识。
    * @throws NotFoundError 集不存在。
    */
   suggestMatches(episodeId: number): BindingSuggestion[] {

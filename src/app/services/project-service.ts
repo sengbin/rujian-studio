@@ -41,6 +41,7 @@ export class ProjectService {
 
   /**
    * 读取项目。
+   * @param id 项目标识。
    * @throws NotFoundError 项目不存在。
    */
   getProject(id: number): Project {
@@ -96,6 +97,7 @@ export class ProjectService {
 
   /**
    * 统计删除项目时会一并删除的内容。
+   * @param id 项目标识。
    * @throws NotFoundError 项目不存在。
    */
   getDeletionImpact(id: number): ProjectDeletionImpact {
@@ -105,6 +107,7 @@ export class ProjectService {
 
   /**
    * 删除项目及其下全部内容。
+   * @param id 项目标识。
    * @throws NotFoundError 项目不存在。
    */
   deleteProject(id: number): void {

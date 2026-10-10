@@ -13,8 +13,11 @@ import { TEXT_MODEL_KEY_MAX_LENGTH, parseTextModelKey } from './text-model-selec
 
 /** 每段字数上限的允许范围与默认值。 */
 export const SEGMENT_CHARS_MIN = 2000;
+/** 每段字符数上限允许的最大值。 */
 export const SEGMENT_CHARS_MAX = 100000;
+/** 每段字符数上限的默认值。 */
 export const DEFAULT_SEGMENT_CHARS = 20000;
+/** 小说分段方式的默认值：按章节。 */
 export const DEFAULT_SPLIT_MODE: NovelSplitMode = 'chapter';
 
 /** 文本生成设置。 */

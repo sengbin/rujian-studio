@@ -10,14 +10,17 @@
 import { createProjectFormCatalog } from '../forms/project-form';
 import { registerFormHandlers } from '../forms/form-handlers';
 import { MessageRouter } from '../messaging/message-router';
-import { OpenedPanel, PanelManager } from '../panels/panel-manager';
+import { OpenedPanel, PanelTabs } from '../panels/panel-tabs';
 import { PROJECT_LIST_PAGE_RESOURCES } from '../panels/page-resources';
 import { DeletionService } from '../services/deletion-service';
 import { ProjectService } from '../services/project-service';
 import { PROJECT_LIST_EVENTS, ProjectListRequest, registerProjectListHandlers } from './project-list-handlers';
 
+/** 项目列表页的标签键，同一键只打开一个标签。 */
 const PROJECT_LIST_PANEL_KEY = 'project-list';
+/** 项目列表页的标题。 */
 const PROJECT_LIST_TITLE = '所有项目';
+/** 项目列表页的描述，显示在标题后面。 */
 const PROJECT_LIST_DESCRIPTION = '浏览、搜索、创建、修改和删除项目。';
 
 /** 项目相关页面的入口集合。 */
@@ -34,7 +37,7 @@ export class ProjectPages {
   constructor(
     private readonly service: ProjectService,
     private readonly deletion: DeletionService,
-    private readonly panels: PanelManager
+    private readonly panels: PanelTabs
   ) {}
 
   /** 打开项目列表页；已打开时聚焦。 */

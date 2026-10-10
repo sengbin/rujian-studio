@@ -123,8 +123,8 @@
 }
 
 .ui-dialog__close-icon {
-  width: 14px;
-  height: 14px;
+  width: var(--icon-size);
+  height: var(--icon-size);
 }
 
 .ui-dialog__body {

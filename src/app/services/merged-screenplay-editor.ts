@@ -68,7 +68,12 @@ export class MergedScreenplayEditor implements ScreenplayEditor {
     screenplays.deleteEpisode(run.workId, ref);
   }
 
-  /** 只互换序号，集的标识不变，所以返回原定位值。 */
+  /**
+   * 只互换序号，集的标识不变，所以返回原定位值。
+   * @param run 剧本阶段记录。
+   * @param ref 要移动的集的定位值。
+   * @param step 移动方向，1 向后、-1 向前。
+   */
   moveEpisode(run: StageRun, ref: number, step: number): number {
     const { screenplays, timestamp } = this.dependencies;
     const episodes = screenplays.listEpisodes(run.workId);

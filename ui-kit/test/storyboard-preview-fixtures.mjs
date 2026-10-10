@@ -38,43 +38,43 @@ export function loadScripts(files, globals = {}) {
 
 /** 时间线需要的脚本：关键词规则、编译、采样。 */
 export const TIMELINE_SCRIPTS = [
-  'stage/stage-storyboard-preview-rules.js',
-  'stage/stage-storyboard-preview-timeline.js',
-  'stage/stage-storyboard-preview-timeline-sample.js'
+  'stage/storyboard-preview/stage-storyboard-preview-rules.js',
+  'stage/storyboard-preview/stage-storyboard-preview-timeline.js',
+  'stage/storyboard-preview/stage-storyboard-preview-timeline-sample.js'
 ];
 
 /** 绘制相关的脚本：基础绘制、插画（人形、道具表、特效表、背景、入口）、扩展道具与特效与背景、角色、动物与微生物、绘制、对照视图。 */
 export const RENDER_SCRIPTS = [
-  'stage/stage-storyboard-preview-draw.js',
-  'stage/stage-storyboard-preview-art-figure.js',
-  'stage/stage-storyboard-preview-art-props.js',
-  'stage/stage-storyboard-preview-art-effects.js',
-  'stage/stage-storyboard-preview-art-backdrops.js',
-  'stage/stage-storyboard-preview-art.js',
-  'stage/stage-storyboard-preview-props-home.js',
-  'stage/stage-storyboard-preview-props-items.js',
-  'stage/stage-storyboard-preview-props-effects.js',
-  'stage/stage-storyboard-preview-props-backdrops.js',
-  'stage/stage-storyboard-preview-creatures.js',
-  'stage/stage-storyboard-preview-bestiary.js',
-  'stage/stage-storyboard-preview-renderer.js',
-  'stage/stage-storyboard-preview-modes.js'
+  'stage/storyboard-preview/stage-storyboard-preview-draw.js',
+  'stage/storyboard-preview/stage-storyboard-preview-art-figure.js',
+  'stage/storyboard-preview/stage-storyboard-preview-art-props.js',
+  'stage/storyboard-preview/stage-storyboard-preview-art-effects.js',
+  'stage/storyboard-preview/stage-storyboard-preview-art-backdrops.js',
+  'stage/storyboard-preview/stage-storyboard-preview-art.js',
+  'stage/storyboard-preview/stage-storyboard-preview-props-home.js',
+  'stage/storyboard-preview/stage-storyboard-preview-props-items.js',
+  'stage/storyboard-preview/stage-storyboard-preview-props-effects.js',
+  'stage/storyboard-preview/stage-storyboard-preview-props-backdrops.js',
+  'stage/storyboard-preview/stage-storyboard-preview-creatures.js',
+  'stage/storyboard-preview/stage-storyboard-preview-bestiary.js',
+  'stage/storyboard-preview/stage-storyboard-preview-renderer.js',
+  'stage/storyboard-preview/stage-storyboard-preview-modes.js'
 ];
 
 /** 预览页面的全部脚本，与 src/app/panels/page-resources.ts 的 STORYBOARD_PREVIEW_SCRIPTS 保持一致。 */
 export const PREVIEW_PAGE_SCRIPTS = [
   ...TIMELINE_SCRIPTS,
-  'stage/stage-storyboard-preview-checks.js',
+  'stage/storyboard-preview/stage-storyboard-preview-checks.js',
   ...RENDER_SCRIPTS,
-  'stage/stage-storyboard-preview-player.js',
-  'stage/stage-storyboard-preview-voice.js',
-  'stage/stage-storyboard-preview-voice-draft.js',
-  'stage/stage-storyboard-preview-stage-view.js',
-  'stage/stage-storyboard-preview-controls.js',
-  'stage/stage-storyboard-preview-timeline-view.js',
-  'stage/stage-storyboard-preview-voice-panel.js',
-  'stage/stage-storyboard-preview-info-panel.js',
-  'stage/stage-storyboard-preview.js'
+  'stage/storyboard-preview/stage-storyboard-preview-player.js',
+  'stage/storyboard-preview/stage-storyboard-preview-voice.js',
+  'stage/storyboard-preview/stage-storyboard-preview-voice-draft.js',
+  'stage/storyboard-preview/stage-storyboard-preview-stage-view.js',
+  'stage/storyboard-preview/stage-storyboard-preview-controls.js',
+  'stage/storyboard-preview/stage-storyboard-preview-timeline-view.js',
+  'stage/storyboard-preview/stage-storyboard-preview-voice-panel.js',
+  'stage/storyboard-preview/stage-storyboard-preview-detail-panel.js',
+  'stage/storyboard-preview/stage-storyboard-preview.js'
 ];
 
 /** 加载时间线相关的全部脚本，返回 window（含 aiStoryboardRules 与 aiStoryboardTimeline）。 */
@@ -92,6 +92,7 @@ export function loadRenderStack() {
   const modesWindow = loadScripts([...TIMELINE_SCRIPTS, ...RENDER_SCRIPTS]);
   return {
     timeline: modesWindow.aiStoryboardTimeline,
+    sampler: modesWindow.aiStoryboardSampler,
     art: modesWindow.aiStoryboardArt,
     creatures: modesWindow.aiStoryboardCreatures,
     renderer: modesWindow.aiStoryboardRenderer,

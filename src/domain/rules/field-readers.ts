@@ -22,12 +22,18 @@ export interface TextRule {
   readonly maxLength: number;
 }
 
-/** 判断值是否为普通对象（非 null、非数组）。 */
+/**
+ * 判断值是否为普通对象（非 null、非数组）。
+ * @param value 待判断的值。
+ */
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-/** 判断提交的字段值是否为空：缺省、null 或空串；仅含空白的文本不算空。 */
+/**
+ * 判断提交的字段值是否为空：缺省、null 或空串；仅含空白的文本不算空。
+ * @param value 提交的字段值。
+ */
 export function isBlank(value: unknown): value is undefined | null | '' {
   return value === undefined || value === null || value === '';
 }
@@ -66,7 +72,11 @@ export function readEntityId(rawInput: unknown, entityLabel: string): number {
   return readIdentifier(readRecord(rawInput), 'id', entityLabel);
 }
 
-/** 读取模型返回的文本字段并去除首尾空白；不是文本时按空串处理。 */
+/**
+ * 读取模型返回的文本字段并去除首尾空白；不是文本时按空串处理。
+ * @param record 模型返回的对象。
+ * @param key 字段名。
+ */
 export function textOf(record: Record<string, unknown>, key: string): string {
   const value = record[key];
   return typeof value === 'string' ? value.trim() : '';

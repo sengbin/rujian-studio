@@ -18,14 +18,17 @@ export const VOLCENGINE_PROVIDER_NAME = '火山引擎';
 
 /** 豆包语音服务商代码与显示名称。 */
 export const VOLCENGINE_SPEECH_PROVIDER_CODE = 'volcengine-speech';
+/** 豆包语音服务商的界面名称。 */
 export const VOLCENGINE_SPEECH_PROVIDER_NAME = '豆包语音';
 
 /** 接口地址设置项的键：方舟的图片、视频地址与豆包语音的地址使用同名键，分属两个服务商、各存各的。 */
 export const VOLCENGINE_ENDPOINT_SETTING_KEY = 'endpoint';
+/** 火山图片、视频接口地址设置项的界面名称。 */
 export const VOLCENGINE_ENDPOINT_LABEL = '接口地址（图片、视频）';
 
 /** 方舟文本接口地址设置项的键与显示名：文本可能使用与图片、视频不同的地址（如 Coding Plan 套餐的专用地址）。 */
 export const VOLCENGINE_TEXT_ENDPOINT_SETTING_KEY = 'textEndpoint';
+/** 火山文本接口地址设置项的界面名称。 */
 export const VOLCENGINE_TEXT_ENDPOINT_LABEL = '文本接口地址';
 
 /** 方舟两个接口地址的默认值；地址格式不固定（可能是代理或编码套餐地址），不做格式校验。 */

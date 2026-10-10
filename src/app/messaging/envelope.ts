@@ -40,7 +40,10 @@ export interface EventEnvelope {
   readonly payload?: unknown;
 }
 
-/** 判断收到的消息是否为合法的请求信封。 */
+/**
+ * 判断收到的消息是否为合法的请求信封。
+ * @param value 收到的消息内容。
+ */
 export function isRequestEnvelope(value: unknown): value is RequestEnvelope {
   if (typeof value !== 'object' || value === null) {
     return false;

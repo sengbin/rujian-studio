@@ -11,6 +11,7 @@ import { ENTITY_ATTRIBUTES, ENTITY_KIND_LABELS, EntityKind, PERFORMANCE_ATTRIBUT
 import { ENTITY_PERFORMANCE_MAX_LENGTH } from '../../../domain/rules/screenplay-rules';
 import { OutputTool } from '../../../domain/ports/text-generation-port';
 
+/** 输出工具里的拒绝原因属性：因内容审查无法生成时才填写。 */
 const REFUSED_PROPERTY = {
   type: 'string',
   description: '仅在因内容审查无法生成时填写拒绝原因；正常生成时不要填写，其他字段必须填写。'
@@ -55,6 +56,34 @@ export const SUBMIT_ADAPTATION_OPTIONS_TOOL: OutputTool = {
           additionalProperties: false
         },
         description: '候选取舍项。'
+      },
+      refused: REFUSED_PROPERTY
+    },
+    additionalProperties: false
+  }
+};
+
+/** 片段标注：{ labels: [{ index, kind, speaker?, uncertain? }] }，每个片段一项、按序号排列。 */
+export const SUBMIT_SEGMENT_LABELS_TOOL: OutputTool = {
+  name: 'submit_segment_labels',
+  description: '提交每个片段的类型和说话人；只引用片段序号，不要复制片段文字。',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      labels: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            index: { type: 'integer', minimum: 1, description: '片段序号，与输入一致，按顺序排列。' },
+            kind: { type: 'string', enum: Object.keys(SEGMENT_KIND_LABELS), description: '片段类型：narration 旁白（叙述与描写）、dialogue 对白、thought 心声。' },
+            speaker: { type: 'string', description: '说话人，必须是角色清单中的名称或别名；旁白不填，无法确定时不填。' },
+            uncertain: { type: 'boolean', description: '没有把握、需要人工核对时填 true。' }
+          },
+          required: ['index', 'kind'],
+          additionalProperties: false
+        },
+        description: '与输入片段一一对应的标注。'
       },
       refused: REFUSED_PROPERTY
     },
@@ -111,34 +140,6 @@ export function createVerbatimStructureTool(single: boolean): OutputTool {
   }
   return createStructureToolFrom(episodeProperties, single ? ['synopsis'] : ['title', 'synopsis', 'startParagraph', 'endParagraph']);
 }
-
-/** 片段标注：{ labels: [{ index, kind, speaker?, uncertain? }] }，每个片段一项、按序号排列。 */
-export const SUBMIT_SEGMENT_LABELS_TOOL: OutputTool = {
-  name: 'submit_segment_labels',
-  description: '提交每个片段的类型和说话人；只引用片段序号，不要复制片段文字。',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      labels: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            index: { type: 'integer', minimum: 1, description: '片段序号，与输入一致，按顺序排列。' },
-            kind: { type: 'string', enum: Object.keys(SEGMENT_KIND_LABELS), description: '片段类型：narration 旁白（叙述与描写）、dialogue 对白、thought 心声。' },
-            speaker: { type: 'string', description: '说话人，必须是角色清单中的名称或别名；旁白不填，无法确定时不填。' },
-            uncertain: { type: 'boolean', description: '没有把握、需要人工核对时填 true。' }
-          },
-          required: ['index', 'kind'],
-          additionalProperties: false
-        },
-        description: '与输入片段一一对应的标注。'
-      },
-      refused: REFUSED_PROPERTY
-    },
-    additionalProperties: false
-  }
-};
 
 /** 组装抽取工具：集的字段由调用方给出，实体的结构固定。 */
 function createStructureToolFrom(episodeProperties: Record<string, unknown>, episodeRequired: readonly string[]): OutputTool {

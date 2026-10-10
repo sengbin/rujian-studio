@@ -20,6 +20,7 @@ export const DUPLICATE_ASSET_CATEGORY_NAME_MESSAGE = '已有同名分类，请�
 /** 资产表单中“所属分类”字段的键，提交的值是分类名称，空串表示不分类。 */
 export const ASSET_CATEGORY_FIELD_KEY = 'category';
 
+/** 所属分类不存在时的提示。 */
 const CATEGORY_NOT_FOUND_MESSAGE = '所属分类不存在，请重新选择。';
 
 /** 资产分类应用服务。 */
@@ -40,13 +41,17 @@ export class AssetCategoryService {
     return this.changeNotifier.subscribe(listener);
   }
 
-  /** 列出某类型的全部分类（含资产数量），按创建顺序。 */
+  /**
+   * 列出某类型的全部分类（含资产数量），按创建顺序。
+   * @param kind 资产类型。
+   */
   listCategories(kind: AssetKind): AssetCategoryListItem[] {
     return this.repository.list(kind);
   }
 
   /**
    * 读取分类。
+   * @param id 分类标识。
    * @throws NotFoundError 分类不存在。
    */
   getCategory(id: number): AssetCategoryRecord {
@@ -83,6 +88,8 @@ export class AssetCategoryService {
 
   /**
    * 修改分类名称；类型不能修改。
+   * @param id 分类标识。
+   * @param rawInput 界面提交的内容，未经校验。
    * @throws ValidationError 名称不合法。
    * @throws ConflictError 名称与同类型的其他分类重复。
    * @throws NotFoundError 分类不存在。
@@ -100,6 +107,7 @@ export class AssetCategoryService {
 
   /**
    * 读取删除分类前需要告知用户的名称与受影响的资产数量。
+   * @param id 分类标识。
    * @throws NotFoundError 分类不存在。
    */
   getDeletionImpact(id: number): AssetCategoryDeletionImpact {
@@ -109,6 +117,7 @@ export class AssetCategoryService {
 
   /**
    * 删除分类；归入该分类的资产变为未分类，资产本身保留。
+   * @param id 分类标识。
    * @throws NotFoundError 分类不存在。
    */
   deleteCategory(id: number): void {

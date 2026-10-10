@@ -35,6 +35,7 @@ export const NARRATOR_SPEAKER_KEY = 'narrator';
 export const VOICE_SAMPLE_TEXT_MAX_LENGTH = 120;
 /** 音色描述与说话方式的长度上限（字）。 */
 export const VOICE_DESCRIPTION_MAX_LENGTH = 500;
+/** 语气描述的长度上限。 */
 export const VOICE_DELIVERY_MAX_LENGTH = 200;
 /** 采用时音色资产名称的长度上限，与资产名称一致。 */
 const VOICE_NAME_MAX_LENGTH = 50;
@@ -164,7 +165,10 @@ export function readVoiceAdoptInput(rawInput: unknown): VoiceAdoptInput {
   return { ...readSpeaker(source), name, applyToOtherEpisodes: source.applyToOtherEpisodes === true };
 }
 
-/** 说话人键：角色为 entity:标识，旁白为 narrator。 */
+/**
+ * 说话人键：角色为 entity:标识，旁白为 narrator。
+ * @param entityId 角色实体标识；null 表示旁白。
+ */
 export function toSpeakerKey(entityId: number | null): string {
   return entityId === null ? NARRATOR_SPEAKER_KEY : `entity:${entityId}`;
 }
@@ -192,7 +196,10 @@ export function guessLanguageCode(text: string): 'zh' | 'en' | null {
   return /[A-Za-z]/.test(text) ? 'en' : null;
 }
 
-/** 语言代码对应的资产语言文字（中文、英文）；不认识的为 null。 */
+/**
+ * 语言代码对应的资产语言文字（中文、英文）；不认识的为 null。
+ * @param code 语言代码；没有时为 null。
+ */
 export function toLanguageLabel(code: string | null): string | null {
   return code === 'zh' ? '中文' : code === 'en' ? '英文' : null;
 }

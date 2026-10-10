@@ -14,7 +14,7 @@ import { FormCatalog } from '../forms/form-definition';
 import { registerFormHandlers } from '../forms/form-handlers';
 import { MessageRouter } from '../messaging/message-router';
 import { ASSET_LIST_PAGE_RESOURCES } from '../panels/page-resources';
-import { OpenedPanel, PanelManager } from '../panels/panel-manager';
+import { OpenedPanel, PanelTabs } from '../panels/panel-tabs';
 import { AssetCategoryService } from '../services/asset-category-service';
 import { AssetCreationService } from '../services/asset-creation-service';
 import { AssetGenerationService } from '../services/asset-generation-service';
@@ -63,7 +63,7 @@ export class AssetListPages {
       readonly generation: AssetGenerationService;
       readonly creations: AssetCreationService;
     },
-    private readonly panels: PanelManager
+    private readonly panels: PanelTabs
   ) {}
 
   /**

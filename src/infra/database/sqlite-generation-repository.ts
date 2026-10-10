@@ -69,6 +69,7 @@ const ACTIVE_STATUS_SQL = ACTIVE_JOB_STATUSES.map((status) => `'${status}'`).joi
 /** 镜头组已有进行中的任务时再次提交的提示。 */
 const ACTIVE_JOB_CONFLICT_MESSAGE = '这一组正在生成，完成或取消后才能再次提交。';
 
+/** 把视频任务的数据库行转换为任务记录。 */
 function toJob(row: JobRow): VideoJobRecord {
   return {
     id: row.id,
@@ -87,6 +88,7 @@ function toJob(row: JobRow): VideoJobRecord {
   };
 }
 
+/** 把视频结果的数据库行转换为结果记录。 */
 function toResult(row: ResultRow): VideoResultRecord {
   return {
     id: row.id,

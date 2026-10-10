@@ -16,10 +16,12 @@ export const QIANWEN_PROVIDER_CODE = 'qianwen';
 
 /** 图片、视频、音频接口地址设置项的键与显示名：三类共用平台原生接口的一个地址和访问密钥。 */
 export const QIANWEN_ENDPOINT_SETTING_KEY = 'endpoint';
+/** 千问图片、视频、音频接口地址设置项的界面名称。 */
 export const QIANWEN_ENDPOINT_LABEL = '接口地址（图片、视频、音频）';
 
 /** 文本接口地址设置项的键与显示名：文本走 OpenAI 兼容接口，地址与原生接口不同。 */
 export const QIANWEN_TEXT_ENDPOINT_SETTING_KEY = 'textEndpoint';
+/** 千问文本接口地址设置项的界面名称。 */
 export const QIANWEN_TEXT_ENDPOINT_LABEL = '文本接口地址';
 
 /** 两个接口地址的默认值；地址格式不固定（可能是代理或其他套餐地址），不做格式校验。 */

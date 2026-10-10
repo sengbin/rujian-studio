@@ -23,6 +23,7 @@ export class SyncResultStore<T> {
 
   /**
    * 暂存一个结果。
+   * @param result 要暂存的同步生成结果。
    * @returns 用于之后取回的短任务编号。
    */
   put(result: T): string {
@@ -38,7 +39,10 @@ export class SyncResultStore<T> {
     return id;
   }
 
-  /** 按任务编号取回结果；不存在（编号未知，或已被丢弃、应用已重启）返回 undefined。 */
+  /**
+   * 按任务编号取回结果；不存在（编号未知，或已被丢弃、应用已重启）返回 undefined。
+   * @param id 任务编号。
+   */
   find(id: string): T | undefined {
     return this.items.get(id);
   }

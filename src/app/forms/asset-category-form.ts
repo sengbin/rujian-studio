@@ -21,6 +21,7 @@ export const ASSET_CATEGORY_FORM_NAMES = {
   edit: 'assetCategory.edit'
 } as const;
 
+/** 提交按钮文字。 */
 const SUBMIT_LABEL = '保存';
 
 /** 构造分类表单的字段描述。 */

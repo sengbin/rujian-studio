@@ -56,7 +56,7 @@
         canvas.width = Math.max(1, Math.round(width * scale));
         canvas.height = Math.max(1, Math.round(height * scale));
         const context = canvas.getContext('2d');
-        context.fillStyle = '#ffffff';
+        context.fillStyle = 'rgb(255, 255, 255)';
         context.fillRect(0, 0, canvas.width, canvas.height);
         context.drawImage(image, 0, 0, canvas.width, canvas.height);
         const url = canvas.toDataURL('image/jpeg', THUMBNAIL_QUALITY);

@@ -16,14 +16,14 @@ import {
   TextGenerationPort,
   TextGenerationRequest,
   TextGenerationSource,
-  TextModelInfo
+  TextModelIdentity
 } from '../../../domain/ports/text-generation-port';
 
 /** 编译产物位于 .test-build/app/stages/testing，项目根目录在其上四级。 */
 const PROMPTS_DIRECTORY = join(resolve(__dirname, '..', '..', '..', '..'), 'resources', 'prompts');
 
 /** 默认的假模型信息。 */
-export const DEFAULT_MODEL: TextModelInfo = { id: 'fake/test', maxInputTokens: 100000 };
+export const DEFAULT_MODEL: TextModelIdentity = { id: 'fake/test', maxInputTokens: 100000 };
 
 /** 响应函数：根据请求与调用序号返回模型提交的结果对象，可返回永不结束的 Promise 模拟卡住。 */
 export type Responder = (request: TextGenerationRequest, callIndex: number) => unknown;
@@ -51,10 +51,10 @@ export class ScriptedText implements TextGenerationPort, TextGenerationSource {
 
   constructor(
     private readonly responder: Responder,
-    private readonly model: TextModelInfo = DEFAULT_MODEL
+    private readonly model: TextModelIdentity = DEFAULT_MODEL
   ) {}
 
-  async resolveModel(): Promise<TextModelInfo> {
+  async resolveModel(): Promise<TextModelIdentity> {
     if (this.unavailable) {
       throw new TextGenerationError('unavailable', '没有可用的文本模型。');
     }

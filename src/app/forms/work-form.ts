@@ -83,11 +83,17 @@ export interface WorkFormDependencies {
   readonly onStarted: (workId: number) => void;
 }
 
+/** 作品素材来源的全部取值，也是来源下拉的选项顺序。 */
 const SOURCE_TYPES: readonly WorkSourceType[] = ['text', 'image', 'novel', 'original'];
+/** 新建作品（需要生成）时的提交按钮文字。 */
 const SUBMIT_LABEL_CREATE = '创建并生成';
+/** 新建作品（直接导入原稿）时的提交按钮文字。 */
 const SUBMIT_LABEL_IMPORT = '创建并导入';
+/** 重新生成表单的提交按钮文字。 */
 const SUBMIT_LABEL_REGENERATE = '开始生成';
+/** 编辑作品表单的提交按钮文字。 */
 const SUBMIT_LABEL_EDIT = '保存';
+/** 单个短视频形态的界面名称。 */
 const LABEL_SINGLE_KIND = WORK_KIND_LABELS.short_video;
 /** 新建表单中“所属项目”字段的键；项目名称全局唯一，字段值就是项目名称。 */
 const PROJECT_FIELD_KEY = 'projectName';
@@ -101,6 +107,25 @@ const IDEA_MAX_ROWS = 8;
 /** 原稿文字是主要输入，多行文本最多长到 12 行。 */
 const MANUSCRIPT_MAX_ROWS = 12;
 const ORIGINAL_REGENERATE_MESSAGE = '原创文稿不支持重新生成，原稿已直接分段为章节，需要修改请直接编辑章节正文。';
+
+/** 新建时的默认参数值。 */
+const DEFAULT_PARAM_VALUES: FormValues = {
+  chapterMinWords: String(DEFAULT_CHAPTER_MIN_WORDS),
+  chapterMaxWords: String(DEFAULT_CHAPTER_MAX_WORDS),
+  maxChapters: String(DEFAULT_MAX_CHAPTERS)
+};
+/** “参考节拍表生成”提交按钮的键；选用时强制节拍参考模式为 reference，忽略字数范围与章节数上限字段。 */
+const SUBMIT_KEY_BEAT_REFERENCE = 'beatReference';
+const BEAT_REFERENCE_SUBMIT_LABEL = '参考节拍表生成';
+/** 新建作品表单：这个按钮始终禁用，因为作品还不存在，不可能有属于它的已确认节拍表。 */
+const BEAT_REFERENCE_NOTE_NEW_WORK =
+  '按已确认节拍表的节拍数和参考字数重新生成全部章节，当前内容会被替换，上面的字数范围与章节数上限不生效；新建作品时还没有节拍表，请先创建作品，再到作品列表为它生成并确认节拍表，之后用“重新生成”使用这个按钮。';
+/** 重新生成表单：该作品还没有已确认节拍表时的说明。 */
+const BEAT_REFERENCE_NOTE_UNAVAILABLE =
+  '按已确认节拍表的节拍数和参考字数重新生成全部章节，当前内容会被替换，上面的字数范围与章节数上限不生效；这个作品还没有已确认的节拍表，请先到作品列表生成并确认节拍表。';
+/** 重新生成表单：该作品已有已确认节拍表时的说明。 */
+const BEAT_REFERENCE_NOTE_AVAILABLE =
+  '按已确认节拍表的节拍数和参考字数重新生成全部章节，当前内容会被替换，上面的字数范围与章节数上限不生效。';
 
 /** 读取入口传来的素材来源，必须是四种之一。 */
 function readSourceType(value: unknown): WorkSourceType {
@@ -321,26 +346,6 @@ function paramsToValues(params: CreativeParams): FormValues {
     extra: params.extra ?? ''
   };
 }
-
-/** 新建时的默认参数值。 */
-const DEFAULT_PARAM_VALUES: FormValues = {
-  chapterMinWords: String(DEFAULT_CHAPTER_MIN_WORDS),
-  chapterMaxWords: String(DEFAULT_CHAPTER_MAX_WORDS),
-  maxChapters: String(DEFAULT_MAX_CHAPTERS)
-};
-
-/** “参考节拍表生成”提交按钮的键；选用时强制节拍参考模式为 reference，忽略字数范围与章节数上限字段。 */
-const SUBMIT_KEY_BEAT_REFERENCE = 'beatReference';
-const BEAT_REFERENCE_SUBMIT_LABEL = '参考节拍表生成';
-/** 新建作品表单：这个按钮始终禁用，因为作品还不存在，不可能有属于它的已确认节拍表。 */
-const BEAT_REFERENCE_NOTE_NEW_WORK =
-  '按已确认节拍表的节拍数和参考字数重新生成全部章节，当前内容会被替换，上面的字数范围与章节数上限不生效；新建作品时还没有节拍表，请先创建作品，再到作品列表为它生成并确认节拍表，之后用“重新生成”使用这个按钮。';
-/** 重新生成表单：该作品还没有已确认节拍表时的说明。 */
-const BEAT_REFERENCE_NOTE_UNAVAILABLE =
-  '按已确认节拍表的节拍数和参考字数重新生成全部章节，当前内容会被替换，上面的字数范围与章节数上限不生效；这个作品还没有已确认的节拍表，请先到作品列表生成并确认节拍表。';
-/** 重新生成表单：该作品已有已确认节拍表时的说明。 */
-const BEAT_REFERENCE_NOTE_AVAILABLE =
-  '按已确认节拍表的节拍数和参考字数重新生成全部章节，当前内容会被替换，上面的字数范围与章节数上限不生效。';
 
 /** 合并多次校验的字段错误后一并抛出，让用户一次看到全部问题。 */
 function collectFieldErrors(checks: ReadonlyArray<() => void>): void {

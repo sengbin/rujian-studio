@@ -11,7 +11,11 @@ import { GroupLayoutEntry } from '../../domain/models/storyboard';
 import { StoryboardRepository } from '../../domain/ports/storyboard-repository';
 import { planGroupLayout, planRegroupLayout } from '../../domain/rules/shot-group-rules';
 
-/** 读取一份分镜脚本当前的分组布局。 */
+/**
+ * 读取一份分镜脚本当前的分组布局。
+ * @param storyboards 分镜脚本仓库。
+ * @param runId 分镜脚本记录标识。
+ */
 export function readGroupLayout(storyboards: StoryboardRepository, runId: number): GroupLayoutEntry[] {
   return storyboards.listGroups(runId).map((group) => ({ groupId: group.id, shotIds: group.shotIds }));
 }
@@ -42,7 +46,13 @@ export function syncShotGroups(storyboards: StoryboardRepository, runId: number,
   if (!unchanged) storyboards.applyGroupLayout(runId, layout, timestamp);
 }
 
-/** 丢弃现有分组，按单组最长时长重新分组。 */
+/**
+ * 丢弃现有分组，按单组最长时长重新分组。
+ * @param storyboards 分镜脚本仓库。
+ * @param runId 分镜脚本记录标识。
+ * @param maxSeconds 单组最长时长，单位为秒。
+ * @param timestamp 写入记录的时间戳。
+ */
 export function regroupShots(storyboards: StoryboardRepository, runId: number, maxSeconds: number, timestamp: string): void {
   const shots = storyboards.listShots(runId);
   storyboards.applyGroupLayout(runId, planRegroupLayout(shots, maxSeconds), timestamp);

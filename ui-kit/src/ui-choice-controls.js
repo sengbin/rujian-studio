@@ -16,8 +16,9 @@
   const PREVIOUS_KEYS = ['ArrowUp', 'ArrowLeft'];
   const NEXT_KEYS = ['ArrowDown', 'ArrowRight'];
 
-  /** 单选与复选的组容器类名，按排列方向区分。 */
-  function groupClass(direction) {
+  /** 单选与复选的组容器类名：分段变体固定横向等宽排列，其余按排列方向区分。 */
+  function groupClass(direction, variant) {
+    if (variant === 'segmented') return 'ui-choice-group ui-choice-group--segmented';
     return direction === 'horizontal' ? 'ui-choice-group ui-choice-group--horizontal' : 'ui-choice-group';
   }
 
@@ -49,17 +50,18 @@
 
   /**
    * 创建单选组。
-   * @param {{ options: Array<string|{ value: string, label?: string, disabled?: boolean }>, value?: string, direction?: 'vertical'|'horizontal',
-   *   ariaLabel?: string, disabled?: boolean, onChange?: (value: string) => void }} options 选项（单个选项可禁用，显示但不能选中），direction 默认 vertical。
+   * @param {{ options: Array<string|{ value: string, label?: string, disabled?: boolean }>, value?: string, direction?: 'vertical'|'horizontal', variant?: 'segmented',
+   *   ariaLabel?: string, disabled?: boolean, onChange?: (value: string) => void }} options 选项（单个选项可禁用，显示但不能选中），direction 默认 vertical；variant 为 segmented 时选项等宽排成一行。
    * @returns 控件对象，getValue 返回所选值（未选为空串）。
    */
   aiUi.radioGroup = function (options) {
     const settings = options || {};
+    if (settings.variant !== undefined && settings.variant !== 'segmented') throw new Error(`未知的单选组变体：${settings.variant}`);
     const items = aiUi.normalizeOptions(settings.options || []);
     const radios = items.map((item) => ({ item, element: createChoiceElement('radio', item.label) }));
     const root = aiUi.h(
       'div',
-      { class: groupClass(settings.direction), attrs: { role: 'radiogroup', 'aria-label': settings.ariaLabel } },
+      { class: groupClass(settings.direction, settings.variant), attrs: { role: 'radiogroup', 'aria-label': settings.ariaLabel } },
       radios.map((radio) => radio.element)
     );
     let selectedValue = '';

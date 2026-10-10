@@ -47,24 +47,10 @@ export interface VolcengineImageModel {
   readonly pixelRange: { readonly min: number; readonly max: number };
 }
 
-/** 构造 Seedream 的能力：每次请求一张，不支持随机种子与反向提示词。 */
-function seedreamCapability(resolutions: readonly string[], referenceImagesMax: number): ImageCapability {
-  return {
-    aspectRatios: ASPECT_RATIOS,
-    resolutions,
-    imagesPerRequestMax: SEEDREAM_IMAGES_PER_REQUEST_MAX,
-    referenceImagesMax,
-    seed: false,
-    promptMaxLength: SEEDREAM_PROMPT_MAX_LENGTH
-  };
-}
-
 /** 5.0 Pro、Flash：档位 1K、1.5K、2K，总像素 921600 至 4624220，最多 10 张参考图。 */
 const PRO_PIXEL_RANGE = { min: 921_600, max: 4_624_220 };
-
 /** 5.0 Lite、4.5：总像素 3686400 至 16777216，最多 14 张参考图。 */
 const LITE_PIXEL_RANGE = { min: 3_686_400, max: 16_777_216 };
-
 /** 火山引擎提供的图像模型。 */
 export const VOLCENGINE_IMAGE_MODELS: readonly VolcengineImageModel[] = [
   {
@@ -84,3 +70,15 @@ export const VOLCENGINE_IMAGE_MODELS: readonly VolcengineImageModel[] = [
     pixelRange: LITE_PIXEL_RANGE
   }
 ];
+
+/** 构造 Seedream 的能力：每次请求一张，不支持随机种子与反向提示词。 */
+function seedreamCapability(resolutions: readonly string[], referenceImagesMax: number): ImageCapability {
+  return {
+    aspectRatios: ASPECT_RATIOS,
+    resolutions,
+    imagesPerRequestMax: SEEDREAM_IMAGES_PER_REQUEST_MAX,
+    referenceImagesMax,
+    seed: false,
+    promptMaxLength: SEEDREAM_PROMPT_MAX_LENGTH
+  };
+}

@@ -274,6 +274,7 @@
         ]
       }
     ];
+    /** 读取作品各集的分镜脚本状态并刷新弹出页内容。 */
     async function load() {
       try {
         const result = await window.hostBridge.request(REQUEST_STORYBOARD_EPISODES, { workId: work.id });
@@ -651,10 +652,6 @@
     const work = payload && works.find((item) => item.id === payload.workId);
     if (work) runAfterForm(() => openEpisodeList(work));
   });
-  const initialLoad = loadWorks(true);
   // 页面打开前已登记的请求（如侧栏点“添加”），加载完成后主动取走。
-  void initialLoad
-    .then(() => window.hostBridge.request(REQUEST_TAKE_PENDING))
-    .then((result) => handleRequest(result && result.request))
-    .catch(() => undefined);
+  void loadWorks(true).then(() => window.pageFormat.takePendingRequest(REQUEST_TAKE_PENDING, handleRequest));
 })();

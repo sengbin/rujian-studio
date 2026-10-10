@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
-// 备注：标签的打开与关闭由主进程的 PanelManager 驱动；用户关闭标签时回报主进程；同一页面键只有一个标签。
+// 备注：标签的打开与关闭由主进程的 PanelTabs 驱动；用户关闭标签时回报主进程；同一页面键只有一个标签。
 // ------------------------------------------------------------------------
 
 import { RujianShellApi, SIDEBAR_FRAME_ID, ShellCommand, ShellTheme, TabDescriptor } from '../app/shell/shell-channels';
@@ -103,7 +103,8 @@ export async function startAppShell(api: RujianShellApi, elements: AppShellEleme
   refresh();
 }
 
-/** 外壳自身的样式按 html 上的 data-theme 切换。 */
+/** 外壳自身的样式按 html 上的 theme-light、theme-dark 类切换，与页面使用同一套主题变量。 */
 function applyShellTheme(theme: ShellTheme): void {
-  document.documentElement.dataset.theme = theme;
+  document.documentElement.classList.remove('theme-light', 'theme-dark');
+  document.documentElement.classList.add(`theme-${theme}`);
 }

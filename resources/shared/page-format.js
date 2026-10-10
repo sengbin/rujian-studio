@@ -1,6 +1,6 @@
 // ------------------------------------------------------------------------
 // 名称：page-format.js
-// 说明：页面共用的格式化与请求封装：相对时间、日期时间、字节大小、秒数、阶段状态文字与样式类（及是否未完成）、Base64 转字节，错误说明文字、“已有表单打开时忽略”的表单打开器，以及“发请求并在提示区显示失败原因”的封装。
+// 说明：页面共用的格式化与请求封装：相对时间、日期时间、字节大小、秒数、阶段状态文字与样式类（及是否未完成）、Base64 转字节，错误说明文字、“已有表单打开时忽略”的表单打开器，“发请求并在提示区显示失败原因”的封装，以及取走页面打开前已登记的请求。
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
@@ -155,6 +155,21 @@
     return { open: (options) => runExclusive(() => forms.open(options)), runExclusive, isOpen: () => isOpen };
   }
 
+  /**
+   * 取走页面打开前已登记的请求（如侧栏点“添加”）并交给处理函数；取不到或处理失败只记录警告，不影响页面使用。
+   * @param {string} requestName 取走请求的宿主请求名。
+   * @param {(request: any) => any} handleRequest 处理请求的函数，可以是异步的。
+   * @param {(result: any) => any} [pickRequest] 从宿主返回值里取出请求，缺省取 result.request。
+   * @returns {Promise<void>}
+   */
+  async function takePendingRequest(requestName, handleRequest, pickRequest = (result) => result && result.request) {
+    try {
+      await handleRequest(pickRequest(await window.hostBridge.request(requestName)));
+    } catch (error) {
+      console.warn('取页面打开前登记的请求失败：', error);
+    }
+  }
+
   /** Base64 转字节；分块转换，避免大文件一次占用过多内存。 */
   function decodeBase64(text) {
     const binary = window.atob(text);
@@ -179,6 +194,7 @@
     errorText,
     requestAction,
     createActionRunner,
-    createFormOpener
+    createFormOpener,
+    takePendingRequest
   };
 })();

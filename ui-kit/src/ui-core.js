@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-09-30
-// 备注：必须最先于其他 ui-*.js 加载；用法见 private-docs/rujian-studio/开发文档-vscode/ui-components.md。
+// 备注：必须最先于其他 ui-*.js 加载；用法见 private-docs/rujian-studio/开发文档/ui-components.md。
 // ------------------------------------------------------------------------
 
 'use strict';

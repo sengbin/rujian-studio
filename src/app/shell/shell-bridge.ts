@@ -31,17 +31,27 @@ export class ShellBridge {
   /** @param transport 与外壳界面的通道。 */
   constructor(private readonly transport: ShellTransport) {}
 
-  /** 登记页面；同一标识重复登记会覆盖。 */
+  /**
+   * 登记页面；同一标识重复登记会覆盖。
+   * @param frameId 页面标识。
+   * @param registration 页面登记信息（页面 HTML 与请求路由）。
+   */
   registerFrame(frameId: string, registration: FrameRegistration): void {
     this.frames.set(frameId, registration);
   }
 
-  /** 注销页面，之后该页面的消息被忽略、事件不再发送。 */
+  /**
+   * 注销页面，之后该页面的消息被忽略、事件不再发送。
+   * @param frameId 页面标识。
+   */
   unregisterFrame(frameId: string): void {
     this.frames.delete(frameId);
   }
 
-  /** 读取页面的 HTML；未登记时返回 undefined。 */
+  /**
+   * 读取页面的 HTML；未登记时返回 undefined。
+   * @param frameId 页面标识。
+   */
   getFrameHtml(frameId: string): string | undefined {
     return this.frames.get(frameId)?.html;
   }
@@ -63,7 +73,12 @@ export class ShellBridge {
     }
   }
 
-  /** 向页面推送事件；页面未登记时忽略。 */
+  /**
+   * 向页面推送事件；页面未登记时忽略。
+   * @param frameId 页面标识。
+   * @param name 事件名称。
+   * @param payload 事件附带的数据，可省略。
+   */
   postEvent(frameId: string, name: string, payload?: unknown): void {
     if (!this.frames.has(frameId)) {
       return;
@@ -72,22 +87,34 @@ export class ShellBridge {
     this.transport.send(SHELL_CHANNELS.toFrame, { frameId, message: event });
   }
 
-  /** 让外壳打开标签。 */
+  /**
+   * 让外壳打开标签。
+   * @param tab 标签描述。
+   */
   openTab(tab: TabDescriptor): void {
     this.transport.send(SHELL_CHANNELS.openTab, tab);
   }
 
-  /** 让外壳聚焦标签。 */
+  /**
+   * 让外壳聚焦标签。
+   * @param key 标签键。
+   */
   revealTab(key: string): void {
     this.transport.send(SHELL_CHANNELS.revealTab, key);
   }
 
-  /** 让外壳关闭标签（程序主动关闭，外壳不会再回报关闭）。 */
+  /**
+   * 让外壳关闭标签（程序主动关闭，外壳不会再回报关闭）。
+   * @param key 标签键。
+   */
   closeTab(key: string): void {
     this.transport.send(SHELL_CHANNELS.closeTab, key);
   }
 
-  /** 通知外壳系统主题变化。 */
+  /**
+   * 通知外壳系统主题变化。
+   * @param theme 界面主题。
+   */
   notifyThemeChanged(theme: ShellTheme): void {
     this.transport.send(SHELL_CHANNELS.themeChanged, theme);
   }
@@ -97,7 +124,10 @@ export class ShellBridge {
     this.tabClosedListeners.push(listener);
   }
 
-  /** 外壳回报用户关闭了标签。 */
+  /**
+   * 外壳回报用户关闭了标签。
+   * @param key 被关闭的标签键。
+   */
   handleTabClosed(key: string): void {
     this.tabClosedListeners.forEach((listener) => listener(key));
   }

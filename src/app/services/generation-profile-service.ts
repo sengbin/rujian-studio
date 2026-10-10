@@ -52,6 +52,8 @@ export class GenerationProfileService {
 
   /**
    * 读取一集的生成参数视图。
+   * @param workId 作品标识。
+   * @param episodeId 集标识。
    * @throws NotFoundError 作品不存在，或集不属于该作品。
    */
   getView(workId: number, episodeId: number): EpisodeProfileView {
@@ -91,6 +93,7 @@ export class GenerationProfileService {
 
   /**
    * 读取作品默认参数的生效值：作品默认优先，画幅与分辨率回退到项目默认；不含各集的覆盖。
+   * @param workId 作品标识。
    * @throws NotFoundError 作品不存在。
    */
   getWorkDefaults(workId: number): EffectiveProfile {

@@ -4,7 +4,7 @@
 // 作者：sengbin
 // 邮箱：chengbin@3578.cn
 // 日期：2026-10-10
-// 备注：依赖 ui-core.js、ui-dialog.js（弹出页）；样式见 ui-controls.css 的 .ui-thumb、.ui-image 系列。
+// 备注：依赖 ui-core.js、ui-dialog.js（弹出页）；样式见 ui-image.css 的 .ui-thumb、.ui-image 系列。
 // ------------------------------------------------------------------------
 
 'use strict';

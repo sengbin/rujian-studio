@@ -34,11 +34,6 @@ const M3_CAPABILITY: TextCapability = { contextTokens: 1_000_000, maxOutputToken
 /** M2.x 系列：204,800 上下文，不支持图片输入。 */
 const M2_CAPABILITY: TextCapability = { contextTokens: 204_800, maxOutputTokens: MAX_OUTPUT_TOKENS_M2, imageInput: false };
 
-/** 构造一个 M2.x 模型。 */
-function m2Model(code: string, displayName: string): MinimaxTextModel {
-  return { descriptor: { code, displayName, kind: 'text', capability: M2_CAPABILITY }, thinking: 'always-on' };
-}
-
 /** MiniMax 提供的文本模型。 */
 export const MINIMAX_TEXT_MODELS: readonly MinimaxTextModel[] = [
   {
@@ -54,3 +49,8 @@ export const MINIMAX_TEXT_MODELS: readonly MinimaxTextModel[] = [
   m2Model('MiniMax-M2.1-highspeed', 'MiniMax M2.1 极速版'),
   m2Model('MiniMax-M2', 'MiniMax M2')
 ];
+
+/** 构造一个 M2.x 模型。 */
+function m2Model(code: string, displayName: string): MinimaxTextModel {
+  return { descriptor: { code, displayName, kind: 'text', capability: M2_CAPABILITY }, thinking: 'always-on' };
+}

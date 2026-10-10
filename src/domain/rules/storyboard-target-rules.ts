@@ -18,13 +18,22 @@ export interface StoryboardTargetValues {
   readonly groupMaxSeconds: number;
 }
 
-/** 目标模型选项的文字：服务商与模型名，已知单次最长时长时附在后面。 */
+/**
+ * 目标模型选项的文字：服务商与模型名，已知单次最长时长时附在后面。
+ * @param providerName 服务商名称。
+ * @param displayName 模型的显示名称。
+ * @param capability 模型的视频能力。
+ */
 export function describeTargetModel(providerName: string, displayName: string, capability: VideoCapability): string {
   const max = maxGroupSeconds(capability.duration);
   return `${providerName} · ${displayName}${max === null ? '' : `（单次最长 ${max} 秒）`}`;
 }
 
-/** 把单组最长时长限制在模型的单次最长时长以内；没有选模型或模型没有上限信息时原样返回。 */
+/**
+ * 把单组最长时长限制在模型的单次最长时长以内；没有选模型或模型没有上限信息时原样返回。
+ * @param seconds 期望的单组最长时长，单位为秒。
+ * @param capability 目标模型的视频能力；没有选模型时为 undefined。
+ */
 export function capGroupSeconds(seconds: number, capability: VideoCapability | undefined): number {
   const max = capability === undefined ? null : maxGroupSeconds(capability.duration);
   return max === null ? seconds : Math.min(seconds, max);

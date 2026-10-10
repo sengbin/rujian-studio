@@ -100,7 +100,10 @@ function describeShotRules(params: StoryboardParams, totalSeconds: number | null
   return parts.join('');
 }
 
-/** 画幅的要求：说明目标画幅，并按横屏、竖屏、方形给出构图提示；无法解析宽高比时只说明画幅。 */
+/**
+ * 画幅的要求：说明目标画幅，并按横屏、竖屏、方形给出构图提示；无法解析宽高比时只说明画幅。
+ * @param aspectRatio 目标画幅，形如 16:9；没有指定时为 null。
+ */
 export function describeAspectRatio(aspectRatio: string | null): string {
   if (aspectRatio === null) {
     return NO_ASPECT_RATIO;

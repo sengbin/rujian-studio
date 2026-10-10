@@ -490,10 +490,6 @@
   renderPage();
   window.hostBridge.onEvent(EVENT_CHANGED, scheduleRefresh);
   window.hostBridge.onEvent(EVENT_ACTION, (request) => void handleRequest(request));
-  const initialLoad = loadAssets(true);
   // 页面打开前已登记的请求（如侧栏点“添加”），加载完成后主动取走。
-  void initialLoad
-    .then(() => window.hostBridge.request(REQUEST_TAKE_PENDING))
-    .then((result) => handleRequest(result && result.request))
-    .catch(() => undefined);
+  void loadAssets(true).then(() => window.pageFormat.takePendingRequest(REQUEST_TAKE_PENDING, handleRequest));
 })();

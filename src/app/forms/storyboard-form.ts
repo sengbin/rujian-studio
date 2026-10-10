@@ -67,11 +67,17 @@ export interface StoryboardFormDependencies {
   readonly onPicked: (workId: number) => void;
 }
 
+/** 提交按钮文字。 */
 const SUBMIT_LABEL = '开始生成';
+/** 没有可生成分镜脚本的作品时的提示。 */
 const NO_STARTABLE_MESSAGE = '没有可生成分镜脚本的作品，请先在“剧本”列表中确认剧本。';
+/** 没有选择任何一集时的校验提示。 */
 const EPISODE_REQUIRED_MESSAGE = '请至少选择一集。';
+/** 所选集的取值格式不正确时的校验提示。 */
 const EPISODES_INVALID_MESSAGE = '所选的集格式不正确，请重新选择。';
+/** 所选模型不在可选列表里时的校验提示。 */
 const MODEL_INVALID_MESSAGE = '请选择列表中的模型。';
+/** 文本模型字段说明里的用途前缀。 */
 const TEXT_MODEL_PURPOSE = '生成分镜脚本时';
 /** 目标模型、画幅、分辨率的字段键：保存为作品默认，不属于分镜脚本的生成参数。 */
 const TARGET_KEYS = { model: 'videoModel', aspectRatio: 'aspectRatio', resolution: 'resolution' } as const;
@@ -355,8 +361,8 @@ function parseChosenLabels(value: string | undefined): string[] {
   let parsed: unknown;
   try {
     parsed = JSON.parse(value ?? '[]');
-  } catch {
-    throw new ValidationError({ episodes: EPISODES_INVALID_MESSAGE });
+  } catch (error) {
+    throw new ValidationError({ episodes: EPISODES_INVALID_MESSAGE }, { cause: error });
   }
   if (!Array.isArray(parsed) || parsed.some((item) => typeof item !== 'string')) {
     throw new ValidationError({ episodes: EPISODES_INVALID_MESSAGE });

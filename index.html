@@ -6,26 +6,33 @@
 作者：sengbin
 邮箱：chengbin@3578.cn
 日期：2026-10-10
-备注：页面内容都在 iframe 中加载（rujian-app: 协议），外壳自身只允许同源脚本。
+备注：页面内容都在 iframe 中加载（rujian-app: 协议），外壳自身只允许同源脚本；开发模式需要的热更新连接由 vite.renderer.config.mts 在开发时追加到策略里。
 ========================================================================
 -->
-<html lang="zh-CN" data-theme="dark">
+<html lang="zh-CN" class="theme-dark">
   <head>
     <meta charset="UTF-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws://localhost:*; frame-src rujian-app:; object-src 'none'"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src rujian-app:; object-src 'none'"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>如见 Studio</title>
   </head>
   <body>
-    <div id="app-shell">
-      <aside id="sidebar-pane" aria-label="菜单"></aside>
-      <main id="workspace">
-        <div id="tab-bar" role="tablist" aria-label="已打开的页面"></div>
-        <div id="tab-views">
-          <p id="empty-hint">从左侧菜单选择一个入口开始。</p>
+    <div id="app-shell" class="shell">
+      <aside id="sidebar-pane" class="shell__sidebar" aria-label="菜单"></aside>
+      <main id="workspace" class="shell__workspace">
+        <div
+          id="tab-bar"
+          class="shell__tabs"
+          role="tablist"
+          aria-label="已打开的页面"
+        ></div>
+        <div id="tab-views" class="shell__views">
+          <p id="empty-hint" class="shell__empty">
+            从左侧菜单选择一个入口开始。
+          </p>
         </div>
       </main>
     </div>

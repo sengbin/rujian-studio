@@ -1,0 +1,38 @@
+/*
+ * ------------------------------------------------------------------------
+ * 名称：ui-audio-preview.css
+ * 说明：界面组件库的试听控件样式：单个按钮，播放中换成主按钮配色。
+ * 作者：sengbin
+ * 邮箱：chengbin@3578.cn
+ * 日期：2026-10-11
+ * 备注：依赖 ui-tokens.css 与 ui-button.css；播放用的音频元素是隐藏的。
+ * ------------------------------------------------------------------------
+ */
+
+/* 只有一个按钮；播放用的音频元素是隐藏的 */
+.ui-audio-preview {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+}
+
+/* 播放中：按钮换成主按钮配色，和空闲时区分开 */
+.ui-audio-preview__button--playing,
+.ui-audio-preview__button--playing:hover,
+.ui-audio-preview__button--playing:active {
+  color: var(--accent-foreground);
+  background: var(--accent);
+}
+
+.ui-audio-preview__button--playing:hover {
+  background: var(--accent-hover);
+}
+
+.ui-audio-preview__button--playing:active {
+  background: var(--accent-active);
+}
+
+/* 设置了 display 的控件会盖过 hidden 属性，这里让它们在没有页面基础样式的页面里也能正常隐藏 */
+.ui-audio-preview[hidden] {
+  display: none !important;
+}

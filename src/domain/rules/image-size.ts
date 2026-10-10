@@ -22,7 +22,10 @@ export interface ImageSize {
 /** JPEG 中不携带图片尺寸的标记（DHT、JPG、DAC）。 */
 const JPEG_NON_FRAME_MARKERS: readonly number[] = [0xc4, 0xc8, 0xcc];
 
-/** 按文件头识别图片格式，返回 MIME 类型；不是受支持的格式返回 null。 */
+/**
+ * 按文件头识别图片格式，返回 MIME 类型；不是受支持的格式返回 null。
+ * @param content 图片文件内容。
+ */
 export function detectImageMime(content: Uint8Array): string | null {
   const startsWith = (offset: number, bytes: readonly number[]) => bytes.every((byte, index) => content[offset + index] === byte);
   if (startsWith(0, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {

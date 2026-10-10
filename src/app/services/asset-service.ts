@@ -20,17 +20,24 @@ import {
   isPromptOutdated
 } from '../../domain/rules/asset-generation-rules';
 import { FieldErrors } from '../../domain/rules/field-readers';
-import { ReferenceFileData, readFirstReferenceFile } from './asset-reference-file';
+import { ReferenceFilePayload, readFirstReferenceFile } from './asset-reference-file';
 import { ChangeNotifier } from './change-notifier';
 
 /** 同类型下资产重名时的提示。 */
 export const DUPLICATE_ASSET_NAME_MESSAGE = '已有同名资产，请换一个名称。';
 
+/** 音频已被绑定或引用时，拒绝修改音频类型的提示。 */
 const AUDIO_KIND_LOCKED_MESSAGE = '该音频已被绑定或引用，不能修改音频类型。';
+/** 提示词生成中，拒绝修改提示词的提示。 */
 const PROMPT_RUNNING_MESSAGE = '提示词生成中，完成后再修改提示词。';
 
 /** 没有上传过文件却要改用上传的提示。 */
 const NO_UPLOAD_FILES_MESSAGE = '还没有上传的文件，请先上传。';
+
+/** 资产没有参考图时的提示。 */
+const NO_REFERENCE_IMAGE_MESSAGE = '该资产没有参考图。';
+/** 资产没有参考音频时的提示。 */
+const NO_REFERENCE_AUDIO_MESSAGE = '该资产还没有参考音频。';
 
 /** 音频被用作音色参考时，不能改用没有文件的来源。 */
 function voiceSourceEmptyMessage(count: number): string {
@@ -67,11 +74,6 @@ export interface AssetListRow extends AssetListItem {
   readonly availability: GenerationAvailability;
 }
 
-/** 资产没有参考图时的提示。 */
-const NO_REFERENCE_IMAGE_MESSAGE = '该资产没有参考图。';
-/** 资产没有参考音频时的提示。 */
-const NO_REFERENCE_AUDIO_MESSAGE = '该资产还没有参考音频。';
-
 /** 资产应用服务。 */
 export class AssetService {
   private readonly changeNotifier = new ChangeNotifier();
@@ -95,7 +97,10 @@ export class AssetService {
     this.changeNotifier.notify();
   }
 
-  /** 列出某类型的全部资产，按更新时间倒序。 */
+  /**
+   * 列出某类型的全部资产，按更新时间倒序。
+   * @param kind 资产类型。
+   */
   listAssets(kind: AssetKind): AssetListItem[] {
     return this.repository.list(kind);
   }
@@ -115,6 +120,7 @@ export class AssetService {
 
   /**
    * 读取资产。
+   * @param id 标识。
    * @throws NotFoundError 资产不存在。
    */
   getAsset(id: number): AssetRecord {
@@ -125,28 +131,36 @@ export class AssetService {
     return asset;
   }
 
-  /** 读取资产当前使用来源的图片或音频文件（含内容）。 */
+  /**
+   * 读取资产当前使用来源的图片或音频文件（含内容）。
+   * @param id 标识。
+   */
   getReferenceFiles(id: number): AssetFileRecord[] {
     return this.repository.listReferenceFiles(this.getAsset(id).id);
   }
 
   /**
    * 读取资产第一张参考图的原图，用于列表预览点击查看。
+   * @param id 标识。
    * @throws NotFoundError 资产不存在，或没有参考图。
    */
-  readReferenceImage(id: number): ReferenceFileData {
+  readReferenceImage(id: number): ReferenceFilePayload {
     return readFirstReferenceFile(this.repository, this.getAsset(id).id, NO_REFERENCE_IMAGE_MESSAGE);
   }
 
   /**
    * 读取音频资产的第一个参考音频，用于列表试听。
+   * @param id 标识。
    * @throws NotFoundError 资产不存在，或没有参考音频。
    */
-  readReferenceAudio(id: number): ReferenceFileData {
+  readReferenceAudio(id: number): ReferenceFilePayload {
     return readFirstReferenceFile(this.repository, this.getAsset(id).id, NO_REFERENCE_AUDIO_MESSAGE);
   }
 
-  /** 读取资产上传的图片或音频文件（含内容），用于编辑表单带出已有文件；与当前使用的来源无关。 */
+  /**
+   * 读取资产上传的图片或音频文件（含内容），用于编辑表单带出已有文件；与当前使用的来源无关。
+   * @param id 标识。
+   */
   getUploadFiles(id: number): AssetFileRecord[] {
     return this.repository.listUploadFiles(this.getAsset(id).id);
   }
@@ -186,6 +200,7 @@ export class AssetService {
 
   /**
    * 由试听确认的音色样本创建“音色参考”音频资产：样本保存为上传来源的参考音频，名称在音频类型内必须唯一。
+   * @param sample 试听确认的音色样本（名称、描述、语言和音频内容）。
    * @throws ValidationError 名称、描述或音频内容不合法。
    * @throws ConflictError 已有同名的音频资产。
    */
@@ -257,6 +272,8 @@ export class AssetService {
 
   /**
    * 手动保存提示词；保存即视为已确认，不再显示“需更新”。
+   * @param id 资产标识。
+   * @param rawInput 界面提交的内容，未经校验。
    * @throws ValidationError 提示词不合法，或提示词正在生成。
    * @throws NotFoundError 资产不存在。
    */
@@ -275,6 +292,7 @@ export class AssetService {
 
   /**
    * 读取删除资产前需要告知用户的名称与使用情况。
+   * @param id 标识。
    * @throws NotFoundError 资产不存在。
    */
   getDeletionImpact(id: number): AssetDeletionImpact {
@@ -284,6 +302,7 @@ export class AssetService {
 
   /**
    * 删除资产及其文件和绑定。
+   * @param id 标识。
    * @throws NotFoundError 资产不存在。
    */
   deleteAsset(id: number): void {

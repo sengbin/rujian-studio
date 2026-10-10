@@ -27,13 +27,13 @@
 
 ![剧本与分镜图标](resources/readme/icons/storyboard-icon.png)
 
-#### 查看分镜
+### 查看分镜
 
 逐镜检查镜头描述、场景实体、时长与声音条目。
 
 ![查看分镜界面](resources/readme/storyboard-view.gif)
 
-#### 分镜动态预演（Animatic）
+### 分镜动态预演（Animatic）
 
 生成视频前先预演整集分镜：查看角色走位、镜头衔接和声音时间线，并切换舞台、镜头对照与调度俯视图。
 
