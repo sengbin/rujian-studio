@@ -47,8 +47,6 @@ export interface GenerationResultsDependencies {
 
 /** 把文字转成可用作文件名的形式：去掉 Windows 不允许的字符。 */
 function toFileName(text: string): string {
-  // Windows 文件名不允许控制字符（0x00-0x1f），这里有意匹配它们。
-  // eslint-disable-next-line no-control-regex
   return text.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').trim();
 }
 
